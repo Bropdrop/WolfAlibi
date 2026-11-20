@@ -1,0 +1,56 @@
+ALIBI - reproducible results (all numbers below are raw output of the commands shown)
+
+$ python3 alibi.py demo
+== Run 1: scripted agent (NOT an LLM - a fixed script) behaves ==
+sealed epoch 0: 4 events, 4 distinct keys, root 360aa45bb2a785d9...
+  ALIBI 'finance/': proof 1155 B  -> VERIFIED (4 events, none in range)
+  ALIBI 'secrets/': proof 1149 B  -> VERIFIED (4 events, none in range)
+
+== Run 2: agent is 'hijacked' and reads finance via a symlink in docs/ ==
+  secrets/.env -> blocked: policy
+  prover refuses: epoch 1: key b'finance/tax/2025.pdf' lies inside the queried range
+  (symlink did not hide it: the broker logs the RESOLVED path)
+  replaying run-1 proof for epochs 0..1 -> epoch coverage mismatch
+
+$ python3 test_alibi.py
+test_crash_after_release_is_recorded (__main__.Crash.test_crash_after_release_is_recorded) ... ok
+test_crash_after_witness_before_journal_is_idempotent (__main__.Crash.test_crash_after_witness_before_journal_is_idempotent) ... ok
+test_crash_between_record_and_release (__main__.Crash.test_crash_between_record_and_release) ... ok
+test_torn_journal_tail_survives (__main__.Crash.test_torn_journal_tail_survives) ... ok
+test_inclusion_paths_all_sizes (__main__.Crypto.test_inclusion_paths_all_sizes) ... ok
+test_known_merkle_vectors (__main__.Crypto.test_known_merkle_vectors) ... ok
+test_second_preimage_domain_separation (__main__.Crypto.test_second_preimage_domain_separation) ... ok
+test_bitflip_fuzz (__main__.Forgery.test_bitflip_fuzz) ... ok
+For small trees, try EVERY (pred, succ) pairing of authentic leaves/indices/paths ... ok
+test_wrong_keys_queries_coverage (__main__.Forgery.test_wrong_keys_queries_coverage) ... ok
+test_alibi_roundtrip_and_privacy (__main__.Honest.test_alibi_roundtrip_and_privacy) ... ok
+test_empty_epoch_and_multi_epoch (__main__.Honest.test_empty_epoch_and_multi_epoch) ... ok
+test_concurrency_completeness (__main__.Hostile.test_concurrency_completeness) ... ok
+test_fail_closed_when_log_unwritable (__main__.Hostile.test_fail_closed_when_log_unwritable) ... ok
+test_symlink_traversal_outside (__main__.Hostile.test_symlink_traversal_outside) ... ok
+test_toctou_race_detected (__main__.Hostile.test_toctou_race_detected) ... ok
+Documents what Alibi does NOT stop: a broker that simply never logs an access. ... ok
+test_equivocation_refused (__main__.Witnessing.test_equivocation_refused) ... ok
+test_gap_rollback_and_seq_gap_refused (__main__.Witnessing.test_gap_rollback_and_seq_gap_refused) ... ok
+Witness amnesia: same witness key, wiped state -> it signs a forked history. ... ok
+A broker that builds an unsorted tree could hide a key behind a fake adjacency. ... ok
+Ran 21 tests in 6.028s
+OK
+MEASURED: {"fuzz": [1438, 11504, 11314, 190, 0], "forgery_attempts": 1088244, "honest_proofs_verified": 49, "concurrency": [8, 960]}
+
+$ python3 mutation_test.py
+CAUGHT   M1 drop adjacency check (succ == pred+1) -> test_exhaustive_forgery_search
+CAUGHT   M2 drop succ >= hi boundary check -> test_exhaustive_forgery_search
+CAUGHT   M3 drop Merkle domain separation -> test_known_merkle_vectors, test_second_preimage_domain_separation
+CAUGHT   M4 witness skips sortedness check -> test_unsorted_tree_refused
+CAUGHT   M5 verifier skips witness co-signature -> test_bitflip_fuzz, test_equivocation_refused, test_wrong_keys_queries_coverage
+CAUGHT   M6 verifier skips epoch-coverage check -> test_wrong_keys_queries_coverage
+CAUGHT   M7 broker skips post-open race check -> test_toctou_race_detected
+CAUGHT   M8 verifier skips hash-chain linkage -> test_spliced_histories_rejected_despite_valid_signatures
+
+8/8 mutants caught
+
+$ python3 alibi.py bench 1000000
+n=    1,000 keys | build   0.00s | prove  0.00s | proof  2346 B JSON | verify  0.28 ms
+n=  100,000 keys | build   0.12s | prove  0.14s | proof  3308 B JSON | verify  0.27 ms
+n=1,000,000 keys | build   1.25s | prove  1.66s | proof  3721 B JSON | verify  0.27 ms
