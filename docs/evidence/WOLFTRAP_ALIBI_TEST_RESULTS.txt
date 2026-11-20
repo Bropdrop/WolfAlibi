@@ -1,0 +1,55 @@
+test_epoch_barrier_prevents_false_nonaccess (test_wolftrap_alibi.WolfTrapAlibi.test_epoch_barrier_prevents_false_nonaccess)
+Do not seal an epoch between authorization log and sensitive-data release. ... FAIL
+test_raced_write_never_creates_outside_file (test_wolftrap_alibi.WolfTrapAlibi.test_raced_write_never_creates_outside_file)
+A blocked directory-swap race must cause no outside-root side effect. ... FAIL
+test_shared_identity_does_not_publish_partial_epoch (test_wolftrap_alibi.WolfTrapAlibi.test_shared_identity_does_not_publish_partial_epoch)
+Independent in-memory brokers must not silently share one signer+journal. ... FAIL
+test_short_journal_write_cannot_create_false_alibi_after_restart (test_wolftrap_alibi.WolfTrapAlibi.test_short_journal_write_cannot_create_false_alibi_after_restart)
+A successful but partial os.write must never release unlogged data. ... FAIL
+
+======================================================================
+FAIL: test_epoch_barrier_prevents_false_nonaccess (test_wolftrap_alibi.WolfTrapAlibi.test_epoch_barrier_prevents_false_nonaccess)
+Do not seal an epoch between authorization log and sensitive-data release.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/test_wolftrap_alibi.py", line 82, in test_epoch_barrier_prevents_false_nonaccess
+    self.fail("False nonaccess proof: finance data released in epoch 1, but epoch 1 proves empty")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False nonaccess proof: finance data released in epoch 1, but epoch 1 proves empty
+
+======================================================================
+FAIL: test_raced_write_never_creates_outside_file (test_wolftrap_alibi.WolfTrapAlibi.test_raced_write_never_creates_outside_file)
+A blocked directory-swap race must cause no outside-root side effect.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/test_wolftrap_alibi.py", line 161, in test_raced_write_never_creates_outside_file
+    self.assertFalse(pathlib.Path(outside, "new.txt").exists(),
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                     "O_CREAT created an outside file before race detection")
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: True is not false : O_CREAT created an outside file before race detection
+
+======================================================================
+FAIL: test_shared_identity_does_not_publish_partial_epoch (test_wolftrap_alibi.WolfTrapAlibi.test_shared_identity_does_not_publish_partial_epoch)
+Independent in-memory brokers must not silently share one signer+journal.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/test_wolftrap_alibi.py", line 107, in test_shared_identity_does_not_publish_partial_epoch
+    self.fail("False nonaccess proof: second broker's finance read omitted from checkpoint")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False nonaccess proof: second broker's finance read omitted from checkpoint
+
+======================================================================
+FAIL: test_short_journal_write_cannot_create_false_alibi_after_restart (test_wolftrap_alibi.WolfTrapAlibi.test_short_journal_write_cannot_create_false_alibi_after_restart)
+A successful but partial os.write must never release unlogged data.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/mnt/data/test_wolftrap_alibi.py", line 145, in test_short_journal_write_cannot_create_false_alibi_after_restart
+    self.fail("False nonaccess proof: successful short write lost the finance read on restart")
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: False nonaccess proof: successful short write lost the finance read on restart
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.017s
+
+FAILED (failures=4)
