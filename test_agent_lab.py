@@ -174,5 +174,21 @@ async def run(tools, fixtures):
             run_manifest(self.manifest,self.report,consent=True,allow_local_code=True)
         self.assertFalse(self.report.exists())
 
+    def test_import_time_exception_is_sanitized(self):
+        module_name='synthetic_lab_import_failure'
+        (self.tmp_path/(module_name+'.py')).write_text('raise RuntimeError("SECRET_IMPORT_TOKEN")\n')
+        sys.path.insert(0,str(self.tmp_path))
+        self.addCleanup(lambda: sys.path.remove(str(self.tmp_path)))
+        self.addCleanup(lambda: sys.modules.pop(module_name,None))
+        self.initial['entrypoint']={'module':module_name,'callable':'run'}
+        self.save()
+        with contextlib.redirect_stdout(io.StringIO()) as output:
+            rc=main(['--manifest',str(self.manifest),'--output',str(self.report),'--consent','--allow-local-code'])
+        self.assertEqual(rc,2)
+        self.assertEqual(json.loads(output.getvalue())['reason'],'ManifestError')
+        self.assertNotIn('SECRET_IMPORT_TOKEN',output.getvalue())
+        self.assertFalse(self.report.exists())
+
+
 
 if __name__=='__main__':unittest.main(verbosity=2)
