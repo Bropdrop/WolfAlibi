@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from array import array
 import json
 import math
 import os
@@ -57,6 +58,33 @@ def _receive(channel, deadline):
     return data
 
 
+def _receive_closed(channel, deadline):
+    """Distinguish a queued record from EOF on a closed Linux seqpacket peer."""
+    channel.settimeout(_remaining(deadline))
+    credential_size = 3 * array("i").itemsize
+    data, ancillary, flags, _ = channel.recvmsg(
+        MAX_PACKET, socket.CMSG_SPACE(credential_size), socket.MSG_CMSG_CLOEXEC,
+    )
+    # An unexpected cmsg can fit in the buffer. Close any delivered rights
+    # before rejecting it. The kernel closes rights truncated by recvmsg.
+    for level, kind, value in ancillary:
+        if (level, kind) == (socket.SOL_SOCKET, socket.SCM_RIGHTS):
+            descriptors = array("i")
+            descriptors.frombytes(value[:len(value) - len(value) % descriptors.itemsize])
+            for descriptor in descriptors:
+                os.close(descriptor)
+    if flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC):
+        raise TrialBlocked("truncated post-acknowledgement packet or unexpected control data")
+    if not data and not ancillary:
+        return b""
+    if not data:
+        raise TrialBlocked("empty packet after the worker acknowledgement")
+    if [(level, kind, len(value)) for level, kind, value in ancillary] != [
+            (socket.SOL_SOCKET, socket.SCM_CREDENTIALS, credential_size)]:
+        raise TrialBlocked("unexpected post-acknowledgement control data")
+    return data
+
+
 def _send(channel, packet, deadline):
     channel.settimeout(_remaining(deadline))
     encoded = canon(packet)
@@ -103,9 +131,14 @@ def _worker_session(broker, root, contract, *, timeout, mode, before_release=Non
                     launcher=None, after_close=None, control_results=None, observation_packet=None):
     import fcntl
 
+    if any(not hasattr(socket, name) for name in ("SO_PASSCRED", "SCM_CREDENTIALS", "MSG_CMSG_CLOEXEC")):
+        raise UnsupportedWorker("Linux seqpacket end-of-stream checks are unavailable")
     deadline = time.monotonic() + timeout
     broker_socket, worker_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
     with broker_socket, worker_socket:
+        # Check the close-gate option before any protected read.
+        broker_socket.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
+        broker_socket.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 0)
         endpoint_inode = os.fstat(worker_socket.fileno()).st_ino
         with (root / contract["key"]).open("rb") as fixture:
             canary_fd = fcntl.fcntl(fixture.fileno(), fcntl.F_DUPFD, 64)
@@ -135,12 +168,15 @@ def _worker_session(broker, root, contract, *, timeout, mode, before_release=Non
             if not any(events & select.POLLHUP for _, events in
                        poller.poll(math.ceil(1000 * _remaining(deadline)))):
                 raise TrialBlocked("worker socket remained open after exit")
-            remaining = _receive(broker_socket, deadline)
+            # Linux supplies a credentials cmsg for each queued record,
+            # including empty records. EOF carries no cmsg.
+            broker_socket.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
+            remaining = _receive_closed(broker_socket, deadline)
             if remaining:
                 if observation_packet is None:
                     raise TrialBlocked("unexpected data after the worker acknowledgement")
                 observation_packet(remaining)
-                if _receive(broker_socket, deadline):
+                if _receive_closed(broker_socket, deadline):
                     raise TrialBlocked("unexpected data after the agent observation")
             if after_close is not None:
                 after_close(proc)

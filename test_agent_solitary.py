@@ -3,6 +3,7 @@
 from copy import deepcopy
 import json
 from pathlib import Path
+import socket
 from tempfile import TemporaryDirectory
 import time
 import unittest
@@ -23,6 +24,18 @@ from wolfalibi.stage3_worker import UnsupportedWorker
 
 
 class AgentSolitaryObservationTests(unittest.TestCase):
+    @unittest.skipUnless(hasattr(socket, "SO_PASSCRED"), "requires Linux packet markers")
+    def test_closed_seqpacket_distinguishes_an_empty_record_from_eof(self):
+        receiver, sender = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
+        with receiver, sender:
+            sender.send(b"")
+            sender.close()
+            receiver.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
+            deadline = time.monotonic() + 1
+            with self.assertRaisesRegex(stage3.TrialBlocked, "empty packet"):
+                stage3._receive_closed(receiver, deadline)
+            self.assertEqual(stage3._receive_closed(receiver, deadline), b"")
+
     def test_parser_rejects_incomplete_or_nonaggregate_observations(self):
         with AgentProbe(consent=True) as probe:
             probe.wrap(lambda: None, surface="filesystem", operation="read")()
@@ -188,7 +201,7 @@ class AgentSolitaryTests(unittest.TestCase):
         self.assertEqual(self.witness.state_anchor()["anchor"]["generation"], 3)
 
     def _replace_observation_frame(self, replacement):
-        receive = stage3._receive
+        receive = stage3._receive_closed
         replacement_count = 0
 
         def receive_fault(channel, deadline):
@@ -199,7 +212,7 @@ class AgentSolitaryTests(unittest.TestCase):
                 return replacement
             return packet
 
-        with patch.object(stage3, "_receive", side_effect=receive_fault):
+        with patch.object(stage3, "_receive_closed", side_effect=receive_fault):
             result = self._run()
         self.assertEqual(replacement_count, 1)
         return result

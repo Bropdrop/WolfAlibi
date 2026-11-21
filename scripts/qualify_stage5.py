@@ -76,6 +76,18 @@ def _artifact(path):
     return result
 
 
+def _external_record(value):
+    """Keep signed artifacts on disk; expose only their public metadata here."""
+    if isinstance(value, dict):
+        return {
+            key: _external_record(member) for key, member in value.items()
+            if key != "json"
+        }
+    if isinstance(value, list):
+        return [_external_record(member) for member in value]
+    return value
+
+
 def _agent_demo(directory):
     directory.mkdir(mode=0o700)
     os.chmod(directory, 0o700)
@@ -228,7 +240,7 @@ def main(argv=None):
         agent=agent, denied=denied, allowed=allowed, export_dir=str(directory),
         outcome="PASS" if passed else "BLOCKED",
     )
-    print(json.dumps(result, indent=2, sort_keys=True))
+    print(json.dumps(_external_record(result), indent=2, sort_keys=True))
     return 0 if passed else 2
 
 

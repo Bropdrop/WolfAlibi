@@ -23,6 +23,8 @@ tagged optional aggregate packet.  It is parsed only as an
 Clearance verification use the separate broker and supervisor records. A
 missing or invalid aggregate leaves the observation unavailable or rejected.
 An unexpected transport frame or incomplete shutdown blocks terminal evidence.
+The supervisor checks for socket hangup and uses Linux packet metadata to
+distinguish EOF from a queued empty frame. Empty frames are rejected.
 
 The local run reports these outcomes separately.
 
