@@ -1,3 +1,5 @@
+![Quorvane primary wordmark — crimson verification check replacing the V](assets/brand/quorvane-primary-wordmark.png)
+
 # 🐺 WolfAlibi
 
 WolfAlibi is an experimental Python research project for cryptographically checkable evidence that specified filesystem resources were not accessed **through a named, mediated broker** during a sealed interval.
