@@ -84,7 +84,7 @@ The runner does not export the manifest itself; however, the digest can identify
 
 ## Qualification
 
-The developer's local isolated harness passed **18/18 new manifest runner tests** for consent, dry-run non-import, JSON schema/duplicate rejection, sync/async callbacks, error redaction, create-only local reporting and execution behavior. A separate dry-run and synthetic two-tool example also completed locally.
+The developer's local isolated harness passed **19/19 new manifest runner tests** for consent, dry-run non-import, JSON schema/duplicate rejection, sync/async callbacks, error redaction, create-only local reporting and execution behavior. A separate dry-run and synthetic two-tool example also completed locally.
 
 The existing Stage 3.5 suite and the Stage 3.5 mutation harness have **not yet been rerun on this published branch**. Qualification of this PR is required before any merge or release. All changes are isolated from the cryptographic engine.
 
