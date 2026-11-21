@@ -41,6 +41,8 @@ Quorvane Gate 002 runs one fictional school-record read against a local target p
 
 Quorvane Gate 003 records synthetic payment intents at a local resource-owned target. It supports exact-packet reconciliation after a lost reply and issues a signed pending-intent receipt. [Finance demo, recovery semantics and qualification](docs/QUORVANE_FINANCE_GATE_003.md)
 
+Quorvane Gate 004 lets a separately authorized auditor recover the original pending-intent receipt after the payment grant expires. The optional settlement experiment verifies its own source and authority signatures. [Historical inquiry demo and qualification](docs/QUORVANE_HISTORY_GATE_004.md)
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.
