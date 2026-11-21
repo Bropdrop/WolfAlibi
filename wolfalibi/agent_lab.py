@@ -109,7 +109,7 @@ def run_manifest(path, output, *, consent=False, allow_local_code=False):
         raise ProbeError("requires --consent and --allow-local-code before importing agent code")
     try:
         entry = _load_callable(manifest["entrypoint"])
-    except (ImportError, AttributeError, ManifestError) as exc:
+    except BaseException as exc:
         raise ManifestError("agent entrypoint could not be imported") from None
     status = "PASS"
     probe = AgentProbe(consent=True, agent_type=manifest["agent_type"])
@@ -119,7 +119,7 @@ def run_manifest(path, output, *, consent=False, allow_local_code=False):
             for item in manifest["tools"]:
                 try:
                     callback = _load_callable(item)
-                except (ImportError, AttributeError, ManifestError):
+                except BaseException:
                     raise ManifestError("declared tool cannot be imported") from None
                 tools[item["alias"]] = probe.wrap(callback, surface=item["surface"],
                                                    operation=item["operation"])
