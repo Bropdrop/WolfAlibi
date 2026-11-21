@@ -1,0 +1,725 @@
+{
+  "cases": [
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "P",
+      "command": "python scripts/finance_challenge.py run --case P01",
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "hypothesis": "A genuine signed record under the external pins must verify its exact historical claim.",
+      "id": "P01",
+      "input_kind": "evidence",
+      "inputs": "Unmodified PR #35 envelope, retained keys and original challenge.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+      "title": "Genuine pending intent"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "P",
+      "command": "python scripts/finance_challenge.py run --case P02",
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_INTENT_DISCLOSURE"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/history/genuine.json",
+      "hypothesis": "A genuine signed record under the external pins must verify its exact historical claim.",
+      "id": "P02",
+      "input_kind": "evidence",
+      "inputs": "Unmodified PR #35 envelope, retained keys and original challenge.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "history",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789",
+      "title": "Genuine historical disclosure"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "A",
+      "command": "python scripts/finance_challenge.py run --case A01",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A01.json",
+      "hypothesis": "The original signed attachments could be accepted for a different amount.",
+      "id": "A01",
+      "input_kind": "evidence",
+      "inputs": "The packet scope field amount_minor changes to 4700. The original grant and target receipt remain.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "9997006904ba6f2de988e3a3402b3343d16289a32fc974c766adcb6cd209d6ff",
+      "title": "Amount substitution"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "A",
+      "command": "python scripts/finance_challenge.py run --case A02",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A02.json",
+      "hypothesis": "The original signed attachments could be accepted for a different payee.",
+      "id": "A02",
+      "input_kind": "evidence",
+      "inputs": "The packet scope field payee changes to fictional-books. The original grant and target receipt remain.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "de3ca4d21de08c536431b30df275a715a884d284732643165f6dfb0cd7eeaada",
+      "title": "Payee substitution"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "A",
+      "command": "python scripts/finance_challenge.py run --case A03",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A03.json",
+      "hypothesis": "The original signed attachments could be accepted for a different account.",
+      "id": "A03",
+      "input_kind": "evidence",
+      "inputs": "The packet scope field account changes to fictional-savings. The original grant and target receipt remain.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "ae8b6596c6989ba41212d64699aadfeb3cf3718a66d1d2062a748d8312b72fdc",
+      "title": "Account substitution"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "A",
+      "command": "python scripts/finance_challenge.py run --case A04",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A04.json",
+      "hypothesis": "The original signed attachments could be accepted for a different operation.",
+      "id": "A04",
+      "input_kind": "evidence",
+      "inputs": "The packet scope field operation changes to fin.balance.inspect. The original grant and target receipt remain.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "81ca390811cfca887c8fdb438f39a664739c46bf2a73a32fcb113cef7a88fdfb",
+      "title": "Operation substitution"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "A",
+      "command": "python scripts/finance_challenge.py run --case A05",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A05.json",
+      "hypothesis": "The original signed attachments could be accepted for a different tenant.",
+      "id": "A05",
+      "input_kind": "evidence",
+      "inputs": "The packet scope field tenant changes to fictional-second-bank. The original grant and target receipt remain.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "6b1bd1267a7f6f864a2079ba58873ae652bacec0ee186e7781a4335057a0aed0",
+      "title": "Tenant substitution"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "A",
+      "command": "python scripts/finance_challenge.py run --case A06",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A06.json",
+      "hypothesis": "The original signed attachments could be accepted for a different request id.",
+      "id": "A06",
+      "input_kind": "evidence",
+      "inputs": "The packet scope field request_id changes to fictional-second-intent. The original grant and target receipt remain.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "15b14b3767785f9a3ea24c402797320bcfee1ccec2201dea4066eb4df57a8134",
+      "title": "Request ID substitution"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "B",
+      "command": "python scripts/finance_challenge.py run --case B01",
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "hypothesis": "Rechecking a pending receipt might be interpreted as creating a second effect.",
+      "id": "B01",
+      "input_kind": "evidence",
+      "inputs": "Two sequential checks of identical PR #35 bytes with the same request ID.",
+      "limitation": "Both calls run a read-only verifier. The supplementary target exercise separately measures the synthetic effect count.",
+      "mode": "repeat",
+      "profile": "finance",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+      "title": "Duplicate historical submission"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "B",
+      "command": "python scripts/finance_challenge.py run --case B02",
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "hypothesis": "Two concurrent verifications might produce different evidence about the same intent.",
+      "id": "B02",
+      "input_kind": "evidence",
+      "inputs": "Two Python worker tasks verify identical evidence and compare complete results.",
+      "limitation": "Two verification jobs share one Python runtime and public inputs. Instruction-level overlap is unobserved.",
+      "mode": "parallel",
+      "profile": "finance",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+      "title": "Concurrent historical submission"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "B",
+      "command": "python scripts/finance_challenge.py run --case B03",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/B03.json",
+      "hypothesis": "A repeated ID might mask a changed business request.",
+      "id": "B03",
+      "input_kind": "evidence",
+      "inputs": "The original request ID is retained with a conflicting amount of 4,501 minor units.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "e16537e4953caa5cf240ed5baac3f4d763ea4b8df2b8a673d6cedadc761f65e1",
+      "title": "Conflicting business terms under one ID"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "B",
+      "command": "python scripts/finance_challenge.py run --case B04",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/B04.json",
+      "hypothesis": "A client-side timeout with the original dispatch packet might be accepted as a completed intent.",
+      "id": "B04",
+      "input_kind": "evidence",
+      "inputs": "Only the genuine packet is supplied. The required target receipt is missing.",
+      "limitation": "The actual effect remains unknown. Reconciliation after a lost response is measured in the local target controls.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "d215af73b14802843875a9d655009efa101ea117ff55be050ae542cddad7ad64",
+      "title": "Response absent"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "C",
+      "command": "python scripts/finance_challenge.py run --case C01",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "education authorization is outside its validity window"
+      },
+      "expected_phase": "payment_packet_check_at_expiry",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "hypothesis": "A verified historical intent might admit the same packet when the original grant expires.",
+      "id": "C01",
+      "input_kind": "evidence",
+      "inputs": "The genuine envelope is verified at its historical time. The original packet is checked again exactly at grant expiry.",
+      "limitation": "The synthetic clock argument is fixed to the boundary. No live service is measured. The diagnostic comes from a shared validity helper.",
+      "mode": "expired",
+      "profile": "finance",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+      "title": "Authority at the expiry boundary"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "C",
+      "command": "python scripts/finance_challenge.py run --case C02",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/C02.json",
+      "hypothesis": "A genuine auditor disclosure might satisfy the payment-evidence interface.",
+      "id": "C02",
+      "input_kind": "evidence",
+      "inputs": "The intact history envelope is supplied to the finance verifier under finance pins.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789",
+      "title": "Disclosure as payment evidence"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "C",
+      "command": "python scripts/finance_challenge.py run --case C03",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid grant fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/C03.json",
+      "hypothesis": "A read-only inquiry grant might authorize the original financial payment.",
+      "id": "C03",
+      "input_kind": "evidence",
+      "inputs": "The finance packet carries the signed inquiry grant from the separate historical fixture.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "88e71c8a63efda8fe8d0802d23130c273d3638f071894890f03486f245096404",
+      "title": "Auditor grant as payment grant"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "D",
+      "command": "python scripts/finance_challenge.py run --case D01",
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "hypothesis": "A genuine pending receipt might be reported as settled.",
+      "id": "D01",
+      "input_kind": "evidence",
+      "inputs": "The signed pending receipt is verified and its complete typed output is compared with the PR #35 result.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+      "title": "Pending intent presented as settlement"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "D",
+      "command": "python scripts/finance_challenge.py run --case D02",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/D02.json",
+      "hypothesis": "A changed outcome label might be trusted despite the target signing the pending payload.",
+      "id": "D02",
+      "input_kind": "evidence",
+      "inputs": "The target receipt payload changes its outcome to SETTLED while retaining the original signature.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "ce5e5a1207c608faf9d7de38f1da9098bfd220d6500aa5a0ef39a61cb946157b",
+      "title": "Settlement text added to signed receipt"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "D",
+      "command": "python scripts/finance_challenge.py run --case D03",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid signed education record fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/D03.json",
+      "hypothesis": "An unsigned gateway acknowledgment might substitute for a target receipt.",
+      "id": "D03",
+      "input_kind": "evidence",
+      "inputs": "A fictional acknowledgment object replaces the signed receipt.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "d3793d2f28dcd8fd310eb3bdcce2fc9bc259b34bb8718c9dd93ae2277fc9d358",
+      "title": "Gateway acknowledgment"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "D",
+      "command": "python scripts/finance_challenge.py run --case D04",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/D04.json",
+      "hypothesis": "A client-supplied settlement field after a timeout might be accepted.",
+      "id": "D04",
+      "input_kind": "evidence",
+      "inputs": "An unchanged signed intent is accompanied by an extra settlement field claiming a client timeout.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "74e2a6ff3fec4ac79964a3f99a65c6428f79fa6d760cb9ea202d39b54c2953ff",
+      "title": "Timeout offered as settlement"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "D",
+      "command": "python scripts/finance_challenge.py run --case D05",
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_INTENT_DISCLOSURE"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/history/genuine.json",
+      "hypothesis": "A signed historical disclosure might establish the current disposition of funds.",
+      "id": "D05",
+      "input_kind": "evidence",
+      "inputs": "The original inquiry and disclosure are verified against history pins. The typed settlement field is checked.",
+      "limitation": "Only the fixed synthetic archive is represented. No present permission, execution or external settlement is observed.",
+      "mode": "verify",
+      "profile": "history",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789",
+      "title": "Historical inquiry as settlement"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E01",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E01.json",
+      "hypothesis": "A public key from another genuine fixture might authenticate the published payment grant.",
+      "id": "E01",
+      "input_kind": "pins",
+      "inputs": "Only the candidate owner pin is replaced with the other published owner public key.",
+      "limitation": "Tests a contradictory candidate pin against the retained evidence. A compromised publisher changing all roots is outside this experiment.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "0e429370d331cfaaa7bcda4b642e74b2f38d3ab5db3979210918f62253e146a0",
+      "title": "Owner public pin substitution"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E02",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E02.json",
+      "hypothesis": "A separately signed receipt for a different target might be accepted in this bundle.",
+      "id": "E02",
+      "input_kind": "evidence",
+      "inputs": "The receipt from the historical fixture replaces the original finance receipt.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "3ac04d0822f852e5fd2d0c51f0e58bf323d72a16add003c76eeeb6c86849bf4c",
+      "title": "Swapped signed receipt"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E03",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E03.json",
+      "hypothesis": "An archived disclosure might authenticate a different original intent.",
+      "id": "E03",
+      "input_kind": "evidence",
+      "inputs": "An independently signed but unrelated original is embedded under the existing disclosure.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "history",
+      "sha256": "beb38ff9c2ad0d554da83808f2eeddeea3148e631a6d0d1fe2a8b2338b0d19ad",
+      "title": "Conflicting embedded original"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E04",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "inquiry challenge differs from the verifier's expectations"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E04.txt",
+      "hypothesis": "An intact auditor disclosure might be reusable with a different verifier challenge.",
+      "id": "E04",
+      "input_kind": "challenge",
+      "inputs": "The separately supplied inquiry challenge changes to a distinct 32-byte public value.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "history",
+      "sha256": "52a5bfa31e999db6966711f5d7a40e05a73f42200bbf37e61f44c1b0b7bfe063",
+      "title": "Changed historical challenge"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E05",
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "duplicate JSON member"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E05.json",
+      "hypothesis": "Two amount fields could invite different interpretations of the same JSON bytes.",
+      "id": "E05",
+      "input_kind": "evidence",
+      "inputs": "A second amount_minor member is present in the same packet scope before the genuine member.",
+      "limitation": "A format decision by the review intake. The canonical verifier receives no object and makes no cryptographic decision.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "8549b2eace67c4c43da41ed8b084a0311cd0ca836ea9cba6f1324331a15f7060",
+      "title": "Duplicate JSON field"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E06",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E06.json",
+      "hypothesis": "An unsigned assurance statement might be accepted alongside a valid receipt.",
+      "id": "E06",
+      "input_kind": "evidence",
+      "inputs": "The evidence object adds a qualification field claiming certification.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "5259a2908931b4cd1f2b3afe7fd509b2dabe7fa7ece2ef4a66355bd9452eeb3d",
+      "title": "Unexpected evidence field"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E07",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "noncanonical record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E07.json",
+      "hypothesis": "The same signature bytes might be accepted in an out-of-profile text encoding.",
+      "id": "E07",
+      "input_kind": "evidence",
+      "inputs": "The Ed25519 signature in the receipt uses uppercase hex digits.",
+      "limitation": "Tests the inherited lowercase hex field rule. JSON formatting and member order are separately handled.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "2b0c09437664c290812e1a4b40fd55f9f15e60e55fa8c4c9b0a439dd64fe95c1",
+      "title": "Noncanonical signature hex"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E08",
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "fixture is not complete JSON"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E08.json",
+      "hypothesis": "An incomplete serialized record might acquire a historical claim.",
+      "id": "E08",
+      "input_kind": "evidence",
+      "inputs": "The final closing brace is missing from the otherwise genuine envelope.",
+      "limitation": "A format decision by the review intake. The canonical verifier receives no object and makes no cryptographic decision.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "28669b0f6b5bb329332873df409fb94f93a97b8c740a966248660a298be622a9",
+      "title": "Truncated input"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E09",
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "profile requires integer JSON numbers"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E09.json",
+      "hypothesis": "A fractional JSON token with the same mathematical value could be coerced before validation.",
+      "id": "E09",
+      "input_kind": "evidence",
+      "inputs": "The amount_minor token is spelled 4500.0 instead of a JSON integer.",
+      "limitation": "A format decision by the review intake. The canonical verifier receives no object and makes no cryptographic decision.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "eff404779cf1f97998d868e595f39b75937fbddd82fb3e0af672e4145d258442",
+      "title": "Non-integer amount representation"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "E",
+      "command": "python scripts/finance_challenge.py run --case E10",
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "UTF-8 byte order mark is outside the wire profile"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E10.json",
+      "hypothesis": "A leading byte order mark might be accepted by one JSON reader and refused by another.",
+      "id": "E10",
+      "input_kind": "evidence",
+      "inputs": "A UTF-8 BOM prefixes the exact genuine bytes.",
+      "limitation": "A format decision by the review intake. The canonical verifier receives no object and makes no cryptographic decision.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "3e55de8bc1ad2879b164ed85a64596a2098765455955f6416ac88d8dcf3939e2",
+      "title": "Alternate wire marker"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "F",
+      "command": "python scripts/finance_challenge.py run --case F01",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid history evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/F01.json",
+      "hypothesis": "A signed disclosure alone might be enough to verify a missing original.",
+      "id": "F01",
+      "input_kind": "evidence",
+      "inputs": "The original intent object is removed. The intact historical request and signature remain.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "history",
+      "sha256": "e395505e04bb33f60be2ef69ddcdaf668652278a9e793be6c5157ddb62db6f19",
+      "title": "Missing archive source"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "F",
+      "command": "python scripts/finance_challenge.py run --case F02",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "finance qualification differs from the retained witness digest"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/F02.json",
+      "hypothesis": "A mismatched witness head might be silently replaced by the value embedded in evidence.",
+      "id": "F02",
+      "input_kind": "pins",
+      "inputs": "A candidate finance pin file supplies the witness digest of the distinct historical case.",
+      "limitation": "One published fictional payment. The historical check cannot create a payment or establish live caller identity.",
+      "mode": "verify",
+      "profile": "finance",
+      "sha256": "a035e31cd27ba1447c0a97a582a26800b31d35c47cacac45b0d59afaafd35d54",
+      "title": "Conflicting retained witness head"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "F",
+      "command": "python scripts/finance_challenge.py run --case F03",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "historical disclosure differs from external pins or original evidence"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/F03.json",
+      "hypothesis": "The historical signature might be accepted despite a different retained anchor.",
+      "id": "F03",
+      "input_kind": "pins",
+      "inputs": "A disposable copy of history pins changes the retained digest to a different 32-byte value.",
+      "limitation": "Checks one presented contradiction. No independent custody, monotonic state or global history completeness is established.",
+      "mode": "verify",
+      "profile": "history",
+      "sha256": "c5556682681ca23388dbe272a845dfacb40b928eec686f22a047d474fcf1608d",
+      "title": "Contradictory archive checkpoint"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "F",
+      "command": "python scripts/finance_challenge.py run --case F04",
+      "expected": {
+        "outcome": "UNSUPPORTED",
+        "reason": "independent cross-UID custody is outside this profile"
+      },
+      "expected_phase": "coverage",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "hypothesis": "A public signature might be mistaken for evidence of independently controlled Linux accounts.",
+      "id": "F04",
+      "input_kind": "evidence",
+      "inputs": "The published financial envelope contains no independently administered custody test.",
+      "limitation": "Two separately provisioned non-root identities and independently observable access checks would be required.",
+      "mode": "custody",
+      "profile": "finance",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+      "title": "Cross-UID custody"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "F",
+      "command": "python scripts/finance_challenge.py run --case F05",
+      "expected": {
+        "outcome": "NOT_ASSESSED",
+        "reason": "no independently held later checkpoint is available"
+      },
+      "expected_phase": "coverage",
+      "fixture": "public_lab/vectors/history/genuine.json",
+      "hypothesis": "An earlier self-consistent snapshot might be detected after the operator rolls back all local references.",
+      "id": "F05",
+      "input_kind": "evidence",
+      "inputs": "Only the published history envelope and co-located public pins are available.",
+      "limitation": "No separate checkpoint custodian participates. The public artifact cannot establish the latest real state.",
+      "mode": "joint_rollback",
+      "profile": "history",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789",
+      "title": "Joint rollback of every local copy"
+    },
+    {
+      "assumptions": "The reviewer independently pins the PR #35 revision and retains its public inputs. Ed25519 signers and the local verifier are trusted.",
+      "category": "F",
+      "command": "python scripts/finance_challenge.py run --case F06",
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "manifest bytes differ from the pinned PR #35 manifest"
+      },
+      "expected_phase": "inventory",
+      "fixture": "public_lab/financial/vectors/F06.json",
+      "hypothesis": "A locally edited manifest naming an earlier parent might be treated as the published PR #35 inventory.",
+      "id": "F06",
+      "input_kind": "manifest",
+      "inputs": "The baseline manifest copy names Gate 003 in its base record. Its bytes are compared to the independently pinned PR #35 manifest digest.",
+      "limitation": "Exact-file inventory check under the original release pin. An operator replacing the trusted program as well is outside scope.",
+      "mode": "manifest",
+      "profile": "finance",
+      "sha256": "a4c5a4308fd19d76a30f690b30b79736e6efe3279e506778cac0668d5334059f",
+      "title": "Stale manifest revision"
+    }
+  ],
+  "schema": "QUORVANE_FINANCIAL_CASES_V1"
+}
