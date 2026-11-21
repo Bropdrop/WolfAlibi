@@ -41,6 +41,15 @@ def _exited(fd):
 def run_solitary(state_dir, *, contract, signer, witness, supervisor,
                  expected_witness_state_digest):
     """Require measured pre-read limits and exit of the same single worker."""
+    return _run_solitary(
+        state_dir, contract=contract, signer=signer, witness=witness, supervisor=supervisor,
+        expected_witness_state_digest=expected_witness_state_digest,
+        launch_worker=launch, expected_profile=worker_profile, controls=CONTROL_RESULTS,
+    )
+
+
+def _run_solitary(state_dir, *, contract, signer, witness, supervisor, expected_witness_state_digest,
+                  launch_worker, expected_profile, controls, observation_packet=None):
     if (not isinstance(witness, DurableWitness) or
             len({supervisor.pub, signer.pub, witness.signer.pub}) != 3):
         return {"outcome": "BLOCKED", "reason": "distinct broker, witness and supervisor keys required"}
@@ -100,8 +109,9 @@ def run_solitary(state_dir, *, contract, signer, witness, supervisor,
         result = stage3.run_trial(
             state_dir, contract=contract, signer=signer, witness=witness,
             expected_witness_state_digest=expected_witness_state_digest,
-            timeout=WALL_TIMEOUT_S, _launcher=launch, _worker_profile=worker_profile,
-            _before_release=observe, _after_close=closed, _control_results=CONTROL_RESULTS,
+            timeout=WALL_TIMEOUT_S, _launcher=launch_worker, _worker_profile=expected_profile,
+            _before_release=observe, _after_close=closed, _control_results=controls,
+            _observation_packet=observation_packet,
         )
     finally:
         if worker_fd is not None:
@@ -109,7 +119,7 @@ def run_solitary(state_dir, *, contract, signer, witness, supervisor,
     if result["outcome"] != "COMPLETED":
         return result
     try:
-        envelope = sign_envelope(result["evidence"], measured["snapshot"], CONTROL_RESULTS,
+        envelope = sign_envelope(result["evidence"], measured["snapshot"], controls,
                                  measured["limits"], measured["closure"], supervisor)
     except (KeyError, ValueError) as exc:
         return {"outcome": "BLOCKED", "reason": f"Solitary evidence incomplete: {exc}"}

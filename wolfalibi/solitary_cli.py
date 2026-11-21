@@ -10,6 +10,8 @@ import stat
 import time
 
 from alibi import DurableWitness, Signer
+from .agent_solitary import agent_solitary_contract, run_agent_solitary
+from .agent_solitary_worker import AGENT_PROFILE
 from .solitary import run_solitary, solitary_contract
 from .solitary_evidence import verify_solitary
 from .solitary_preflight import preflight
@@ -22,6 +24,7 @@ _MANIFEST = {
     "profile": "solitary-synthetic",
     "fixture": "protected.txt",
 }
+_AGENT_MANIFEST = {**_MANIFEST, "profile": AGENT_PROFILE}
 _REFERENCE_KEYS = ("broker_pub", "witness_pub", "supervisor_pub", "expected_witness_state_digest")
 
 
@@ -56,15 +59,21 @@ def _write_new(path, value):
 
 def inspect_manifest(path):
     manifest = _read(path, 4096)
-    if manifest != _MANIFEST:
-        raise ValueError("Solitary V1 accepts only the fixed synthetic manifest")
-    return {"outcome": "VALID", "profile": manifest["profile"],
+    if manifest not in (_MANIFEST, _AGENT_MANIFEST):
+        raise ValueError("Solitary accepts only the fixed synthetic manifests")
+    result = {"outcome": "VALID", "profile": manifest["profile"],
             "worker": "FIXED_SYNTHETIC", "resources": [{"key": manifest["fixture"], "operation": "read"}],
             "agent_imports": False, "network_upload": False}
+    if manifest == _AGENT_MANIFEST:
+        result["adapter"] = {"name": "python-callbacks", "version": "1"}
+    return result
 
 
 def _test(args):
-    inspect_manifest(args.manifest)
+    profile = inspect_manifest(args.manifest)["profile"]
+    if args.profile is not None and args.profile != profile:
+        raise ValueError("requested profile does not match the fixed manifest")
+    agent_profile = profile == AGENT_PROFILE
     if not args.consent:
         return {"outcome": "BLOCKED", "reason": "explicit consent is required for the local trial"}
     readiness = preflight()
@@ -77,11 +86,14 @@ def _test(args):
         raise ValueError("state directory must be private and owner-controlled")
     expected_path, evidence_path = state / "expected.json", state / "evidence.json"
     if any(os.path.lexists(state / name) for name in
-           ("expected.json", "evidence.json", "witness.json", "verifier.db")):
+           ("expected.json", "evidence.json", "observation.json", "witness.json", "verifier.db")):
         raise ValueError("use a new state directory for each one-run trial")
     challenge = bytes.fromhex(args.challenge) if args.challenge else secrets.token_bytes(32)
     now = int(time.time())
-    contract = solitary_contract(args.run_id, challenge, now + 120)
+    contract_for, trial_runner = (
+        (agent_solitary_contract, run_agent_solitary) if agent_profile else (solitary_contract, run_solitary)
+    )
+    contract = contract_for(args.run_id, challenge, now + 120)
     broker, supervisor = Signer(), Signer()
     with DurableWitness(state / "witness.json", Signer()) as witness:
         pins = {"broker_pub": broker.pub, "witness_pub": witness.signer.pub,
@@ -96,7 +108,7 @@ def _test(args):
                 "contract": contract, "expected_witness_state_digest": prior.hex(),
                 "now": now,
             })
-            trial = run_solitary(state, contract=contract, signer=broker, witness=witness,
+            trial = trial_runner(state, contract=contract, signer=broker, witness=witness,
                                  supervisor=supervisor, expected_witness_state_digest=prior)
             if trial["outcome"] != "COMPLETED":
                 return trial
@@ -108,9 +120,20 @@ def _test(args):
                                         supervisor_record=envelope["supervisor_record"])
             if verification["outcome"] != "VERIFIED":
                 return verification
-    return {"outcome": "COMPLETED", "assurance": "BROKER_ONLY", "confinement": "BLOCKED",
+    result = {"outcome": "COMPLETED", "assurance": "BROKER_ONLY", "confinement": "BLOCKED",
             "expected": str(expected_path), "evidence": str(evidence_path),
             "fresh_acceptance": verification, "network_upload": False}
+    if agent_profile:
+        observation = trial["observation"]
+        observation_path = state / "observation.json"
+        _write_new(observation_path, observation)
+        result.update(
+            profile=AGENT_PROFILE, confinement_qualification="SYNTHETIC_CELL_CANDIDATE",
+            owner_authorization="NOT_REQUESTED",
+            observation={"assurance": observation["assurance"], "outcome": observation["outcome"],
+                         "path": str(observation_path)},
+        )
+    return result
 
 
 def _verify(args):
@@ -144,14 +167,14 @@ def command(args):
 def add_byoa_parser(subcommands):
     from .clearance_cli import add_clearance_parser
 
-    parser = subcommands.add_parser("byoa", help="run the fixed synthetic Solitary profile")
+    parser = subcommands.add_parser("byoa", help="run fixed synthetic Solitary profiles")
     commands = parser.add_subparsers(dest="byoa_command", required=True)
     commands.add_parser("doctor", help="exercise local prerequisites")
     inspect = commands.add_parser("inspect", help="inspect the fixed manifest without executing code")
     inspect.add_argument("--manifest", required=True)
     test = commands.add_parser("test", help="run one consented fixed synthetic trial")
     test.add_argument("--manifest", required=True)
-    test.add_argument("--profile", choices=["solitary-synthetic"], default="solitary-synthetic")
+    test.add_argument("--profile", choices=[_MANIFEST["profile"], AGENT_PROFILE])
     test.add_argument("--state-dir", required=True)
     test.add_argument("--consent", action="store_true")
     test.add_argument("--challenge", help="verifier-issued 32-byte hex challenge")

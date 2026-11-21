@@ -100,7 +100,7 @@ def _checkpoint(broker, cp):
 
 
 def _worker_session(broker, root, contract, *, timeout, mode, before_release=None,
-                    launcher=None, after_close=None, control_results=None):
+                    launcher=None, after_close=None, control_results=None, observation_packet=None):
     import fcntl
 
     deadline = time.monotonic() + timeout
@@ -135,8 +135,13 @@ def _worker_session(broker, root, contract, *, timeout, mode, before_release=Non
             if not any(events & select.POLLHUP for _, events in
                        poller.poll(math.ceil(1000 * _remaining(deadline)))):
                 raise TrialBlocked("worker socket remained open after exit")
-            if _receive(broker_socket, deadline):
-                raise TrialBlocked("unexpected data after the worker acknowledgement")
+            remaining = _receive(broker_socket, deadline)
+            if remaining:
+                if observation_packet is None:
+                    raise TrialBlocked("unexpected data after the worker acknowledgement")
+                observation_packet(remaining)
+                if _receive(broker_socket, deadline):
+                    raise TrialBlocked("unexpected data after the agent observation")
             if after_close is not None:
                 after_close(proc)
         finally:
@@ -185,7 +190,7 @@ def _sync_directory(path):
 def run_trial(state_dir, *, contract, signer, witness, expected_witness_state_digest,
               timeout=10.0, _worker_mode="normal", _fixture=(FIXTURE_KEY, FIXTURE_BYTES),
               _before_release=None, _after_close=None, _launcher=None,
-              _worker_profile=None, _control_results=None):
+              _worker_profile=None, _control_results=None, _observation_packet=None):
     """Run one fixed synthetic worker with a fresh broker and witness history.
 
     The trusted operator owns state_dir and uses the witness exclusively for
@@ -236,7 +241,8 @@ def run_trial(state_dir, *, contract, signer, witness, expected_witness_state_di
             observations = _worker_session(broker, root, contract, timeout=timeout,
                                            mode=_worker_mode, before_release=_before_release,
                                            launcher=_launcher, after_close=_after_close,
-                                           control_results=_control_results)
+                                           control_results=_control_results,
+                                           observation_packet=_observation_packet)
             if contract["expires_at"] <= time.time():
                 raise TrialBlocked("run challenge expired before closure")
             evidence = _signed_evidence(broker, witness, journal, contract, prior,

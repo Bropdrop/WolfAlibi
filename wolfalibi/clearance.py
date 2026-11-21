@@ -10,8 +10,10 @@ import threading
 import time
 
 from alibi import H, canon
+from .agent_solitary import agent_solitary_contract
+from .agent_solitary_worker import AGENT_PROFILE
 from .clearance_records import (
-    CAPABILITY_TTL, QUALIFICATION_TTL, check_grant, check_request, check_revocation, make_scope, sign_decision,
+    CAPABILITY_TTL, PROFILE, QUALIFICATION_TTL, check_grant, check_request, check_revocation, make_scope, sign_decision,
 )
 from .solitary import solitary_contract
 from .stage35_verifier import VerifierStore, VerifierStoreError
@@ -183,17 +185,20 @@ class ClearanceGateway:
     def _revoked(self, grant_id):
         return self._db.execute("SELECT 1 FROM revoked WHERE grant_id = ?", (grant_id,)).fetchone() is not None
 
-    def prepare(self, run_id, *, agent_pub):
+    def prepare(self, run_id, *, agent_pub, profile=PROFILE):
         """Issue verifier-owned expectations before launching the fixed worker."""
         with self._lock:
             try:
                 now = self._now()
                 if agent_pub in (self.signer.pub, self._owner, *self._pins.values()):
                     raise ValueError("agent requires a separate signing key")
+                contract_for = {PROFILE: solitary_contract, AGENT_PROFILE: agent_solitary_contract}.get(profile)
+                if contract_for is None:
+                    raise ValueError("unsupported fixed Solitary profile")
                 with self._verifier() as verifier:
                     if self._witness_head() != self._retained_head:
                         raise ClearanceError("witness head differs from the independently retained head")
-                    contract = solitary_contract(run_id, secrets.token_bytes(32), now + QUALIFICATION_TTL)
+                    contract = contract_for(run_id, secrets.token_bytes(32), now + QUALIFICATION_TTL)
                     scope = make_scope(contract, agent_pub=agent_pub, gateway_pub=self.signer.pub,
                                        expected_witness_state_digest=self._retained_head)
                     issued = verifier.issue(contract=contract, **self._pins, now=now)
