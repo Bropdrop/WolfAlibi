@@ -61,7 +61,7 @@ def _handle(endpoint, signer, instruction):
     raise ValueError("unsupported fixture action")
 
 
-def main():
+def run_handler(handle):
     if len(sys.argv) != 2:
         return 2
     signer = Signer()
@@ -70,11 +70,15 @@ def main():
         if not line.endswith(b"\n") or len(line) > _MAX_COMMAND_BYTES:
             return 2
         try:
-            result = _handle(sys.argv[1], signer, json.loads(line))
+            result = handle(sys.argv[1], signer, json.loads(line))
         except (KeyError, TypeError, ValueError, OSError, RuntimeError):
             result = {"result": {"outcome": "BLOCKED", "reason": "FIXTURE_INSTRUCTION_BLOCKED"}}
         _publish(result)
     return 0
+
+
+def main():
+    return run_handler(_handle)
 
 
 if __name__ == "__main__":

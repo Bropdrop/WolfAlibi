@@ -18,31 +18,28 @@ from tempfile import TemporaryDirectory
 import time
 
 from alibi import Signer, canon
-from wolfalibi.education_records import digest, owner_grant, qualify, validate_scope, verify_receipt
-from wolfalibi.education_transport import measure_peer, request
+from wolfalibi import education_records, education_transport
+from wolfalibi.education_records import digest, verify_receipt
 from wolfalibi.stage3_evidence import _hex
 
 
 FICTIONAL_RESPONSE = {"student_ref": "fictional-aster", "support_level": "scheduled-check-in"}
 _ROOT = Path(__file__).resolve().parents[1]
-_CALLER_SOURCE = _ROOT / "wolfalibi" / "education_fixture_caller.py"
 _PYTHON = Path(sys.executable).absolute()
 _ENV = {"PATH": "/usr/bin:/bin", "LC_ALL": "C.UTF-8"}
 _MAX_RECORD = 65_536
 _INIT_KEY = (
-    "from pathlib import Path; from sys import argv; "
-    "from wolfalibi.education_target import init_key; print(init_key(Path(argv[1])))"
+    "from importlib import import_module; from pathlib import Path; from sys import argv; "
+    "print(import_module(argv[1]).init_key(Path(argv[2])))"
 )
 _REVOKE = (
-    "from pathlib import Path; from sys import argv; import json; "
-    "from wolfalibi.education_target import EducationTarget\n"
-    "with EducationTarget(Path(argv[1]), Path(argv[2])) as target:\n"
-    "    print(json.dumps(target.revoke(argv[3])))\n"
+    "from importlib import import_module; from pathlib import Path; from sys import argv; import json\n"
+    "with getattr(import_module(argv[1]), argv[2])(Path(argv[3]), Path(argv[4])) as target:\n"
+    "    print(json.dumps(target.revoke(argv[5])))\n"
 )
 _STATUS = (
-    "from pathlib import Path; from sys import argv; import json; "
-    "from wolfalibi.education_target import EducationTarget\n"
-    "with EducationTarget(Path(argv[1]), Path(argv[2])) as target:\n"
+    "from importlib import import_module; from pathlib import Path; from sys import argv; import json\n"
+    "with getattr(import_module(argv[1]), argv[2])(Path(argv[3]), Path(argv[4])) as target:\n"
     "    print(json.dumps(target.status()))\n"
 )
 
@@ -96,8 +93,10 @@ def _stop(process, *, interrupt):
         process.wait(timeout=4)
 
 
-class EducationFixture:
-    """Trusted controller for one measured run and one fictional record."""
+class LocalFixture:
+    """Provision, measure and supervise the caller and target of one local run."""
+
+    extra_expectations = {}
 
     def __init__(self, root, *, challenge=None):
         if challenge is not None:
@@ -117,23 +116,25 @@ class EducationFixture:
         self.owner = Signer()
         self.supervisor = Signer()
         self.witness = Signer()
-        self.grant_id = "fictional-support-grant"
+
+    def target_scope(self):
+        return self.scope
 
     def start(self):
-        target_pub = _admin(_INIT_KEY, self.target_state).decode("ascii").strip()
-        command = [str(_PYTHON), "-I", str(_CALLER_SOURCE), str(self.endpoint)]
-        expected_source = hashlib.sha256(_CALLER_SOURCE.read_bytes()).hexdigest()
+        target_pub = _admin(_INIT_KEY, self.target_module, self.target_state).decode("ascii").strip()
+        command = [str(_PYTHON), "-I", str(self.caller_source), str(self.endpoint)]
+        expected_source = hashlib.sha256(self.caller_source.read_bytes()).hexdigest()
         expected_executable = hashlib.sha256(_PYTHON.resolve().read_bytes()).hexdigest()
         self.caller = subprocess.Popen(
             command, cwd=_ROOT, env=_ENV, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,
         )
         announced = _read_json_line(self.caller.stdout)
-        peer = measure_peer(self.caller.pid)
+        peer = self.transport.measure_peer(self.caller.pid)
         observed_argv = Path(f"/proc/{self.caller.pid}/cmdline").read_bytes()
         expected_argv = b"\0".join(os.fsencode(item) for item in command) + b"\0"
         expected_argv_sha256 = hashlib.sha256(expected_argv).hexdigest()
-        observed_source = hashlib.sha256(_CALLER_SOURCE.read_bytes()).hexdigest()
+        observed_source = hashlib.sha256(self.caller_source.read_bytes()).hexdigest()
         if (peer["pid"] != self.caller.pid or peer["exe_sha256"] != expected_executable
                 or observed_source != expected_source or peer["source_sha256"] != expected_source
                 or observed_argv != expected_argv or peer["argv_sha256"] != expected_argv_sha256):
@@ -144,27 +145,26 @@ class EducationFixture:
             "expected_argv_sha256": expected_argv_sha256, "observed_argv_sha256": peer["argv_sha256"],
             "fixed_argv_matched": True, "provenance": "TRUSTED_CONTROLLER_LAUNCH_SNAPSHOT",
         }
-        self.scope = validate_scope({
-            "tenant": "fictional-school", "student": "fictional-aster",
-            "purpose": "approved-support", "operation": "edu.student_record.read",
-            "target_pub": target_pub, "policy_version": "edu-gate-002.v1",
+        self.scope = self.records.validate_scope({
+            **self.scope_fields, "target_pub": target_pub,
             "run_id": secrets.token_hex(16), "challenge": self.challenge,
             "caller_pub": announced["caller_pub"], "request_id": secrets.token_hex(16),
         })
         now = int(time.time())
         self.approval = self.make_grant(start=now, end=now + 90)
-        self.qualification = qualify(self.supervisor, self.witness, self.scope, peer, now, now + 90)
-        head = digest(self.qualification)
+        self.qualification = self.records.qualify(self.supervisor, self.witness, self.scope, peer, now, now + 90)
+        head = self.records.digest(self.qualification)
         write_new(self.head_file, head.encode("ascii"))
         self.expectations = {
             "scope": self.scope, "owner_pub": self.owner.pub.hex(),
             "supervisor_pub": self.supervisor.pub.hex(), "witness_pub": self.witness.pub.hex(),
             "target_pub": target_pub, "peer": peer, "witness_head": head,
-            "response_sha256": digest(FICTIONAL_RESPONSE),
+            **self.extra_expectations,
         }
         config = {
             **{key: self.expectations[key] for key in
-               ("scope", "owner_pub", "supervisor_pub", "witness_pub", "peer")},
+               ("owner_pub", "supervisor_pub", "witness_pub", "peer")},
+            "scope": self.target_scope(),
             "witness_head_path": str(self.head_file),
         }
         write_new(self.target_state / "config.json", canon(config))
@@ -174,7 +174,7 @@ class EducationFixture:
         if self.target is not None:
             raise FixtureError("target already started")
         command = [
-            str(_PYTHON), "-m", "wolfalibi.education_transport", str(self.target_state),
+            str(_PYTHON), "-m", self.transport.__name__, str(self.target_state),
             str(self.anchor), str(self.endpoint),
         ]
         if create:
@@ -207,12 +207,13 @@ class EducationFixture:
         """Run local target-owner administration with the service stopped."""
         if self.target is not None:
             raise FixtureError("stop the target before revoking a fixture grant")
-        return json.loads(_admin(_REVOKE, self.target_state, self.anchor, self.grant_id))
+        return json.loads(_admin(_REVOKE, self.target_module, self.target_class, self.target_state,
+                                 self.anchor, self.grant_id))
 
     def offline_status(self):
         if self.target is not None:
             raise FixtureError("stop the target before checking its durable ledger")
-        return json.loads(_admin(_STATUS, self.target_state, self.anchor))
+        return json.loads(_admin(_STATUS, self.target_module, self.target_class, self.target_state, self.anchor))
 
     def retained_anchor(self):
         return (self.anchor / "ledger-anchor.json").read_bytes()
@@ -227,36 +228,35 @@ class EducationFixture:
 
     def make_grant(self, *, signer=None, scope=None, start=None, end=None):
         now = int(time.time())
-        return owner_grant(
+        return self.records.owner_grant(
             self.owner if signer is None else signer, self.scope if scope is None else scope,
             self.grant_id, now if start is None else start, now + 90 if end is None else end,
         )
 
-    def invoke(self, mode="read", *, packet=None, grant=None, qualification=None, scope=None):
+    def invoke(self, mode=None, *, packet=None, grant=None, qualification=None, scope=None):
         if self.target is None or self.caller is None:
             raise FixtureError("caller or target not running")
+        if self.caller.poll() is not None:
+            raise FixtureError("original caller process exited and its enrollment is unusable")
         instruction = {
-            "mode": mode, "target_pid": self.target.pid,
+            "mode": self.action if mode is None else mode, "target_pid": self.target.pid,
             "scope": self.scope if scope is None else scope,
             "grant": self.approval if grant is None else grant,
             "qualification": self.qualification if qualification is None else qualification,
             "packet": packet,
         }
-        self.caller.stdin.write(canon(instruction) + b"\n")
-        self.caller.stdin.flush()
+        try:
+            self.caller.stdin.write(canon(instruction) + b"\n")
+            self.caller.stdin.flush()
+        except BrokenPipeError as error:
+            raise FixtureError("original caller process exited and its enrollment is unusable") from error
         return _read_json_line(self.caller.stdout)
 
     def direct(self, packet):
         """Issue a fixture control from the controller's unauthorized PID."""
         if self.target is None:
             raise FixtureError("target not running")
-        return request(self.endpoint, "read", packet, expected_target_pid=self.target.pid)
-
-    def verify(self, packet, response, receipt):
-        return verify_receipt(
-            receipt, target_pub=bytes.fromhex(self.expectations["target_pub"]),
-            scope=self.scope, packet=packet, response=response,
-        )
+        return self.transport.request(self.endpoint, self.action, packet, expected_target_pid=self.target.pid)
 
     def close(self):
         try:
@@ -271,9 +271,32 @@ class EducationFixture:
                     self.caller = None
 
 
+class EducationFixture(LocalFixture):
+    """Trusted controller for one measured run and one fictional record."""
+
+    caller_source = _ROOT / "wolfalibi" / "education_fixture_caller.py"
+    records = education_records
+    transport = education_transport
+    target_module = "wolfalibi.education_target"
+    target_class = "EducationTarget"
+    action = "read"
+    grant_id = "fictional-support-grant"
+    scope_fields = {
+        "tenant": "fictional-school", "student": "fictional-aster", "purpose": "approved-support",
+        "operation": "edu.student_record.read", "policy_version": "edu-gate-002.v1",
+    }
+    extra_expectations = {"response_sha256": digest(FICTIONAL_RESPONSE)}
+
+    def verify(self, packet, response, receipt):
+        return verify_receipt(
+            receipt, target_pub=bytes.fromhex(self.expectations["target_pub"]),
+            scope=self.scope, packet=packet, response=response,
+        )
+
+
 @contextmanager
-def fixture(root, *, challenge=None):
-    resource = EducationFixture(root, challenge=challenge)
+def fixture(root, *, challenge=None, fixture_type=EducationFixture):
+    resource = fixture_type(root, challenge=challenge)
     try:
         resource.start()
         yield resource

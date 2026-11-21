@@ -9,6 +9,7 @@ establish production confinement or independent custody.
 from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass
 import argparse
 import hashlib
 import json
@@ -21,7 +22,7 @@ import stat
 import sys
 from threading import BoundedSemaphore, Lock
 import time
-from typing import Any, Mapping, Optional
+from typing import Any, Callable, FrozenSet, Mapping, Optional
 
 from .education_records import validate_peer
 from .voidcell_service import MAX_PACKET_BYTES, _canonical, _decode, _snapshot
@@ -38,14 +39,9 @@ CONNECTION_TIMEOUT_SECONDS = 2.0
 MAX_ACTIVE_CONNECTIONS = 4
 LISTEN_BACKLOG = 16
 
-_TYPE = "wolfalibi.education.local-transport.v1"
-_ACTIONS = frozenset({"read", "reconcile"})
 _BOOT_ID = re.compile(
     r"[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\Z"
 )
-_READY = _canonical({"type": _TYPE, "ready": True})
-_REJECTED = {"outcome": "BLOCKED", "reason": "EDUCATION_TRANSPORT_REJECTED"}
-_UNAVAILABLE = {"outcome": "BLOCKED", "reason": "EDUCATION_TRANSPORT_UNAVAILABLE"}
 _UNKNOWN = {"outcome": "UNKNOWN", "reason": "RECONCILE_ORIGINAL_DISPATCH"}
 _PEER_DENIED = {"outcome": "DENIED", "reason": "PEER_IDENTITY_MISMATCH"}
 _FIXED_CALLER = Path(__file__).with_name("education_fixture_caller.py").absolute()
@@ -65,6 +61,51 @@ class _TerminalResult(EducationTransportError):
     def __init__(self, result: dict) -> None:
         super().__init__("target rejected the local admission handshake")
         self.result = result
+
+
+@dataclass(frozen=True)
+class TransportProfile:
+    """Immutable local protocol identity selected by trusted module code."""
+
+    label: str
+    wire_type: str
+    actions: FrozenSet[str]
+    caller_path: Path
+    peer_validator: Callable[[Mapping[str, Any]], dict]
+
+    def __post_init__(self) -> None:
+        # Profiles are module-level trusted constants, never packet input.
+        object.__setattr__(self, "actions", frozenset(self.actions))
+        object.__setattr__(
+            self, "caller_path", Path(os.path.abspath(os.fspath(self.caller_path)))
+        )
+
+
+EDUCATION_PROFILE = TransportProfile(
+    label="EDUCATION",
+    wire_type="wolfalibi.education.local-transport.v1",
+    actions=frozenset({"read", "reconcile"}),
+    caller_path=_FIXED_CALLER,
+    peer_validator=validate_peer,
+)
+# Preserve Gate002 module-private values for existing callers and tests.
+_TYPE = EDUCATION_PROFILE.wire_type
+_ACTIONS = EDUCATION_PROFILE.actions
+_READY = _canonical({"type": _TYPE, "ready": True})
+_REJECTED = {"outcome": "BLOCKED", "reason": "EDUCATION_TRANSPORT_REJECTED"}
+_UNAVAILABLE = {"outcome": "BLOCKED", "reason": "EDUCATION_TRANSPORT_UNAVAILABLE"}
+
+
+def _ready(profile: TransportProfile) -> bytes:
+    return _canonical({"type": profile.wire_type, "ready": True})
+
+
+def _rejected(profile: TransportProfile) -> dict:
+    return {"outcome": "BLOCKED", "reason": profile.label + "_TRANSPORT_REJECTED"}
+
+
+def _unavailable(profile: TransportProfile) -> dict:
+    return {"outcome": "BLOCKED", "reason": profile.label + "_TRANSPORT_UNAVAILABLE"}
 
 
 def _linux_controls() -> None:
@@ -166,12 +207,15 @@ def _executable_digest(directory: int) -> str:
         return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
-def _source_digest() -> str:
+def _source_digest(profile: TransportProfile) -> str:
     """Sample the fixed source on disk and reject changes during the read."""
     def fingerprint(item):
         return (item.st_dev, item.st_ino, item.st_size, item.st_ctime_ns)
 
-    descriptor = os.open(_FIXED_CALLER, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK)
+    descriptor = os.open(
+        profile.caller_path,
+        os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW | os.O_NONBLOCK,
+    )
     with os.fdopen(descriptor, "rb") as stream:
         opened = os.fstat(stream.fileno())
         if (not stat.S_ISREG(opened.st_mode) or opened.st_mode & 0o022
@@ -179,19 +223,24 @@ def _source_digest() -> str:
             raise EducationTransportError("invalid fixed caller source")
         digest = hashlib.file_digest(stream, "sha256").hexdigest()
         if (fingerprint(opened) != fingerprint(os.fstat(stream.fileno()))
-                or fingerprint(opened) != fingerprint(_FIXED_CALLER.lstat())):
+                or fingerprint(opened) != fingerprint(profile.caller_path.lstat())):
             raise EducationTransportError("fixed caller source changed during measurement")
         return digest
 
 
-def _caller_argv(directory: int, *, endpoint: Optional[str]) -> str:
+def _caller_argv(
+    directory: int,
+    *,
+    endpoint: Optional[str],
+    profile: TransportProfile,
+) -> str:
     """Validate the fixed supervisor launch shape and hash raw NUL argv bytes."""
     raw = _read_at(directory, "cmdline", 16_384)
     if not raw.endswith(b"\0"):
         raise EducationTransportError("fixed caller command line is invalid")
     argv = raw[:-1].split(b"\0")
     expected_interpreter = os.fsencode(str(Path(sys.executable).absolute()))
-    expected_source = os.fsencode(str(_FIXED_CALLER))
+    expected_source = os.fsencode(str(profile.caller_path))
     if len(argv) != 4 or argv[:3] != [expected_interpreter, b"-I", expected_source]:
         raise EducationTransportError("fixed caller command line differs from supervisor profile")
     try:
@@ -210,7 +259,13 @@ def _caller_argv(directory: int, *, endpoint: Optional[str]) -> str:
     return hashlib.sha256(raw).hexdigest()
 
 
-def _measure_process(pid: int, *, pidfd: int, fixed_caller=False, endpoint=None) -> dict:
+def _measure_process(
+    pid: int,
+    *,
+    pidfd: int,
+    profile: Optional[TransportProfile] = None,
+    endpoint: Optional[str] = None,
+) -> dict:
     if not _pidfd_alive(pidfd):
         raise EducationTransportError("enrolled process is no longer live")
     directory = os.open(Path("/proc") / str(pid), os.O_RDONLY | os.O_DIRECTORY |
@@ -220,9 +275,11 @@ def _measure_process(pid: int, *, pidfd: int, fixed_caller=False, endpoint=None)
         observed = {"pid": pid, "uid": uid, "gid": gid,
                     "start_ticks": _process_start_ticks(_read_at(directory, "stat", 65_536)),
                     "exe_sha256": _executable_digest(directory), "boot_id": _boot_id()}
-        if fixed_caller:
-            observed.update(argv_sha256=_caller_argv(directory, endpoint=endpoint),
-                            source_sha256=_source_digest())
+        if profile is not None:
+            observed.update(
+                argv_sha256=_caller_argv(directory, endpoint=endpoint, profile=profile),
+                source_sha256=_source_digest(profile),
+            )
     finally:
         os.close(directory)
     if not _pidfd_alive(pidfd):
@@ -230,14 +287,14 @@ def _measure_process(pid: int, *, pidfd: int, fixed_caller=False, endpoint=None)
     return observed
 
 
-def measure_peer(pid: int) -> dict:
+def measure_peer(pid: int, *, profile: TransportProfile = EDUCATION_PROFILE) -> dict:
     """Measure the fixed education caller from procfs, never from a packet.
 
     The exact return schema is pid, uid, gid, start_ticks, boot_id,
     exe_sha256, argv_sha256, and source_sha256. It rejects a caller not
     launched as sys.executable, -I, fixed caller source, and endpoint.
     """
-    with _PinnedProcess(pid, fixed_caller=True) as caller:
+    with _PinnedProcess(pid, profile=profile) as caller:
         return caller.identity
 
 
@@ -249,12 +306,12 @@ class _PinnedProcess:
         pid: int,
         *,
         expected: Optional[Mapping[str, Any]] = None,
-        fixed_caller: bool = False,
+        profile: Optional[TransportProfile] = None,
         endpoint: Optional[str] = None,
     ) -> None:
         _linux_controls()
         self._closed = False
-        self._fixed_caller = fixed_caller
+        self._profile = profile
         self._endpoint = endpoint
         self._pid = _unsigned(pid, "process PID", positive=True)
         try:
@@ -264,7 +321,11 @@ class _PinnedProcess:
         try:
             identity = self._observe()
             if expected is not None:
-                shaped = validate_peer(expected)
+                if self._profile is None:
+                    raise EducationTransportError(
+                        "an enrolled caller requires a trusted transport profile"
+                    )
+                shaped = self._profile.peer_validator(expected)
                 if identity != shaped:
                     raise EducationTransportError(
                         "measured process differs from the enrolled identity"
@@ -276,8 +337,12 @@ class _PinnedProcess:
             raise
 
     def _observe(self) -> dict:
-        return _measure_process(self._pid, pidfd=self._pidfd, fixed_caller=self._fixed_caller,
-                                endpoint=self._endpoint)
+        return _measure_process(
+            self._pid,
+            pidfd=self._pidfd,
+            profile=self._profile,
+            endpoint=self._endpoint,
+        )
 
     @property
     def identity(self) -> dict:
@@ -314,7 +379,11 @@ class _PinnedProcess:
         self.close()
 
 
-def _decode_request(raw: bytes) -> tuple[str, dict]:
+def _decode_request(
+    raw: bytes,
+    *,
+    profile: TransportProfile = EDUCATION_PROFILE,
+) -> tuple[str, dict]:
     try:
         frame = _decode(raw, maximum=MAX_FRAME_BYTES)
     except Exception as exc:
@@ -322,23 +391,28 @@ def _decode_request(raw: bytes) -> tuple[str, dict]:
     if (
         type(frame) is not dict
         or frozenset(frame) != {"type", "action", "packet"}
-        or frame["type"] != _TYPE
+        or frame["type"] != profile.wire_type
         or type(frame["action"]) is not str
-        or frame["action"] not in _ACTIONS
+        or frame["action"] not in profile.actions
         or type(frame["packet"]) is not dict
     ):
         raise EducationTransportError("invalid education request frame")
     return frame["action"], frame["packet"]
 
 
-def _encode_request(action: str, packet: object) -> bytes:
-    if type(action) is not str or action not in _ACTIONS or type(packet) is not dict:
+def _encode_request(
+    action: str,
+    packet: object,
+    *,
+    profile: TransportProfile = EDUCATION_PROFILE,
+) -> bytes:
+    if type(action) is not str or action not in profile.actions or type(packet) is not dict:
         raise ValueError("unsupported education request")
     try:
         frozen = _snapshot(packet, maximum=MAX_PACKET_BYTES)
         if type(frozen) is not dict:
             raise ValueError
-        raw = _canonical({"type": _TYPE, "action": action, "packet": frozen})
+        raw = _canonical({"type": profile.wire_type, "action": action, "packet": frozen})
     except Exception as exc:
         raise ValueError("invalid education request") from exc
     if len(raw) > MAX_FRAME_BYTES:
@@ -346,20 +420,28 @@ def _encode_request(action: str, packet: object) -> bytes:
     return raw
 
 
-def _encode_result(result: object) -> bytes:
+def _encode_result(
+    result: object,
+    *,
+    profile: TransportProfile = EDUCATION_PROFILE,
+) -> bytes:
     try:
         frozen = _snapshot(result, maximum=MAX_FRAME_BYTES // 2)
         if type(frozen) is not dict:
             raise ValueError
-        raw = _canonical({"type": _TYPE, "result": frozen})
+        raw = _canonical({"type": profile.wire_type, "result": frozen})
     except Exception:
-        raw = _canonical({"type": _TYPE, "result": _REJECTED})
+        raw = _canonical({"type": profile.wire_type, "result": _rejected(profile)})
     if len(raw) > MAX_FRAME_BYTES:
-        raw = _canonical({"type": _TYPE, "result": _REJECTED})
+        raw = _canonical({"type": profile.wire_type, "result": _rejected(profile)})
     return raw
 
 
-def _decode_result(raw: bytes) -> dict:
+def _decode_result(
+    raw: bytes,
+    *,
+    profile: TransportProfile = EDUCATION_PROFILE,
+) -> dict:
     try:
         frame = _decode(raw, maximum=MAX_FRAME_BYTES)
     except Exception as exc:
@@ -367,7 +449,7 @@ def _decode_result(raw: bytes) -> dict:
     if (
         type(frame) is not dict
         or frozenset(frame) != {"type", "result"}
-        or frame["type"] != _TYPE
+        or frame["type"] != profile.wire_type
         or type(frame["result"]) is not dict
     ):
         raise EducationTransportError("invalid education response frame")
@@ -381,9 +463,14 @@ def _safe_send(channel: socket.socket, raw: bytes, *, close_write: bool) -> None
         channel.shutdown(socket.SHUT_WR)
 
 
-def _safe_terminal(channel: socket.socket, result: Mapping[str, Any]) -> None:
+def _safe_terminal(
+    channel: socket.socket,
+    result: Mapping[str, Any],
+    *,
+    profile: TransportProfile = EDUCATION_PROFILE,
+) -> None:
     try:
-        _safe_send(channel, _encode_result(dict(result)), close_write=True)
+        _safe_send(channel, _encode_result(dict(result), profile=profile), close_write=True)
     except OSError:
         pass
 
@@ -433,14 +520,14 @@ def _endpoint_directory(path: Path, peer_uid: int) -> Path:
     return directory
 
 
-def _target_peer(target: object) -> dict:
-    return validate_peer(target.peer)
+def _target_peer(target: object, *, profile: TransportProfile = EDUCATION_PROFILE) -> dict:
+    return profile.peer_validator(target.peer)
 
 
-def _check_target(target: object) -> None:
+def _check_target(target: object, *, profile: TransportProfile = EDUCATION_PROFILE) -> None:
     if not callable(getattr(target, "handle", None)):
         raise EducationTransportError("education target must expose handle")
-    _target_peer(target)
+    _target_peer(target, profile=profile)
 
 
 def _serve_connection(
@@ -450,6 +537,7 @@ def _serve_connection(
     expected: Mapping[str, Any],
     *,
     target_lock: Lock,
+    profile: TransportProfile = EDUCATION_PROFILE,
 ) -> None:
     """Serve one credential-bound connection with a READY-before-request handshake."""
     submitted = False
@@ -461,7 +549,7 @@ def _serve_connection(
         if credentials != (expected["pid"], expected["uid"], expected["gid"]):
             raise _PeerDenied("connection comes from an unenrolled process")
         enrolled.match_credentials(credentials)
-        _safe_send(channel, _READY, close_write=False)
+        _safe_send(channel, _ready(profile), close_write=False)
 
         data, ancillary, _ = _recv(channel)
         if not data:
@@ -474,7 +562,7 @@ def _serve_connection(
         _expect_eof(channel)
         if time.monotonic() >= deadline:
             raise EducationTransportError("education request deadline expired")
-        action, packet = _decode_request(data)
+        action, packet = _decode_request(data, profile=profile)
 
         # Socket parsing may be concurrent, but target admission and durable
         # state changes remain serial at this process boundary.
@@ -488,8 +576,8 @@ def _serve_connection(
     except _PeerDenied:
         result = _PEER_DENIED
     except Exception:
-        result = _UNKNOWN if submitted else _REJECTED
-    _safe_terminal(channel, result)
+        result = _UNKNOWN if submitted else _rejected(profile)
+    _safe_terminal(channel, result, profile=profile)
 
 
 def serve(
@@ -499,6 +587,7 @@ def serve(
     on_ready=None,
     stop_event=None,
     metrics: Optional[TransportMetrics] = None,
+    profile: TransportProfile = EDUCATION_PROFILE,
 ) -> None:
     """Serve one target endpoint until stopped or the fixed caller dies.
 
@@ -511,8 +600,8 @@ def serve(
     _linux_controls()
     if os.geteuid() == 0:
         raise EducationTransportError("education target transport refuses to run as root")
-    _check_target(target)
-    expected = _target_peer(target)
+    _check_target(target, profile=profile)
+    expected = _target_peer(target, profile=profile)
     if expected["uid"] == 0:
         raise EducationTransportError("education caller must be non-root")
     if on_ready is not None and not callable(on_ready):
@@ -536,13 +625,14 @@ def serve(
     target_lock = Lock()
 
     with _PinnedProcess(
-        expected["pid"], expected=expected, fixed_caller=True, endpoint=str(path)
+        expected["pid"], expected=expected, profile=profile, endpoint=str(path)
     ) as enrolled:
         def handle(channel: socket.socket) -> None:
             try:
                 with channel:
                     _serve_connection(
-                        channel, target, enrolled, expected, target_lock=target_lock
+                        channel, target, enrolled, expected, target_lock=target_lock,
+                        profile=profile,
                     )
             finally:
                 metrics._end()
@@ -551,7 +641,7 @@ def serve(
         def reject(channel: socket.socket, field: str, result: Mapping[str, Any]) -> None:
             with channel:
                 channel.setblocking(False)
-                _safe_terminal(channel, result)
+                _safe_terminal(channel, result, profile=profile)
             metrics._reject(field)
 
         listener = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
@@ -589,7 +679,7 @@ def serve(
                     try:
                         credentials = _peer_credentials(channel)
                     except (OSError, RuntimeError):
-                        reject(channel, "rejected_credentials", _REJECTED)
+                        reject(channel, "rejected_credentials", _rejected(profile))
                         continue
                     if credentials != (
                         expected["pid"], expected["uid"], expected["gid"]
@@ -599,10 +689,10 @@ def serve(
                     try:
                         enrolled.match_credentials(credentials)
                     except (OSError, ValueError, RuntimeError):
-                        reject(channel, "rejected_credentials", _REJECTED)
+                        reject(channel, "rejected_credentials", _rejected(profile))
                         continue
                     if not slots.acquire(blocking=False):
-                        reject(channel, "rejected_capacity", _REJECTED)
+                        reject(channel, "rejected_capacity", _rejected(profile))
                         continue
                     metrics._begin()
                     try:
@@ -638,17 +728,19 @@ class _ClientSession:
         channel: socket.socket,
         target: _PinnedProcess,
         credentials: tuple[int, int, int],
+        profile: TransportProfile = EDUCATION_PROFILE,
     ) -> None:
         self._channel = channel
         self._target = target
         self._credentials = credentials
+        self._profile = profile
         self._sent = False
         self._closed = False
 
     def send(self, action: str, packet: object) -> None:
         if self._closed or self._sent:
             raise EducationTransportError("education request session is not writable")
-        raw = _encode_request(action, packet)
+        raw = _encode_request(action, packet, profile=self._profile)
         self._target.match_credentials(self._credentials)
         _safe_send(self._channel, raw, close_write=True)
         self._sent = True
@@ -663,7 +755,7 @@ class _ClientSession:
             _credentials(ancillary, self._credentials)
             _expect_eof(self._channel)
             self._target.match_credentials(self._credentials)
-            return _decode_result(data)
+            return _decode_result(data, profile=self._profile)
         finally:
             self.close()
 
@@ -683,7 +775,12 @@ class _ClientSession:
         self.close()
 
 
-def _open_client_session(socket_path: object, *, expected_target_pid: int) -> _ClientSession:
+def _open_client_session(
+    socket_path: object,
+    *,
+    expected_target_pid: int,
+    profile: TransportProfile = EDUCATION_PROFILE,
+) -> _ClientSession:
     """Open a READY-validated internal session; callers must close it."""
     _linux_controls()
     expected_target_pid = _unsigned(
@@ -709,11 +806,11 @@ def _open_client_session(socket_path: object, *, expected_target_pid: int) -> _C
         if not data:
             raise EducationTransportError("target did not signal readiness")
         _credentials(ancillary, credentials)
-        if data != _READY:
-            terminal = _decode_result(data)
+        if data != _ready(profile):
+            terminal = _decode_result(data, profile=profile)
             raise _TerminalResult(terminal)
         target.match_credentials(credentials)
-        return _ClientSession(channel, target, credentials)
+        return _ClientSession(channel, target, credentials, profile=profile)
     except BaseException:
         if channel is not None:
             channel.close()
@@ -727,14 +824,21 @@ def request(
     packet: object,
     *,
     expected_target_pid: int,
+    profile: TransportProfile = EDUCATION_PROFILE,
 ) -> dict:
     """Send one read/reconcile request through a pidfd-validated target endpoint."""
     try:
-        session = _open_client_session(path, expected_target_pid=expected_target_pid)
+        if profile is EDUCATION_PROFILE:
+            # Preserve the Gate002 lost-reply test seam.
+            session = _open_client_session(path, expected_target_pid=expected_target_pid)
+        else:
+            session = _open_client_session(
+                path, expected_target_pid=expected_target_pid, profile=profile
+            )
     except _TerminalResult as exc:
         return dict(exc.result)
     except (OSError, RuntimeError):
-        return dict(_UNAVAILABLE)
+        return _unavailable(profile)
     with session:
         try:
             session.send(action, packet)
@@ -778,6 +882,8 @@ __all__ = (
     "LISTEN_BACKLOG",
     "MAX_ACTIVE_CONNECTIONS",
     "MAX_FRAME_BYTES",
+    "EDUCATION_PROFILE",
+    "TransportProfile",
     "measure_peer",
     "request",
     "serve",

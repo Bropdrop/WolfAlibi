@@ -46,13 +46,6 @@ def _clock_time():
         raise EducationTargetError("invalid process clock") from exc
 
 
-def _checked_now():
-    now = _clock_time()
-    if type(now) is not int or not 0 <= now < 2**63:
-        raise EducationTargetError("invalid process clock")
-    return now
-
-
 def _witness_lineage(path, owner):
     lineage = []
     for directory in (path, *path.parents):
@@ -82,13 +75,12 @@ class _Delivery:
     witness_head: bytes
 
 
-class EducationTarget:
-    """Authorize, record and checkpoint a single one-use fictional read.
+class _DurableTarget:
+    """Shared storage and admission boundary for the synthetic sector targets.
 
     Admission samples the target clock after authentication and commits its
     evidence before handoff. Handoff rechecks the witnessed reference and
-    deadline after checkpointing. A failed handoff leaves the admission
-    terminal, so reconciliation can recover only the receipt.
+    deadline after checkpointing.
     """
 
     def __init__(self, state_dir, anchor_dir, *, create=False):
@@ -104,9 +96,9 @@ class EducationTarget:
             self._open(create)
         except (OSError, sqlite3.Error, TypeError, ValueError, RuntimeError) as exc:
             self.close()
-            if isinstance(exc, EducationTargetError):
+            if isinstance(exc, self._state_error):
                 raise
-            raise EducationTargetError("target state could not be authenticated") from exc
+            raise self._state_error("target state could not be authenticated") from exc
         except BaseException:
             self.close()
             raise
@@ -127,7 +119,7 @@ class EducationTarget:
         if len(seed) != 32 or type(config) is not dict or config.keys() != _CONFIG_FIELDS:
             raise EducationTargetError("invalid provisioned target identity or configuration")
         self._signer = Signer(seed)
-        self._scope = validate_scope(config["scope"])
+        self._scope = self._validate_scope(config["scope"])
         if self._scope["target_pub"] != self.target_pub.hex():
             raise EducationTargetError("scope does not name the provisioned target key")
         self._peer = validate_peer(config["peer"])
@@ -148,9 +140,8 @@ class EducationTarget:
             raise EducationTargetError("retain the witness head outside the target state and checkpoint")
         self._witness_head()
 
-        self._operation_id = H(canon(self._scope)).hex()
         pins = canon({
-            "profile": "education-read",
+            "profile": self._profile,
             "config": config,
             "target_pub": self.target_pub.hex(),
             "witness_owner": self._witness_owner,
@@ -191,22 +182,23 @@ class EducationTarget:
         if self._db.execute("PRAGMA journal_mode").fetchone() != ("delete",):
             raise EducationTargetError("target requires a durable SQLite rollback journal")
         if create:
-            # These typed columns are shared with the signed logical checkpoint.
-            self._db.executescript("""
+            # The signed logical checkpoint uses these column types.
+            # The committed outcome is a fixed profile constant.
+            self._db.executescript(f"""
                 BEGIN IMMEDIATE;
                 CREATE TABLE configuration (pins BLOB NOT NULL, checked_at INTEGER NOT NULL);
                 CREATE TABLE revoked (grant_id TEXT PRIMARY KEY, proof BLOB NOT NULL);
                 CREATE TABLE effects (
                     operation_id TEXT PRIMARY KEY,
                     dispatch_digest TEXT NOT NULL,
-                    outcome TEXT NOT NULL CHECK (outcome IN ('RELEASED', 'FENCED')),
+                    outcome TEXT NOT NULL CHECK (outcome IN ('{self._effect_outcome}', 'FENCED')),
                     receipt BLOB NOT NULL
                 );
                 CREATE TABLE decisions (
                     id INTEGER PRIMARY KEY, dispatch_digest TEXT NOT NULL, receipt BLOB NOT NULL
                 );
             """)
-            self._db.execute("INSERT INTO configuration VALUES (?, ?)", (pins, _checked_now()))
+            self._db.execute("INSERT INTO configuration VALUES (?, ?)", (pins, self._checked_now()))
             self._db.commit()
             _sync_directory(self._state)
         if self._db.execute("SELECT pins FROM configuration").fetchall() != [(pins,)]:
@@ -270,6 +262,15 @@ class EducationTarget:
         )
         return update.rowcount == 1
 
+    def _clock(self):
+        return _clock_time()
+
+    def _checked_now(self):
+        now = self._clock()
+        if type(now) is not int or not 0 <= now < 2**63:
+            raise self._state_error("invalid process clock")
+        return now
+
     def _invoke(self, operation):
         with self._lock:
             if self._blocked:
@@ -278,7 +279,7 @@ class EducationTarget:
                 self._files_unchanged()
                 self._anchor.verify(self)
                 with self._transaction():
-                    now = _checked_now()
+                    now = self._checked_now()
                     if not self._observe_time(now):
                         return _blocked("TARGET_CLOCK_REGRESSION")
                     result = operation(now)
@@ -298,7 +299,7 @@ class EducationTarget:
                 current_head = self._witness_head()
             except (OSError, ValueError, RuntimeError):
                 current_head = None
-            now = _checked_now()
+            now = self._checked_now()
             if now < retained_time:
                 return _blocked("TARGET_CLOCK_REGRESSION")
             resampled = now > retained_time
@@ -310,7 +311,7 @@ class EducationTarget:
                 self._anchor.advance(self)
                 retained_time = now
             if now >= delivery.deadline:
-                return _deny("AUTHORIZATION_EXPIRED_BEFORE_HANDOFF")
+                return {"outcome": self._expired_handoff, "reason": "AUTHORIZATION_EXPIRED_BEFORE_HANDOFF"}
             if current_head != delivery.witness_head:
                 return _blocked("WITNESS_HEAD_CHANGED_BEFORE_HANDOFF")
             if not resampled:
@@ -318,15 +319,18 @@ class EducationTarget:
         return _blocked("TARGET_HANDOFF_CLOCK_UNSTABLE")
 
     def handle(self, action, packet, peer):
-        """Use the authenticated transport peer for a read or reconciliation."""
+        """Use the authenticated transport peer for an operation or reconciliation."""
         return self._invoke(lambda now: self._access(action, packet, peer, now))
 
+    def _scope_denial(self):
+        return None
+
     def _access(self, action, packet, peer, now):
-        if type(action) is not str or action not in ("read", "reconcile"):
+        if type(action) is not str or action not in self._actions:
             return _deny("UNKNOWN_TARGET_ACTION")
         try:
             peer = validate_peer(peer)
-            packet = snapshot_packet(packet)
+            packet = self._snapshot_packet(packet)
         except (TypeError, ValueError, RuntimeError):
             return _deny("INVALID_TARGET_REQUEST")
         if peer != self._peer:
@@ -336,7 +340,7 @@ class EducationTarget:
         except (OSError, TypeError, ValueError, RuntimeError):
             return _blocked("WITNESS_HEAD_UNAVAILABLE")
         try:
-            grant_id = check_packet(
+            grant_id = self._check_packet(
                 packet, expected_scope=self._scope, peer=peer, now=now,
                 witness_head=witness_head, **self._keys,
             )
@@ -344,49 +348,24 @@ class EducationTarget:
             return _deny("AUTHORIZATION_OR_QUALIFICATION_UNVERIFIED")
         if self._db.execute("SELECT 1 FROM revoked WHERE grant_id = ?", (grant_id,)).fetchone():
             return _deny("OWNER_GRANT_REVOKED")
-        if self._scope["tenant"] != "fictional-school" or self._scope["student"] != "fictional-aster":
-            return _deny("FIXTURE_OUT_OF_SCOPE")
+        scope_denial = self._scope_denial()
+        if scope_denial is not None:
+            return _deny(scope_denial)
 
         try:
             current_head = self._witness_head()
         except (OSError, ValueError, RuntimeError):
             current_head = None
-        authorized_at = _checked_now()
+        authorized_at = self._checked_now()
         if not self._observe_time(authorized_at):
             return _blocked("TARGET_CLOCK_REGRESSION")
         if current_head != witness_head:
             return _blocked("WITNESS_HEAD_CHANGED_BEFORE_ADMISSION")
         try:
-            deadline = check_admission_time(packet, authorized_at)
+            deadline = self._check_admission_time(packet, authorized_at)
         except ValueError:
             return _deny("AUTHORIZATION_OR_QUALIFICATION_UNVERIFIED")
-        digest = H(canon(packet)).hex()
-        saved = self._db.execute(
-            "SELECT dispatch_digest, outcome, receipt FROM effects WHERE operation_id = ?",
-            (self._operation_id,),
-        ).fetchone()
-        if saved is not None:
-            if saved[1] == "FENCED":
-                return _deny("READ_FENCED")
-            if action == "reconcile" and digest == saved[0]:
-                result = {"outcome": "RECONCILED", "receipt": json.loads(saved[2])}
-                return _Delivery(result, authorized_at, deadline, witness_head)
-            return _deny("READ_ALREADY_RECORDED")
-        if action == "reconcile":
-            self._db.execute("INSERT INTO effects VALUES (?, ?, 'FENCED', ?)",
-                             (self._operation_id, digest, b""))
-            return _deny("READ_FENCED")
-
-        response = _RESPONSE.copy()
-        signed = receipt(self._signer, self._scope, packet, response, authorized_at)
-        evidence = canon({"packet": packet, "response": response, "receipt": signed,
-                          "observed_peer": peer, "observed_witness_head": witness_head.hex()})
-        self._db.execute("INSERT INTO effects VALUES (?, ?, 'RELEASED', ?)",
-                         (self._operation_id, digest, canon(signed)))
-        self._db.execute("INSERT INTO decisions (dispatch_digest, receipt) VALUES (?, ?)",
-                         (digest, evidence))
-        result = {"outcome": "RELEASED", "response": response, "receipt": signed}
-        return _Delivery(result, authorized_at, deadline, witness_head)
+        return self._apply(action, packet, peer, authorized_at, deadline, witness_head)
 
     def revoke(self, grant_id):
         """Record a revocation through the local target administrator API."""
@@ -407,11 +386,10 @@ class EducationTarget:
                 try:
                     self._files_unchanged()
                     anchor = self._anchor.verify(self)
-                    count, = self._db.execute(
-                        "SELECT COUNT(*) FROM effects WHERE outcome = 'RELEASED'",
-                    ).fetchone()
+                    count, = self._db.execute("SELECT COUNT(*) FROM effects WHERE outcome = ?",
+                                              (self._effect_outcome,)).fetchone()
                     return {"outcome": "READY", "target_pub": self.target_pub.hex(),
-                            "release_count": count, "anchor": anchor}
+                            self._count_field: count, "anchor": anchor}
                 except (OSError, sqlite3.Error, TypeError, ValueError, RuntimeError):
                     self._blocked = True
             return _blocked("TARGET_STATE_UNAVAILABLE")
@@ -426,3 +404,52 @@ class EducationTarget:
 
     def __exit__(self, *_):
         self.close()
+
+
+class EducationTarget(_DurableTarget):
+    """Authorize, record and checkpoint a single one-use fictional read."""
+
+    _state_error = EducationTargetError
+    _profile = "education-read"
+    _effect_outcome = "RELEASED"
+    _count_field = "release_count"
+    _expired_handoff = "DENIED"
+    _actions = ("read", "reconcile")
+    _validate_scope = staticmethod(validate_scope)
+    _snapshot_packet = staticmethod(snapshot_packet)
+    _check_packet = staticmethod(check_packet)
+    _check_admission_time = staticmethod(check_admission_time)
+
+    def _scope_denial(self):
+        if self._scope["tenant"] != "fictional-school" or self._scope["student"] != "fictional-aster":
+            return "FIXTURE_OUT_OF_SCOPE"
+        return None
+
+    def _apply(self, action, packet, peer, authorized_at, deadline, witness_head):
+        digest = H(canon(packet)).hex()
+        operation_id = H(canon(self._scope)).hex()
+        saved = self._db.execute(
+            "SELECT dispatch_digest, outcome, receipt FROM effects WHERE operation_id = ?",
+            (operation_id,),
+        ).fetchone()
+        if saved is not None:
+            if saved[1] == "FENCED":
+                return _deny("READ_FENCED")
+            if action == "reconcile" and digest == saved[0]:
+                result = {"outcome": "RECONCILED", "receipt": json.loads(saved[2])}
+                return _Delivery(result, authorized_at, deadline, witness_head)
+            return _deny("READ_ALREADY_RECORDED")
+        if action == "reconcile":
+            self._db.execute("INSERT INTO effects VALUES (?, ?, 'FENCED', ?)", (operation_id, digest, b""))
+            return _deny("READ_FENCED")
+
+        response = _RESPONSE.copy()
+        signed = receipt(self._signer, self._scope, packet, response, authorized_at)
+        evidence = canon({"packet": packet, "response": response, "receipt": signed,
+                          "observed_peer": peer, "observed_witness_head": witness_head.hex()})
+        self._db.execute("INSERT INTO effects VALUES (?, ?, 'RELEASED', ?)",
+                         (operation_id, digest, canon(signed)))
+        self._db.execute("INSERT INTO decisions (dispatch_digest, receipt) VALUES (?, ?)",
+                         (digest, evidence))
+        result = {"outcome": "RELEASED", "response": response, "receipt": signed}
+        return _Delivery(result, authorized_at, deadline, witness_head)
