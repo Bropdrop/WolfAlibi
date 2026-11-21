@@ -1,0 +1,43 @@
+# Stage 3 independent qualification plan
+
+The next milestone should qualify mediation for an explicitly declared synthetic resource set. Retain `BROKER_ONLY` assurance and return `BLOCKED` for confinement or custody claims with incomplete evidence. Independent qualification requires a reviewer to reproduce both the allowed operation and the rejection controls on an independently controlled Linux host.
+
+## Evidence at the starting revision
+
+Reviewed source is commit `8cf41f8a8044154abc21f329d4108246518e6063`, tree `f8e8f2c5ad8f603c1254d1a033cd83b82b641e80`. The exact-tree repeat delivered 62 passing unit tests, 11 passing Stage 3 tests and eight detected legacy mutants. The synthetic CLI verified four WAL frames and three signed witness transitions. The builder's host reported Linux 6.18.57 x86_64, Bubblewrap 0.12.0, supervisor Python 3.12.14, worker Python 3.13.5 and cryptography 50.0.0. The fixed fixture SHA-256 was `c299faaa49cb5a383a4526cf3f15711a8ab226d03d2941230c362fbf4fbeb061` and the canonical launcher profile SHA-256 was `514a932b7b41246bf306187ed2bb72293dfcf64fd834480b05110aac5721f63d`.
+
+The preserved suite includes an explicit known-limit test for a broker that omits an access from its log. A correct witness signature validates the recorded events. The mediation and supervisor gates below address the separate completeness requirement. [Current trial and reproduction commands](STAGE3_EXECUTION.md) · [Builder qualification in draft PR #8](https://github.com/Bropdrop/WolfAlibi/pull/8) · [Independent review requirements in Issue #7](https://github.com/Bropdrop/WolfAlibi/issues/7)
+
+## 1. Complete mediation for the declared resource set
+
+Begin with a supervisor-owned, read-only synthetic corpus and a versioned manifest of reachable logical keys, file identity bindings, fixture digests, allowed operations and supported alias rules. The verifier supplies the expected manifest digest. Inventory the worker's allowed runtime and scratch mounts, inherited descriptors, IPC endpoints and permitted execution scope. The protected corpus belongs to the broker's resource view. For each relevant route in Issue #7 Q1, record the enforcement mechanism and coverage. An unresolved route or preexisting copy in an exposed runtime prevents qualification for that resource.
+
+Keep a private per-run channel and validate the opcode, run, sequence and complete message before dispatch. Arrange the operation log so an in-scope denied attempt counts against any absence proof that covers attempts. Commit the corresponding event before sending any protected bytes. Distinguish durable attempt, authorization result, response send, acknowledgement and run completion. Match the acknowledgement to the response digest and leave byte consumption outside the scope of the evidence.
+
+**Acceptance.** Demonstrate an authorized broker read and a witnessed in-range denied attempt on fixtures. Confirm that each defeats an absence claim over its event range. Test the declared alias and FD policy, forbidden operations and bounded transport failures locally with synthetic records and resources. Duplicate, malformed, truncated, cross-run, ancillary-data and late or disconnected requests must have no unaccounted release or successful terminal envelope. Inject WAL short-write and sync failures around the release boundary and verify byte count, recovered journal and terminal state. Include witness unavailability as a separate incomplete-evidence outcome. [Current request and durable read path](../wolfalibi/stage3.py#L67) · [Current protocol and interruption tests](../test_stage3_execution.py)
+
+## 2. Supervisor-measured execution and shutdown
+
+Gate worker access while a trusted supervisor measures the launched executable and stable process identity, effective mount and namespace views, credentials, capabilities, descriptor inventory and enforcement-policy identity. Bind the measurements to the run challenge, resource manifest and start checkpoint. Record which facts come from the supervisor, which rely on the kernel, and which are worker observations. If the selected host profile cannot supply a required measurement, report that missing capability in the transcript.
+
+Track a dedicated process scope through closure. For a profile that supports descendants, use a supervisor-controlled scope with an observable empty state and enforce membership for the lifetime of the run. Close request admission, drain or account for in-flight requests and responses, record process-scope termination and endpoint closure, then obtain the terminal witness checkpoint. Define the abort record for timeout and supervisor restart.
+
+**Acceptance.** Compare the measured image and policy to independent verifier expectations. Substitution, a missing measurement, or a changed scope must block completion or be rejected. A live child, retained endpoint, pending response or ambiguous close must prevent terminal evidence. The normal case must show a closed scope, a drained broker and a terminal checkpoint in that order. Use a benign synthetic worker for lifecycle checks. [Current launcher profile and artifact measurements](../wolfalibi/stage3_worker.py#L100) · [Current exit and hangup checks](../wolfalibi/stage3.py#L98)
+
+## 3. Verifier-controlled challenge consumption
+
+Add a durable verifier-owned challenge register that records the run ID, nonce digest, contract digest, pinned keys, expiry and expected prior witness head before execution. Keep the existing offline cryptographic check available for historical inspection. For fresh acceptance, use one transaction to confirm that the challenge is issued and unexpired, compare the retained head with the expected predecessor, advance that head, and mark the challenge consumed. Conflicting submissions must revalidate against current state. A missing or unavailable register blocks fresh acceptance.
+
+**Acceptance.** A valid envelope is accepted fresh once. Failed verification leaves the challenge pending. Test sequential and concurrent duplicate submissions, close and reopen, an interrupted acceptance transaction, wrong and expired challenges, and a stale head. Verify that a crash leaves either both state updates visible or neither. [Current stateless verifier and external freshness contract](../wolfalibi/stage3_evidence.py#L131)
+
+## 4. Independently retained witness history
+
+Add a versioned continuation from an already authenticated witness head across multiple runs. Retain signed, ordered checkpoint and receipt records with durable append-before-acknowledgement semantics. Put witness keys and storage under separate custody from the broker. The verifier authenticates its prior head through its own store and verifies an ordered continuation to the new head. Document who can write each store and how bootstrap, rotation and recovery are authorized. Treat two isolated verifier stores as separate views until they can compare authenticated heads or rely on a checkpoint retained by an independent party.
+
+**Acceptance.** Verify two consecutive synthetic runs from a retained starting head. Block incomplete history and reject a spliced suffix, an obsolete snapshot or incompatible records at the same history index. Simulate witness restart and unavailability, plus conflicting views in an explicitly shared or independently administered head store. Local separate processes can test protocol and restart behavior. Independent custody requires separately controlled keys and durable storage. [Current one-run anchor validation](../wolfalibi/stage3_evidence.py#L96) · [Current rollback test](../test_stage3_execution.py#L210)
+
+## Graduation evidence
+
+Each change should pair a synthetic acceptance case with its pre-change result and its post-change result. Keep the original suites and mutation harness in the matrix. Record Git commit and tree, host and dependency versions, policy and fixture digests, exact commands, expected and observed effects, journal and witness evidence, assurance, and pass, failure or unsupported counts. Provide one machine-readable record per case that any reviewer can reproduce with local fixtures. A skipped required mechanism receives `UNSUPPORTED` or `BLOCKED` and contributes zero coverage.
+
+The milestone is ready for independent review when all declared routes have positive and negative evidence, one full measured lifecycle verifies, replay cannot earn a second fresh acceptance, and an independent operator can extend a previously retained witness head from the exported evidence. Keep finding reproduction limited to the repository and local synthetic assets. [Issue #7 evidence standard](https://github.com/Bropdrop/WolfAlibi/issues/7)
