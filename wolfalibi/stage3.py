@@ -64,7 +64,7 @@ def _send(channel, packet, deadline):
         raise TrialBlocked("incomplete broker response")
 
 
-def _serve(channel, broker, contract, deadline):
+def _serve(channel, broker, contract, deadline, *, before_release=None):
     expected_read = {
         "type": "read", "run_id": contract["run_id"],
         "challenge": contract["challenge"], "seq": 1, "key": contract["key"],
@@ -75,6 +75,8 @@ def _serve(channel, broker, contract, deadline):
         if not request:
             raise TrialBlocked("worker closed before sending probe and request")
         raise TrialBlocked("worker probe or request did not match the run contract")
+    if before_release is not None:
+        before_release()
     # The fixed fixture is created under a newly allocated, private directory.
     # Broker.read logs the authorized key to its WAL before returning bytes.
     data = broker.read(contract["key"])
@@ -95,13 +97,14 @@ def _checkpoint(broker, cp):
     }
 
 
-def _worker_session(broker, root, contract, *, timeout, mode):
+def _worker_session(broker, root, contract, *, timeout, mode, before_release=None):
     import fcntl
 
     deadline = time.monotonic() + timeout
     broker_socket, worker_socket = socket.socketpair(socket.AF_UNIX, socket.SOCK_SEQPACKET)
     with broker_socket, worker_socket:
-        with (root / FIXTURE_KEY).open("rb") as fixture:
+        endpoint_inode = os.fstat(worker_socket.fileno()).st_ino
+        with (root / contract["key"]).open("rb") as fixture:
             canary_fd = fcntl.fcntl(fixture.fileno(), fcntl.F_DUPFD, 64)
         try:
             os.set_inheritable(canary_fd, True)
@@ -113,7 +116,11 @@ def _worker_session(broker, root, contract, *, timeout, mode):
         # Only the launched side may keep the worker endpoint open.
         worker_socket.close()
         try:
-            digest = _serve(broker_socket, broker, contract, deadline)
+            def measure():
+                before_release(proc, endpoint_inode, root, canary_fd, deadline)
+
+            digest = _serve(broker_socket, broker, contract, deadline,
+                            before_release=measure if before_release else None)
             if proc.wait(timeout=_remaining(deadline)) != 0:
                 raise TrialBlocked("worker did not exit successfully")
             # A zero-length packet alone cannot establish peer closure.
@@ -168,7 +175,8 @@ def _sync_directory(path):
 
 
 def run_trial(state_dir, *, contract, signer, witness, expected_witness_state_digest,
-              timeout=10.0, _worker_mode="normal"):
+              timeout=10.0, _worker_mode="normal", _fixture=(FIXTURE_KEY, FIXTURE_BYTES),
+              _before_release=None):
     """Run one fixed synthetic worker with a fresh broker and witness history.
 
     The trusted operator owns state_dir and uses the witness exclusively for
@@ -181,7 +189,8 @@ def run_trial(state_dir, *, contract, signer, witness, expected_witness_state_di
         if (type(timeout) not in (int, float) or not 0 < timeout <= 120 or
                 not math.isfinite(timeout)):
             raise TrialBlocked("invalid worker timeout")
-        if (contract["key"] != FIXTURE_KEY or contract["fixture_sha256"] != H(FIXTURE_BYTES).hex()
+        fixture_key, fixture_bytes = _fixture
+        if (contract["key"] != fixture_key or contract["fixture_sha256"] != H(fixture_bytes).hex()
                 or canon(contract["profile"]) != canon(worker_profile())):
             raise TrialBlocked("fixture or worker profile differs from the trial contract")
         if not isinstance(witness, DurableWitness):
@@ -202,7 +211,10 @@ def run_trial(state_dir, *, contract, signer, witness, expected_witness_state_di
         _sync_directory(run_dir.parent)
         root = run_dir / "resources"
         root.mkdir(mode=0o700)
-        (root / FIXTURE_KEY).write_bytes(FIXTURE_BYTES)
+        fixture_path = root / fixture_key
+        fixture_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        fixture_path.write_bytes(fixture_bytes)
+        fixture_path.chmod(0o400)
         journal = run_dir / "broker.wal"
         with Broker(root, signer, witness, journal=journal) as broker:
             _sync_directory(run_dir)
@@ -212,7 +224,8 @@ def run_trial(state_dir, *, contract, signer, witness, expected_witness_state_di
                 broker._record(run_marker(contract), OPS["r"])
             start = _checkpoint(broker, broker.seal())
             after_start = witness.state_anchor()
-            observations = _worker_session(broker, root, contract, timeout=timeout, mode=_worker_mode)
+            observations = _worker_session(broker, root, contract, timeout=timeout,
+                                           mode=_worker_mode, before_release=_before_release)
             if contract["expires_at"] <= time.time():
                 raise TrialBlocked("run challenge expired before closure")
             evidence = _signed_evidence(broker, witness, journal, contract, prior,
