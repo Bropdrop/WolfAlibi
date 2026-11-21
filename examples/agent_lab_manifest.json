@@ -1,0 +1,10 @@
+{
+  "schema": "wolfalibi.agent_lab.manifest.v1",
+  "agent_type": "custom",
+  "entrypoint": {"module": "examples.agent_lab_sample", "callable": "run"},
+  "tools": [
+    {"alias": "lookup", "module": "examples.agent_lab_sample", "callable": "lookup", "surface": "tool", "operation": "invoke"},
+    {"alias": "denied", "module": "examples.agent_lab_sample", "callable": "denied", "surface": "filesystem", "operation": "read"}
+  ],
+  "fixtures": {"query": "hello"}
+}
