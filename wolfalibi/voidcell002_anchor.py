@@ -37,6 +37,10 @@ class AnchorError(RuntimeError):
     """The separately retained ledger anchor cannot substantiate this state."""
 
 
+class LedgerDivergence(AnchorError):
+    """A verified retained anchor differs from the committed ledger or policy."""
+
+
 def _private_file(item):
     return (stat.S_ISREG(item.st_mode) and item.st_uid == os.geteuid()
             and stat.S_IMODE(item.st_mode) == 0o600 and item.st_nlink == 1)
@@ -261,7 +265,7 @@ class LedgerAnchor:
             if previous is not None and previous[1] != digest:
                 raise AnchorError("retained ledger anchor changed under the active lease")
             if any(payload[name] != value for name, value in state.items()):
-                raise AnchorError("target ledger differs from the separately retained anchor")
+                raise LedgerDivergence("target ledger differs from the separately retained anchor")
         self._current = payload, digest
         return self.public_summary()
 

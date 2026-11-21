@@ -35,6 +35,8 @@ For the separate Solitary experiment, run `wolfalibi byoa doctor` to check Linux
 
 [VOIDCELL Experiment 002](docs/VOIDCELL_EXPERIMENT_002.md) adds a target-owned signing key, a UID-gated daemon, and a separately retained ledger checkpoint.
 
+VOIDCELL Experiment 003 provides a two-account synthetic trial, a bounded Unix socket test, and exact-tree local evidence. Cross-UID custody requires observations from independently provisioned gateway and target accounts. [Qualification guide](docs/VOIDCELL_EXPERIMENT_003.md)
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.

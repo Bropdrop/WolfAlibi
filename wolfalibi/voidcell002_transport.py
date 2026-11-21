@@ -7,11 +7,13 @@ a production network transport or a substitute for signed authority records.
 from __future__ import annotations
 
 from array import array
+from concurrent.futures import ThreadPoolExecutor
 import os
 from pathlib import Path
 import socket
 import stat
 import struct
+from threading import BoundedSemaphore, Lock
 import time
 
 from .voidcell_service import MAX_PACKET_BYTES, _canonical, _decode, _snapshot
@@ -20,6 +22,9 @@ from .voidcell_service import MAX_PACKET_BYTES, _canonical, _decode, _snapshot
 MAX_FRAME_BYTES = 65_536
 CONNECT_TIMEOUT_SECONDS = 2.0
 CONNECTION_TIMEOUT_SECONDS = 2.0
+MAX_ACTIVE_CONNECTIONS = 4
+LISTEN_BACKLOG = 16
+_WORKER_PREFIX = "voidcell-local"
 _TYPE = "wolfalibi.voidcell002.local-transport.v1"
 _ACTIONS = frozenset({"dispatch", "reconcile", "revoke", "status"})
 _GATEWAY_ACTIONS = frozenset({"dispatch", "reconcile"})
@@ -33,6 +38,34 @@ _UNAVAILABLE = {"outcome": "BLOCKED", "reason": "VOIDCELL002_TRANSPORT_UNAVAILAB
 
 class Voidcell002TransportError(RuntimeError):
     """The fixed local VOIDCELL002 endpoint cannot be used safely."""
+
+
+class TransportMetrics:
+    """Process-local connection counts with no peer IDs or request contents."""
+
+    def __init__(self):
+        self._lock = Lock()
+        self._counts = dict(active=0, peak_active=0, admitted=0, completed=0,
+                            rejected_capacity=0, rejected_credentials=0)
+
+    def snapshot(self) -> dict[str, int]:
+        with self._lock:
+            return dict(self._counts)
+
+    def _begin(self) -> None:
+        with self._lock:
+            self._counts["active"] += 1
+            self._counts["admitted"] += 1
+            self._counts["peak_active"] = max(self._counts["active"], self._counts["peak_active"])
+
+    def _end(self) -> None:
+        with self._lock:
+            self._counts["active"] -= 1
+            self._counts["completed"] += 1
+
+    def _reject(self, reason) -> None:
+        with self._lock:
+            self._counts[reason] += 1
 
 
 def _close_rights(ancillary) -> None:
@@ -204,31 +237,39 @@ def _safe_send(channel, result: dict) -> None:
         pass
 
 
-def _serve_connection(channel, authority, gateway_uid: int, target_uid: int) -> None:
+def _serve_connection(channel, authority, gateway_uid: int, target_uid: int, *,
+                      authority_lock) -> None:
     """Serve one connection; all malformed or unauthorized paths are opaque."""
     try:
         channel.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
         channel.settimeout(CONNECTION_TIMEOUT_SECONDS)
+        deadline = time.monotonic() + CONNECTION_TIMEOUT_SECONDS
         peer = _peer_credentials(channel)
         data, ancillary, _ = _recv(channel)
         if not data:
             raise Voidcell002TransportError("empty request frame")
         _credentials(ancillary, peer)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise Voidcell002TransportError("request deadline expired")
+        channel.settimeout(remaining)
         _expect_eof(channel)
+        if time.monotonic() >= deadline:
+            raise Voidcell002TransportError("request deadline expired")
+        channel.settimeout(CONNECTION_TIMEOUT_SECONDS)
         action, packet = _decode_request(data)
         if action in _GATEWAY_ACTIONS:
             if peer[1] != gateway_uid:
                 raise Voidcell002TransportError("gateway peer is not authorized")
         elif peer[1] != target_uid:
             raise Voidcell002TransportError("target peer is not authorized")
-        if action == "dispatch":
-            result = authority.dispatch(packet)
-        elif action == "reconcile":
-            result = authority.reconcile(packet)
-        elif action == "revoke":
-            result = authority.revoke(packet)
-        else:
-            result = authority.status()
+        # Socket waits run concurrently. Authority callbacks still share one
+        # serial admission point, and response writes happen after it opens.
+        with authority_lock:
+            if action == "status":
+                result = authority.status()
+            else:
+                result = getattr(authority, action)(packet)
         if type(result) is not dict:
             raise Voidcell002TransportError("authority result is invalid")
     except Exception:
@@ -236,17 +277,26 @@ def _serve_connection(channel, authority, gateway_uid: int, target_uid: int) -> 
     _safe_send(channel, result)
 
 
-def serve(authority, *, socket_path, gateway_uid, on_ready=None) -> None:
+def serve(authority, *, socket_path, gateway_uid, on_ready=None, stop_event=None,
+          metrics=None) -> None:
     """Run one local UID-gated endpoint until interrupted.
 
     The directory must already be a dedicated, owner-controlled 0711 or 0755
-    directory. Existing entries are never unlinked or overwritten.
+    directory. New peers are refused when the handler slots are occupied.
+    Shutdown drains already admitted callbacks. The connection deadline
+    covers reading the request, while authority execution can take longer.
     """
     _check_authority(authority)
     gateway_uid = _check_gateway_uid(gateway_uid)
     _bound_gateway_uid(authority, gateway_uid)
     if on_ready is not None and not callable(on_ready):
         raise TypeError("on_ready must be callable")
+    if stop_event is not None and not callable(getattr(stop_event, "is_set", None)):
+        raise TypeError("stop_event must expose is_set")
+    if metrics is None:
+        metrics = TransportMetrics()
+    elif type(metrics) is not TransportMetrics:
+        raise TypeError("metrics must be TransportMetrics")
     try:
         path = Path(os.fspath(socket_path)).absolute()
     except (TypeError, OSError) as exc:
@@ -256,6 +306,25 @@ def serve(authority, *, socket_path, gateway_uid, on_ready=None) -> None:
         raise Voidcell002TransportError("endpoint path already exists")
     listener = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
     bound = None
+    slots = BoundedSemaphore(MAX_ACTIVE_CONNECTIONS)
+    authority_lock = Lock()
+    target_uid = os.geteuid()
+
+    def handle(channel):
+        try:
+            with channel:
+                _serve_connection(channel, authority, gateway_uid, target_uid,
+                                  authority_lock=authority_lock)
+        finally:
+            metrics._end()
+            slots.release()
+
+    def reject(channel, reason):
+        with channel:
+            channel.setblocking(False)
+            _safe_send(channel, _REJECTED)
+        metrics._reject(reason)
+
     try:
         listener.setsockopt(socket.SOL_SOCKET, socket.SO_PASSCRED, 1)
         listener.bind(str(path))
@@ -266,19 +335,37 @@ def serve(authority, *, socket_path, gateway_uid, on_ready=None) -> None:
             raise Voidcell002TransportError("endpoint binding is unsafe")
         bound = (entry.st_dev, entry.st_ino)
         _endpoint_inventory(directory, path.name)
-        listener.listen(16)
+        listener.listen(LISTEN_BACKLOG)
         listener.settimeout(0.25)
-        if on_ready is not None:
-            on_ready()
-        while True:
-            try:
-                channel, _ = listener.accept()
-            except socket.timeout:
-                continue
-            except InterruptedError:
-                continue
-            with channel:
-                _serve_connection(channel, authority, gateway_uid, os.geteuid())
+        with ThreadPoolExecutor(max_workers=MAX_ACTIVE_CONNECTIONS, thread_name_prefix=_WORKER_PREFIX) as pool:
+            if on_ready is not None:
+                on_ready()
+            while stop_event is None or not stop_event.is_set():
+                try:
+                    channel, _ = listener.accept()
+                except (socket.timeout, InterruptedError):
+                    continue
+                if stop_event is not None and stop_event.is_set():
+                    channel.close()
+                    break
+                try:
+                    peer_uid = _peer_credentials(channel)[1]
+                except (OSError, Voidcell002TransportError):
+                    peer_uid = None
+                if peer_uid not in (gateway_uid, target_uid):
+                    reject(channel, "rejected_credentials")
+                    continue
+                if not slots.acquire(blocking=False):
+                    reject(channel, "rejected_capacity")
+                    continue
+                metrics._begin()
+                try:
+                    pool.submit(handle, channel)
+                except RuntimeError:
+                    channel.close()
+                    metrics._end()
+                    slots.release()
+                    raise
     except KeyboardInterrupt:
         return
     finally:
@@ -334,4 +421,4 @@ def request(socket_path, action, packet=None, *, expected_target_uid=None,
         return dict(_UNAVAILABLE)
 
 
-__all__ = ("Voidcell002TransportError", "request", "serve")
+__all__ = ("TransportMetrics", "Voidcell002TransportError", "request", "serve")

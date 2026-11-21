@@ -17,6 +17,7 @@ from .solitary_cli import _read, _unique_object, _write_new
 from .stage3_evidence import _hex
 from .voidcell import EffectVault
 from .voidcell002_anchor import LedgerAnchor
+from .voidcell002_probe import _INVENTORY_V2_DOMAIN, _INVENTORY_V2_TYPE, _start_ticks
 
 
 KEY_FILE = "target.key"
@@ -201,16 +202,25 @@ class TargetAuthority:
                 or _static_file_state(self._state / _CONFIG_FILE) != self._config_state):
             raise AuthorityError("target ledger, signing key or authority configuration changed")
 
-    def _inventory(self):
+    def _inventory(self, *, version=1):
         directory = self._state.lstat()
+        key = _owner_file((self._state / KEY_FILE).lstat())
+        ledger = _owner_file((self._state / LEDGER_FILE).lstat())
         payload = {
             "type": "WOLFALIBI_VOIDCELL002_INVENTORY_V1", "pid": os.getpid(),
             "target_uid": os.geteuid(), "gateway_uid": self._gateway_uid,
             "state_device": str(directory.st_dev), "state_inode": str(directory.st_ino),
-            "key_mode": stat.S_IMODE((self._state / KEY_FILE).lstat().st_mode),
-            "ledger_mode": stat.S_IMODE((self._state / LEDGER_FILE).lstat().st_mode),
+            "key_mode": stat.S_IMODE(key.st_mode), "ledger_mode": stat.S_IMODE(ledger.st_mode),
         }
-        return {"payload": payload, "signature": self._signer.sign(_INVENTORY_DOMAIN, canon(payload)).hex()}
+        domain = _INVENTORY_DOMAIN
+        if version == 2:
+            payload.update(
+                type=_INVENTORY_V2_TYPE, target_start_ticks=_start_ticks("self"),
+                key_device=str(key.st_dev), key_inode=str(key.st_ino),
+                ledger_device=str(ledger.st_dev), ledger_inode=str(ledger.st_ino),
+            )
+            domain = _INVENTORY_V2_DOMAIN
+        return {"payload": payload, "signature": self._signer.sign(domain, canon(payload)).hex()}
 
     def _invoke(self, action, packet=None):
         with self._lock:
@@ -223,7 +233,7 @@ class TargetAuthority:
                             "outcome": "READY", "effect_count": self._vault.effect_count(),
                             "target_pub": self._target_pub, "target_uid": os.geteuid(), "pid": os.getpid(),
                             "gateway_uid": self._gateway_uid, "anchor": self._anchor.public_summary(),
-                            "inventory": self._inventory(),
+                            "inventory": self._inventory(), "inventory_v2": self._inventory(version=2),
                         }
                     operation = {"dispatch": self._vault.dispatch, "reconcile": self._vault.reconcile,
                                  "revoke": self._vault.revoke}[action]
@@ -300,8 +310,8 @@ def _command(args):
     if args.command == "probe":
         from .voidcell002_probe import probe
         inventory = _read(args.inventory, 16384) if args.inventory is not None else None
-        if isinstance(inventory, dict) and "inventory" in inventory:
-            inventory = inventory["inventory"]
+        if isinstance(inventory, dict):
+            inventory = inventory.get("inventory_v2", inventory.get("inventory", inventory))
         target_pub = _hex(args.target_pub, 32, "target key") if args.target_pub is not None else None
         return probe(args.target_uid, target_pid=args.target_pid, state_dir=args.state_dir, socket_path=args.socket,
                      inventory=inventory, target_pub=target_pub)
