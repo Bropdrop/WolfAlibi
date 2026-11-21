@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-from contextlib import nullcontext, redirect_stderr, redirect_stdout
 from functools import wraps
 import hashlib
 import importlib
@@ -17,8 +16,10 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import sys
+import tempfile
 
 from .agent_probe import AgentProbe, ProbeError, AGENT_TYPES, SURFACES, OPERATIONS, OUTCOMES
 
@@ -31,6 +32,7 @@ _NAME = re.compile(r"^[a-zA-Z][a-zA-Z_0-9]{0,63}$")
 _ALLOWED_FIELDS = frozenset({"schema", "agent_type", "entrypoint", "tools", "fixtures"})
 _TOOL_FIELDS = frozenset({"alias", "module", "callable", "surface", "operation"})
 _MAX_MANIFEST = 32768
+_MAX_WORKER_RESULT = 16384
 
 
 class ManifestError(ValueError):
@@ -299,6 +301,7 @@ def configure_parser(parser):
     parser.add_argument("--research-consent", action="store_true",
                         help="consent separately to writing the aggregate file")
     parser.add_argument("--expected-manifest", help=argparse.SUPPRESS)
+    parser.add_argument("--worker-result", help=argparse.SUPPRESS)
     return parser
 
 
@@ -331,13 +334,25 @@ def _child(args, digest):
     ]
     if args.research_output:
         command.extend(["--research-output", args.research_output, "--research-consent"])
-    completed = subprocess.run(command, stdin=subprocess.DEVNULL, capture_output=True,
-                               text=True, errors="replace", check=False,
-                               timeout=args.process_timeout, env=environment)
-    try:
-        result = json.loads(completed.stdout)
-    except (ValueError, RecursionError):
-        return _blocked("WORKER_PROTOCOL", guidance="check local adapter and report paths")
+    # Discard agent-owned console output across Python, native code, and
+    # subprocesses. Read only a bounded harness result from a private directory.
+    with tempfile.TemporaryDirectory(prefix="wolfalibi-agent-worker-") as directory:
+        result_file = Path(directory) / "result.json"
+        command.extend(["--worker-result", str(result_file)])
+        completed = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, check=False,
+                                   timeout=args.process_timeout, env=environment)
+        try:
+            flags = os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0) | getattr(os, "O_NONBLOCK", 0)
+            with os.fdopen(os.open(result_file, flags), "rb") as stream:
+                if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
+                    return _blocked("WORKER_PROTOCOL")
+                raw = stream.read(_MAX_WORKER_RESULT + 1)
+            if len(raw) > _MAX_WORKER_RESULT:
+                return _blocked("WORKER_PROTOCOL")
+            result = json.loads(raw)
+        except (OSError, ValueError, RecursionError):
+            return _blocked("WORKER_PROTOCOL", guidance="check local adapter and report paths")
     # Accept only the harness's fixed fields and values, never raw child output.
     if not isinstance(result, dict) or result.get("assurance") != "OBSERVATIONAL_ONLY":
         return _blocked("WORKER_PROTOCOL")
@@ -401,12 +416,9 @@ def run_cli(args, *, child=False):
             elif args.credential_env:
                 raise ProbeError("credential forwarding is available through the installed command")
             else:
-                quiet = open(os.devnull, "w") if args.expected_manifest else nullcontext()
-                with quiet as sink, (redirect_stdout(sink) if sink else nullcontext()), \
-                        (redirect_stderr(sink) if sink else nullcontext()):
-                    result = run_manifest(args.manifest, args.output, consent=True,
-                                          allow_local_code=True,
-                                          expected_manifest_sha256=args.expected_manifest)
+                result = run_manifest(args.manifest, args.output, consent=True,
+                                      allow_local_code=True,
+                                      expected_manifest_sha256=args.expected_manifest)
                 if args.research_output:
                     from .agent_research import ResearchExportError, export_research
                     summary = json.loads(Path(args.output).read_bytes())
@@ -426,7 +438,10 @@ def run_cli(args, *, child=False):
         result = _blocked("OPERATOR_INTERRUPTION", outcome="INTERRUPTED")
     except (ManifestError, ProbeError, ValueError, OSError) as exc:
         result = _blocked(type(exc).__name__)
-    print(json.dumps(result, sort_keys=True))
+    if args.worker_result and args.expected_manifest and not child:
+        _write_report(args.worker_result, result)
+    else:
+        print(json.dumps(result, sort_keys=True))
     return 0 if result["outcome"] in ("VALID", "PASS") and result.get("research_export") != "BLOCKED" else 2
 
 

@@ -78,6 +78,13 @@ def has_credential():
     return os.environ.get("WOLFALIBI_TEST_CREDENTIAL") == "SYNTHETIC_TEST_TOKEN"
 
 
+def noisy(tools, _):
+    print("SYNTHETIC_PYTHON_LOG")
+    os.write(1, b"SYNTHETIC_NATIVE_STDOUT\n")
+    os.write(2, b"SYNTHETIC_NATIVE_STDERR\n")
+    tools["scoped"]("allowed")
+
+
 _ROOT = Path(__file__).resolve().parent
 
 
@@ -183,6 +190,14 @@ class Stage4ManifestTests(unittest.TestCase):
         self.assertEqual(command.returncode, 2, result)
         self.assertEqual(result["outcome"], "TIMEOUT", result)
         self.assertFalse(self.report.exists())
+
+    def test_installed_command_discards_worker_stdio_including_descriptor_writes(self):
+        self._configure("noisy", [self._tool("scoped")])
+        command, result = self._cli()
+        self.assertEqual(command.returncode, 0, result)
+        self.assertEqual(result["events"], 1)
+        for raw in (command.stdout, command.stderr, self.report.read_text()):
+            self.assertNotIn("SYNTHETIC_", raw)
 
     def test_research_export_requires_separate_consent_and_omits_run_identifiers(self):
         self._configure("credential_boundary", [self._tool("env", "has_credential")],

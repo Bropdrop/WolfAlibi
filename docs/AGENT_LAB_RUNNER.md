@@ -40,7 +40,7 @@ The API references cover the exact entrypoints exercised by the tests. [MCP v2.3
 
 ## Reports and consent
 
-The observation file contains aggregate counts and coarse duration buckets, adapter and outcome labels, and a local run identifier. The observer does not store prompts, callback inputs or outputs, credential values, resource names, or exception strings. An installed-command worker suppresses normal Python console writes during the run. Code and libraries still control their own file, descriptor, provider, and logging behavior.
+The observation file contains aggregate counts and coarse duration buckets, adapter and outcome labels, and a local run identifier. The observer does not store prompts, callback inputs or outputs, credential values, resource names, or exception strings. The installed command discards worker stdout and stderr and reads bounded harness metadata from a private result file. Code and libraries still control their own file, descriptor, provider, and logging behavior.
 
 Add `--research-consent --research-output /tmp/agent-research.json` to create a separate local aggregate for review. It omits the run ID, manifest digest, paths, aliases, and configuration. Its schema and bucket definitions support interpretation of results. It is unsigned and replayable and can still contain distinctive count patterns. Sharing requires separate consent and review.
 
