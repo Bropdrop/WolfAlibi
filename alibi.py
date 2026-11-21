@@ -109,6 +109,11 @@ DENIED = 8          # attempt blocked by policy / sandbox / race detection
 OUTSIDE = b"!outside"
 DOM_B, DOM_W, DOM_C = b"alibi/broker/v1", b"alibi/witness/v1", b"alibi/cp/v1"
 DOM_RB, DOM_RW = b"alibi/receipt/broker/v1", b"alibi/receipt/witness/v1"
+# A durable witness state anchor is separately signed so a verifier can retain
+# one digest outside the witness host and detect a later rollback to an older
+# local state.  It is not a transparency log or a substitute for an
+# independently operated witness service.
+DOM_WS, DOM_WSA = b"alibi/witness-state/v1", b"alibi/witness-state-anchor/v1"
 
 # Journal v2 is deliberately framed.  A record becomes eligible to release an
 # effect only after its complete frame has been written and fsync() has
@@ -292,18 +297,41 @@ class DurableWitness(Witness):
     domain by itself.
     """
 
-    STATE_VERSION = 1
+    # Version 2 adds a signed, hash-linked state anchor.  A state anchor is
+    # useful only when its digest is retained independently of this state
+    # file; a local attacker who can roll back both copies is still in scope.
+    STATE_VERSION = 2
+    LEGACY_STATE_VERSION = 1
     RECEIPT_HISTORY_LIMIT = 4096
 
-    def __init__(self, state_path, signer=None):
+    def __init__(self, state_path, signer=None, *, expected_state_digest=None):
         self.state_path = os.path.abspath(state_path)
         self._state_fd = None
         self._state_lease_key = None
         self.receipt_hashes = []
+        self._state_generation = None
+        self._state_digest = None
+        self._state_anchor = None
+        self._state_anchor_signature = None
+        if expected_state_digest is not None:
+            if (not isinstance(expected_state_digest, bytes) or
+                    len(expected_state_digest) != 32):
+                raise JournalError("expected witness state digest must be 32 bytes")
         super().__init__(signer)
         try:
             self._acquire_state_lease()
             self._load_state()
+            if self._state_digest is None:
+                if expected_state_digest is not None:
+                    raise JournalError(
+                        "witness state has no signed continuity anchor for the expected digest")
+                # Persist a signed genesis anchor at construction time, rather
+                # than waiting for the first checkpoint.  This gives an
+                # external operator something concrete to retain before a run.
+                self._persist(self.heads, self.receipt_hashes)
+            elif (expected_state_digest is not None and
+                  self._state_digest != expected_state_digest):
+                raise JournalError("witness state digest does not match the external expectation")
         except BaseException:
             self.close()
             raise
@@ -338,7 +366,44 @@ class DurableWitness(Witness):
             os.close(fd)
             raise
 
-    def _state_object(self, heads=None, receipt_hashes=None):
+    @staticmethod
+    def _decode_hex(value, length, label):
+        if type(value) is not str:
+            raise ValueError(f"{label} must be hexadecimal text")
+        decoded = bytes.fromhex(value)
+        if len(decoded) != length:
+            raise ValueError(f"{label} has an invalid length")
+        return decoded
+
+    def _parse_heads(self, heads):
+        if not isinstance(heads, dict):
+            raise ValueError("witness heads must be an object")
+        parsed = {}
+        for broker, item in heads.items():
+            if not isinstance(item, dict):
+                raise ValueError("invalid witness head")
+            epoch, seq_hi = item.get("epoch"), item.get("seq_hi")
+            checkpoint_hash = self._decode_hex(item.get("hash"), 32, "witness head hash")
+            if (type(broker) is not str or len(self._decode_hex(broker, 32, "broker identity")) != 32 or
+                    type(epoch) is not int or epoch < 0 or
+                    type(seq_hi) is not int or seq_hi < 0):
+                raise ValueError("invalid witness head")
+            parsed[broker] = (epoch, checkpoint_hash, seq_hi)
+        return parsed
+
+    def _parse_receipt_hashes(self, receipt_hashes):
+        if (not isinstance(receipt_hashes, list) or
+                len(receipt_hashes) > self.RECEIPT_HISTORY_LIMIT):
+            raise ValueError("invalid durable receipt history")
+        for item in receipt_hashes:
+            self._decode_hex(item, 32, "receipt digest")
+        return list(receipt_hashes)
+
+    def _state_core(self, heads, receipt_hashes, generation, previous_state_digest):
+        if type(generation) is not int or generation < 0:
+            raise ValueError("invalid witness state generation")
+        if not isinstance(previous_state_digest, bytes) or len(previous_state_digest) != 32:
+            raise ValueError("invalid previous witness state digest")
         heads = self.heads if heads is None else heads
         receipt_hashes = self.receipt_hashes if receipt_hashes is None else receipt_hashes
         return {
@@ -348,8 +413,72 @@ class DurableWitness(Witness):
                 broker: {"epoch": epoch, "hash": checkpoint_hash.hex(), "seq_hi": seq_hi}
                 for broker, (epoch, checkpoint_hash, seq_hi) in heads.items()
             },
-            "receipt_hashes": receipt_hashes,
+            "receipt_hashes": list(receipt_hashes),
+            "generation": generation,
+            "previous_state_digest": previous_state_digest.hex(),
         }
+
+    def _anchor_for_core(self, core):
+        state_digest = H(DOM_WS + b"\0" + canon(core))
+        receipt_hashes = core["receipt_hashes"]
+        anchor = {
+            "v": 1,
+            "type": "WITNESS_STATE_ANCHOR_V1",
+            "witness": self.signer.pub.hex(),
+            "generation": core["generation"],
+            "state_digest": state_digest.hex(),
+            "previous_state_digest": core["previous_state_digest"],
+            "heads_digest": H(canon(core["heads"])).hex(),
+            "receipt_history_digest": H(canon(receipt_hashes)).hex(),
+            "last_receipt_digest": receipt_hashes[-1] if receipt_hashes else None,
+        }
+        return anchor, self.signer.sign(DOM_WSA, canon(anchor)), state_digest
+
+    @classmethod
+    def _parse_anchor_package(cls, value, witness_pub):
+        if (not isinstance(value, dict) or not isinstance(value.get("anchor"), dict) or
+                type(value.get("signature")) is not str or
+                not isinstance(witness_pub, bytes) or len(witness_pub) != 32):
+            raise ValueError("malformed witness state anchor")
+        anchor = value["anchor"]
+        signature = cls._decode_hex(value["signature"], 64, "witness state anchor signature")
+        if (anchor.get("v") != 1 or anchor.get("type") != "WITNESS_STATE_ANCHOR_V1" or
+                anchor.get("witness") != witness_pub.hex() or
+                type(anchor.get("generation")) is not int or anchor["generation"] < 0):
+            raise ValueError("invalid witness state anchor identity")
+        cls._decode_hex(anchor.get("state_digest"), 32, "witness state digest")
+        cls._decode_hex(anchor.get("previous_state_digest"), 32, "previous witness state digest")
+        cls._decode_hex(anchor.get("heads_digest"), 32, "witness heads digest")
+        cls._decode_hex(anchor.get("receipt_history_digest"), 32, "receipt history digest")
+        last_receipt = anchor.get("last_receipt_digest")
+        if last_receipt is not None:
+            cls._decode_hex(last_receipt, 32, "last receipt digest")
+        if not verify_sig(witness_pub, DOM_WSA, canon(anchor), signature):
+            raise ValueError("invalid witness state anchor signature")
+        return dict(anchor), signature
+
+    def _state_anchor_package(self):
+        if self._state_anchor is None or self._state_anchor_signature is None:
+            raise JournalError("durable witness has no persisted state anchor")
+        # Canonical round-tripping prevents a caller from mutating the live
+        # in-memory anchor through the returned object.
+        return {
+            "anchor": json.loads(canon(self._state_anchor)),
+            "signature": self._state_anchor_signature.hex(),
+        }
+
+    def state_anchor(self):
+        """Return the latest signed state anchor for external retention."""
+        with self._lock:
+            return self._state_anchor_package()
+
+    @property
+    def state_digest(self):
+        """Latest signed state digest; retain it outside this host for rollback detection."""
+        with self._lock:
+            if self._state_digest is None:
+                raise JournalError("durable witness has no persisted state digest")
+            return bytes(self._state_digest)
 
     def _load_state(self):
         if not os.path.exists(self.state_path):
@@ -360,23 +489,46 @@ class DurableWitness(Witness):
             obj = json.loads(raw)
             if canon(obj) != raw:
                 raise ValueError("state is not canonical")
-            if obj["v"] != self.STATE_VERSION or obj["witness"] != self.signer.pub.hex():
-                raise ValueError("wrong state version or witness identity")
-            parsed = {}
-            for broker, item in obj["heads"].items():
-                epoch, seq_hi = item["epoch"], item["seq_hi"]
-                checkpoint_hash = bytes.fromhex(item["hash"])
-                if (type(broker) is not str or len(bytes.fromhex(broker)) != 32 or
-                        type(epoch) is not int or epoch < 0 or
-                        type(seq_hi) is not int or seq_hi < 0 or len(checkpoint_hash) != 32):
-                    raise ValueError("invalid witness head")
-                parsed[broker] = (epoch, checkpoint_hash, seq_hi)
-            receipt_hashes = obj.get("receipt_hashes", [])
-            if (not isinstance(receipt_hashes, list) or len(receipt_hashes) > self.RECEIPT_HISTORY_LIMIT or
-                    any(type(item) is not str or len(bytes.fromhex(item)) != 32 for item in receipt_hashes)):
-                raise ValueError("invalid durable receipt history")
+            if obj.get("witness") != self.signer.pub.hex():
+                raise ValueError("wrong witness identity")
+            parsed = self._parse_heads(obj.get("heads"))
+            receipt_hashes = self._parse_receipt_hashes(obj.get("receipt_hashes", []))
+            if obj.get("v") == self.LEGACY_STATE_VERSION:
+                # A v1 state has no signed continuity anchor.  It can be
+                # migrated, but cannot satisfy an externally supplied anchor
+                # expectation from before this version.
+                self.heads, self.receipt_hashes = parsed, receipt_hashes
+                return
+            if obj.get("v") != self.STATE_VERSION:
+                raise ValueError("wrong state version")
+            required = {
+                "v", "witness", "heads", "receipt_hashes", "generation",
+                "previous_state_digest", "anchor", "anchor_signature",
+            }
+            if set(obj) != required:
+                raise ValueError("unexpected witness state fields")
+            generation = obj["generation"]
+            if type(generation) is not int or generation < 0:
+                raise ValueError("invalid witness state generation")
+            previous = self._decode_hex(obj["previous_state_digest"], 32,
+                                        "previous witness state digest")
+            core = self._state_core(parsed, receipt_hashes, generation, previous)
+            anchor, signature = self._parse_anchor_package(
+                {"anchor": obj["anchor"], "signature": obj["anchor_signature"]}, self.signer.pub)
+            state_digest = H(DOM_WS + b"\0" + canon(core))
+            if (anchor["generation"] != generation or
+                    anchor["state_digest"] != state_digest.hex() or
+                    anchor["previous_state_digest"] != previous.hex() or
+                    anchor["heads_digest"] != H(canon(core["heads"])).hex() or
+                    anchor["receipt_history_digest"] != H(canon(receipt_hashes)).hex() or
+                    anchor["last_receipt_digest"] != (receipt_hashes[-1] if receipt_hashes else None)):
+                raise ValueError("witness state anchor does not bind state")
             self.heads = parsed
             self.receipt_hashes = receipt_hashes
+            self._state_generation = generation
+            self._state_digest = state_digest
+            self._state_anchor = anchor
+            self._state_anchor_signature = signature
         except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as ex:
             raise JournalError("durable witness state is malformed") from ex
 
@@ -395,8 +547,14 @@ class DurableWitness(Witness):
             view = view[count:]
 
     def _persist(self, heads, receipt_hashes=None):
+        receipt_hashes = self.receipt_hashes if receipt_hashes is None else receipt_hashes
+        generation = 0 if self._state_generation is None else self._state_generation + 1
+        previous = b"\0" * 32 if self._state_digest is None else self._state_digest
+        core = self._state_core(heads, receipt_hashes, generation, previous)
+        anchor, signature, state_digest = self._anchor_for_core(core)
+        state_object = dict(core, anchor=anchor, anchor_signature=signature.hex())
         directory = os.path.dirname(self.state_path) or "."
-        payload = canon(self._state_object(heads, receipt_hashes))
+        payload = canon(state_object)
         fd, temporary = tempfile.mkstemp(prefix=".wolfalibi-witness-", dir=directory)
         try:
             os.fchmod(fd, 0o600)
@@ -421,6 +579,11 @@ class DurableWitness(Witness):
             except FileNotFoundError:
                 pass
             raise
+        self._state_generation = generation
+        self._state_digest = state_digest
+        self._state_anchor = anchor
+        self._state_anchor_signature = signature
+        return self._state_anchor_package()
 
     def _store_head(self, broker, head):
         new_heads = dict(self.heads)
@@ -482,6 +645,17 @@ class DurableWitness(Witness):
             self.close()
         except Exception:
             pass
+
+
+def verify_witness_state_anchor(value, witness_pub):
+    """Validate a signed DurableWitness state anchor without its state file.
+
+    The returned anchor can be retained by an independent verifier.  It proves
+    only that this witness key signed a local state transition; it does not
+    itself make the state externally durable or independently observed.
+    """
+    anchor, _signature = DurableWitness._parse_anchor_package(value, witness_pub)
+    return anchor
 
 # --------------------------------------------------------------------------
 # Broker: the only door
@@ -950,6 +1124,16 @@ class Broker:
             if actual != p:              # raced: log what we REALLY opened, release nothing
                 self._record(self._key_for(actual, is_dir), OPS[op] | DENIED)
                 raise PermissionError("path changed during open (race detected)")
+            # A hard link has more than one filesystem path for one object.
+            # The v0.1 range proof is path-scoped, so it cannot honestly map
+            # every such alias back into every requested path interval.  Do
+            # not release bytes (or truncate an existing file) through an
+            # ambiguous regular-file alias.  This is deliberately a refusal,
+            # not a claim that inode identity has been solved.
+            opened = os.fstat(fd)
+            if (not is_dir and stat.S_ISREG(opened.st_mode) and opened.st_nlink > 1):
+                self._record(key, OPS[op] | DENIED)
+                raise PermissionError("blocked: hard-link resource aliases are unsupported")
         except BaseException:
             os.close(fd)
             raise

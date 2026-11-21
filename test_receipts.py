@@ -177,6 +177,28 @@ class ReceiptTests(unittest.TestCase):
                 broker.close()
                 witness.close()
 
+    def test_v1_empty_policy_remains_verifiable_for_compatibility(self):
+        with tempfile.TemporaryDirectory(prefix="receipt-empty-policy-") as root:
+            _sandbox(root)
+            witness = DurableWitness(os.path.join(root, "witness.json"), Signer(WITNESS_SEED))
+            broker = Broker(root, Signer(BROKER_SEED), witness,
+                            journal=os.path.join(root, "events.wal"))
+            try:
+                run = EvidenceRun(broker, run_id="empty-policy", challenge=b"empty-policy-challenge",
+                                  policy={}, code_digest=H(b"empty-policy-code"))
+                run.begin()
+                broker.read("docs/notes.txt")
+                receipt = run.finish_negative(*subtree("finance"))
+                result = verify_negative_access_receipt(
+                    receipt, broker_pub=broker.signer.pub, witness_pub=witness.signer.pub,
+                    challenge=b"empty-policy-challenge", policy={}, lo=subtree("finance")[0],
+                    hi=subtree("finance")[1], run_id="empty-policy",
+                    code_digest=H(b"empty-policy-code"), epochs=(1, 1))
+                self.assertEqual(result["outcome"], "VERIFIED")
+            finally:
+                broker.close()
+                witness.close()
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,0 +1,57 @@
+{
+  "schema": "wolfalibi.stage1-qualification.v1",
+  "qualified_commit": "dd7c5c76cadc49ab464f14abdbf77269ca735291",
+  "git_tree": "ebfbf4e2dcf70fbcf1d919fef277f9cbf371eac9",
+  "qualified_at_utc": "2026-11-21T01:14:13Z",
+  "scope": "Synthetic local fixtures only; no network targets, credentials, deployment, or hosted CI.",
+  "environment": {
+    "os": "Linux 6.18.57",
+    "architecture": "x86_64",
+    "libc": "glibc 2.41",
+    "python": "CPython 3.12.14",
+    "cryptography": "50.0.0",
+    "git": "2.56.1"
+  },
+  "preconditions": {
+    "head_matched_qualified_commit": true,
+    "working_tree_clean_before": true,
+    "working_tree_clean_after": true
+  },
+  "commands": [
+    {
+      "command": "python3 -m unittest discover -v",
+      "result": "PASS",
+      "tests_passed": 44,
+      "elapsed_seconds": 6.064,
+      "notes": "Includes the four WolfTrap acceptance regressions."
+    },
+    {
+      "command": "python3 -u mutation_test.py",
+      "result": "PASS",
+      "mutants_caught": 8,
+      "mutants": ["M1", "M2", "M3", "M4", "M5", "M6", "M7", "M8"],
+      "elapsed_seconds_approx": 35.55
+    },
+    {
+      "command": "python3 alibi.py demo",
+      "result": "PASS",
+      "notes": "Run-1 finance/secrets absence proofs verified; the synthetic symlink hijack and proof replay were refused in run 2."
+    },
+    {
+      "command": "python3 alibi.py bench 1000000",
+      "result": "PASS",
+      "million_key_measurement": {
+        "build_seconds": 1.11,
+        "proof_seconds": 1.14,
+        "proof_json_bytes": 3721,
+        "verify_milliseconds": 0.28
+      },
+      "notes": "Single-host measurement only; not a performance or security guarantee."
+    }
+  ],
+  "limitations": [
+    "Passing synthetic tests does not establish real-agent confinement or complete mediation.",
+    "BROKER_ONLY evidence is not independently sufficient proof of universal negative access.",
+    "Benchmark timing is environment-specific."
+  ]
+}

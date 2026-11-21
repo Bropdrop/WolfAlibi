@@ -53,6 +53,15 @@ On supported Linux hosts, the broker retains a root directory descriptor and use
 
 This feature needs Linux `openat2`; an unsupported kernel or architecture fails closed rather than falling back to a path-string check. Root setup, the kernel, the broker process, and its signing key remain trusted computing-base components.
 
+In-root symlinks are keyed by their resolved target path. Hard links cannot be
+unambiguously represented by the path-range proof model, so the broker refuses
+regular files with multiple links before returning bytes or truncating an
+existing file. The check follows an open and is therefore TOCTOU-sensitive if
+the trusted root is concurrently hostile; a denied alias is recorded under its
+alias path. This is a conservative byte-release/truncation refusal, not
+inode-wide resource identity or a solution for bind mounts and direct host
+access.
+
 ### Witnesses and receipts
 
 `Witness` checks sorted leaves, contiguous sequence numbers, checkpoint chain links, and a broker signature before signing a checkpoint. `DurableWitness` adds:
@@ -62,7 +71,22 @@ This feature needs Linux `openat2`; an unsupported kernel or architecture fails 
 - persisted checkpoint heads before checkpoint signatures leave the process;
 - a bounded, persisted history of receipt payload digests before receipt signatures leave the process.
 
+State format v2 also signs a hash-linked state anchor on every durable state
+transition. A caller can retain `witness.state_digest` outside the witness host
+and require that digest at the next `DurableWitness` startup. This detects a
+local state rollback only when that outside copy survives; it is not a remote
+transparency log, a quorum, or protection from a party that controls both the
+witness key and every retained copy.
+
 `wolfalibi.receipts.EvidenceRun` requires both a configured durable broker journal and `DurableWitness`, seals a pre-run boundary, seals a completed interval, creates a Merkle absence proof, and produces `NEGATIVE_ACCESS_RECEIPT_V1`. A receipt binds the run ID, fresh challenge, concrete scope, policy-plus-scope digest, declared local artifact digest, signed start/end checkpoint boundaries, broker/witness identities, proof, and signatures.
+
+`NEGATIVE_ACCESS_RECEIPT_V2` is opt-in so v1 verification remains compatible.
+It additionally binds a caller-supplied resource-identity descriptor and
+execution-boundary descriptor, plus a three-transition durable-witness state
+anchor chain. Its verifier requires all three expected values from the caller,
+including a pre-run state digest retained independently. These are substitution
+and rollback-detection bindings, not evidence that the declared boundary
+confined the process or that the declared code executed.
 
 The offline verifier requires expected broker and witness public keys, challenge, policy, range, run ID, code digest, and epoch range from its caller. It returns `VERIFIED`, `REJECTED`, or `BLOCKED`; it never obtains those references from the receipt as authorization.
 
@@ -70,9 +94,20 @@ Receipt assurance is currently **`BROKER_ONLY`**. The code digest is a declared 
 
 ### Optional Linux launcher
 
-`wolfalibi.isolation` can launch a command with Bubblewrap in new user, PID, network, IPC, and UTS namespaces. It supplies a writable `/work`, a temporary `/tmp`, selected read-only runtime library mounts, no stdin, `close_fds=True`, and a cleared environment. It returns `UNSUPPORTED` or `BLOCKED` when prerequisites are absent.
+`wolfalibi.isolation` can launch a direct argv command with Bubblewrap in new
+user, PID, network, IPC, and UTS namespaces. It emits a versioned manifest and
+digest covering a writable host bind at `/work`, an isolated writable temporary
+`/tmp`, selected read-only
+runtime mounts, no stdin, `close_fds=True`, cleared environment, and dropped
+capabilities. It returns typed `UNSUPPORTED`, `BLOCKED`, or `READY` prerequisite
+results. A synthetic probe can narrowly demonstrate that one host marker path
+and one parent file descriptor were absent from launched child processes.
 
-It intentionally does **not** expose a broker IPC route, attest executable identity, prove all file-descriptor or kernel escape avenues closed, or upgrade a receipt to `CONFINED_LINUX_VERIFIED`. Its reported assurance is always `BLOCKED` in v0.1. It is a process-level demonstration and a base for future review, not a general sandbox promise.
+It intentionally does **not** expose a broker IPC route, attest executable
+identity, apply seccomp/Landlock, prove all file-descriptor or kernel escape
+avenues closed, or upgrade a receipt to `CONFINED_LINUX_VERIFIED`. Its reported
+assurance is always `BLOCKED`. It is a process-level demonstration and a base
+for future review, not a general sandbox promise.
 
 ## Extensibility boundary
 
