@@ -19,7 +19,16 @@ _ZERO_CAPS = {field: "0000000000000000" for field in _CAPABILITIES}
 _STATUS_FIELDS = {"Uid", "Gid", *_CAPABILITIES}
 _UNGRANTED_REASON = "INVALID_GATEWAY_DISPATCH"
 _INVENTORY_DOMAIN = b"wolfalibi/voidcell002/private-inventory/v1"
+_INVENTORY_V2_DOMAIN = b"wolfalibi/voidcell002/private-inventory/v2"
+_INVENTORY_V1_TYPE = "WOLFALIBI_VOIDCELL002_INVENTORY_V1"
+_INVENTORY_V2_TYPE = "WOLFALIBI_VOIDCELL002_INVENTORY_V2"
 _PERMISSION_FAILURES = (errno.EACCES, errno.EPERM)
+_ACCESS_TRIALS = (
+    ("target_key", "target.key", "read", os.O_RDONLY),
+    ("target_key", "target.key", "write", os.O_WRONLY),
+    ("ledger", "ledger.sqlite", "read", os.O_RDONLY),
+    ("ledger", "ledger.sqlite", "write", os.O_WRONLY),
+)
 
 
 def _linux():
@@ -44,6 +53,21 @@ def _status(pid):
            for value in caps.values()):
         raise ValueError("invalid process capability fields")
     return {**ids, "capabilities": caps}
+
+
+def _start_ticks(pid):
+    with Path(f"/proc/{pid}/stat").open(encoding="ascii", errors="replace") as stream:
+        # The process name can contain spaces and right parentheses.
+        _, delimiter, fields = stream.read(65_536).rpartition(")")
+    fields = fields.split()
+    if not delimiter or len(fields) < 20 or not _unsigned_decimal(fields[19]):
+        raise ValueError("target process start time unavailable")
+    return fields[19]
+
+
+def _unsigned_decimal(value):
+    return (type(value) is str and 1 <= len(value) <= 20 and value.isascii() and value.isdecimal()
+            and str(int(value)) == value and int(value) < 2**64)
 
 
 def _result(outcome, reason, state, **observations):
@@ -89,15 +113,15 @@ def _target_file(directory, name, target_uid):
     return _fingerprint(entry)
 
 
-def _open_denied(directory, name, access):
+def _observe_open(directory, name, access):
     try:
         fd = os.open(name, access | os.O_NOFOLLOW | os.O_CLOEXEC | os.O_NONBLOCK, dir_fd=directory)
     except OSError as exc:
         if exc.errno not in _PERMISSION_FAILURES:
             raise
-        return True
+        return {"outcome": "DENIED", "errno": errno.errorcode[exc.errno]}
     os.close(fd)
-    return False
+    return {"outcome": "OPENED", "errno": None}
 
 
 def _check_inventory(inventory, target_pub, state, directory_entry):
@@ -108,15 +132,52 @@ def _check_inventory(inventory, target_pub, state, directory_entry):
             or type(inventory) is not dict or inventory.keys() != {"payload", "signature"}):
         raise ValueError("target inventory and an independent target key are required")
     expected = {
-        "type": "WOLFALIBI_VOIDCELL002_INVENTORY_V1", "pid": state["target_pid"],
+        "type": _INVENTORY_V1_TYPE, "pid": state["target_pid"],
         "target_uid": state["target_uid"], "gateway_uid": state["uid"],
         "state_device": str(directory_entry.st_dev), "state_inode": str(directory_entry.st_ino),
         "key_mode": 0o600, "ledger_mode": 0o600,
     }
-    payload = canon(inventory["payload"])
+    payload = inventory["payload"]
+    if type(payload) is not dict:
+        raise ValueError("invalid target inventory payload")
+    domain = _INVENTORY_DOMAIN
+    if payload.get("type") == _INVENTORY_V2_TYPE:
+        refs = ("key_device", "key_inode", "ledger_device", "ledger_inode")
+        values = [payload.get(name) for name in refs]
+        if any(not _unsigned_decimal(value) for value in values) or values[1] == "0" or values[3] == "0":
+            raise ValueError("invalid target inventory object identities")
+        identities = {
+            (expected["state_device"], expected["state_inode"]),
+            tuple(values[:2]), tuple(values[2:]),
+        }
+        if len(identities) != 3:
+            raise ValueError("target inventory object identities are aliased")
+        started = state.get("target_start_ticks")
+        if not _unsigned_decimal(started):
+            raise ValueError("target process start time unavailable")
+        expected.update(type=_INVENTORY_V2_TYPE, target_start_ticks=started, **dict(zip(refs, values)))
+        domain = _INVENTORY_V2_DOMAIN
+    if payload.keys() != expected.keys() or any(type(payload[name]) is not type(value)
+                                                for name, value in expected.items()):
+        raise ValueError("invalid target inventory payload")
     signature = _hex(inventory["signature"], 64, "target inventory signature")
-    if payload != canon(expected) or not verify_sig(target_pub, _INVENTORY_DOMAIN, payload, signature):
+    if payload != expected or not verify_sig(target_pub, domain, canon(expected), signature):
         raise ValueError("target inventory does not match the pinned peer and state directory")
+    return expected
+
+
+def _file_stat_pair(directory, target_uid):
+    return (_target_file(directory, "target.key", target_uid),
+            _target_file(directory, "ledger.sqlite", target_uid))
+
+
+def _match_inventory_files(inventory, before):
+    if inventory["type"] != _INVENTORY_V2_TYPE:
+        return
+    for name, entry in zip(("key", "ledger"), before):
+        if ((inventory[f"{name}_device"], inventory[f"{name}_inode"]) != tuple(map(str, entry[:2]))
+                or inventory[f"{name}_mode"] != stat.S_IMODE(entry[2])):
+            raise ValueError("independently visible target files differ from the signed inventory")
 
 
 def _file_observations(state_dir, state, *, inventory, target_pub):
@@ -126,30 +187,43 @@ def _file_observations(state_dir, state, *, inventory, target_pub):
         entry = os.fstat(directory)
         if entry.st_uid != target_uid or entry.st_mode & 0o022:
             raise ValueError("target state directory is not controlled by the target")
-        names = ("target.key", "ledger.sqlite")
+        attested = _check_inventory(inventory, target_pub, state, entry) if inventory is not None else None
         try:
-            before = tuple(_target_file(directory, name, target_uid) for name in names)
+            before = _file_stat_pair(directory, target_uid)
         except OSError as exc:
-            if exc.errno not in _PERMISSION_FAILURES or stat.S_IMODE(entry.st_mode) != 0o700:
+            if (exc.errno not in _PERMISSION_FAILURES or stat.S_IMODE(entry.st_mode) != 0o700
+                    or attested is None):
                 raise
-            _check_inventory(inventory, target_pub, state, entry)
             before = None
-        observations = {
-            "target_key_read_denied": _open_denied(directory, names[0], os.O_RDONLY),
-            "ledger_write_denied": _open_denied(directory, names[1], os.O_WRONLY),
-            "file_existence_basis": "OWNER_ATTESTED" if before is None else "INDEPENDENT_STAT",
-        }
-        if before is not None and tuple(_target_file(directory, name, target_uid) for name in names) != before:
-            raise ValueError("target file changed during observation")
+        if before is not None:
+            if before[0][:2] == before[1][:2]:
+                raise ValueError("target files share the same object identity")
+            if attested is not None:
+                _match_inventory_files(attested, before)
+        opened = {f"{object_name}_{access}": _observe_open(directory, filename, flags)
+                  for object_name, filename, access, flags in _ACCESS_TRIALS}
+        if before is not None and _file_stat_pair(directory, target_uid) != before:
+            raise ValueError("target files changed during observation")
         if _fingerprint(os.stat(state_dir, follow_symlinks=False)) != _fingerprint(entry):
             raise ValueError("target state directory changed during observation")
-        return observations
+        if before is not None:
+            existence = identities = "INDEPENDENT_STAT"
+        else:
+            existence = "OWNER_ATTESTED"
+            identities = ("OWNER_ATTESTED_DEVICE_INODE" if attested["type"] == _INVENTORY_V2_TYPE
+                          else "OWNER_ATTESTED_DIRECTORY_ONLY")
+        return {
+            **{f"{trial}_denied": result["outcome"] == "DENIED" for trial, result in opened.items()},
+            "file_open_results": opened,
+            "file_open_scope": "ORDINARY_OPEN_WITHOUT_CREATE_OR_TRUNCATE",
+            "file_existence_basis": existence, "file_identity_basis": identities,
+        }
     finally:
         os.close(directory)
 
 
 def probe(target_uid, *, target_pid, state_dir, socket_path, inventory=None, target_pub=None):
-    """Measure ordinary file-open denials against the operator's pinned target.
+    """Measure ordinary read and write open denials for each pinned target file.
 
     When a private directory hides file metadata, require a signed owner
     inventory and a separately supplied target public key for file existence.
@@ -193,6 +267,7 @@ def _probe_live(target, state_dir, socket_path, state, caller, *, inventory, tar
     poller.register(target, select.POLLIN)
     try:
         before = _status(target_pid)
+        state["target_start_ticks"] = _start_ticks(target_pid)
         endpoint = os.stat(socket_path, follow_symlinks=False)
     except (OSError, ValueError, TypeError):
         return _result("BLOCKED", "target credentials or endpoint could not be established", state)
@@ -214,14 +289,15 @@ def _probe_live(target, state_dir, socket_path, state, caller, *, inventory, tar
 
     try:
         observations.update(_file_observations(state_dir, state, inventory=inventory, target_pub=target_pub))
-        if (_status(target_pid) != before or _status("self") != caller
+        if (_status(target_pid) != before or _start_ticks(target_pid) != state["target_start_ticks"]
+                or _status("self") != caller
                 or _fingerprint(os.stat(socket_path, follow_symlinks=False)) != _fingerprint(endpoint)
                 or poller.poll(0)):
             raise ValueError("credentials or endpoint changed during observation")
     except (ImportError, OSError, ValueError, TypeError, RecursionError):
         return _result("BLOCKED", "target file metadata or stable process references were unavailable",
                        state, observations=observations)
-    if not observations["target_key_read_denied"] or not observations["ledger_write_denied"]:
+    if not all(result["outcome"] == "DENIED" for result in observations["file_open_results"].values()):
         return _result("BLOCKED", "an ordinary file-open exclusion was not observed",
                        state, observations=observations)
     return _result("MEASURED_CANDIDATE", "ordinary principal exclusions observed for the pinned fixture",
