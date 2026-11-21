@@ -27,6 +27,8 @@ Test an authorized agent with `wolfalibi agent test --manifest agent.json`. The 
 
 For the separate Solitary experiment, run `wolfalibi byoa doctor` to check Linux prerequisites. The fixed synthetic worker produces `BROKER_ONLY` evidence that can be verified offline with separate expectations. [Solitary setup, control pairs and limitations](docs/BYOA_SOLITARY_V1.md)
 
+[Alibi Clearance V1](docs/ALIBI_CLEARANCE_V1.md) combines a fresh Solitary trial and a separately signed resource-owner grant to gate one offline synthetic read. The gateway produces a local signed decision report.
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.

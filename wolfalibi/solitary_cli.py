@@ -142,6 +142,8 @@ def command(args):
 
 
 def add_byoa_parser(subcommands):
+    from .clearance_cli import add_clearance_parser
+
     parser = subcommands.add_parser("byoa", help="run the fixed synthetic Solitary profile")
     commands = parser.add_subparsers(dest="byoa_command", required=True)
     commands.add_parser("doctor", help="exercise local prerequisites")
@@ -157,4 +159,5 @@ def add_byoa_parser(subcommands):
     verify = commands.add_parser("verify", help="verify a transcript with separate expectations")
     verify.add_argument("--evidence", required=True)
     verify.add_argument("--expect", required=True)
+    add_clearance_parser(commands)
     parser.set_defaults(handler=command)
