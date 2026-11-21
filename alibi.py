@@ -27,15 +27,23 @@ TRUST MODEL (read this):
   (container / seccomp / no ambient credentials) - which this prototype does
   not implement.  Untouched-by-Broker != untouched-by-universe.
 
-Requires: Python 3.9+, `cryptography` (Ed25519).  Everything else is stdlib.
+Requires: Python 3.9+, `cryptography` (Ed25519), and Linux `openat2(2)` for
+the hardened filesystem broker.  Durable journal/witness leases use POSIX
+`fcntl`; unsupported hosts fail closed rather than using path-string fallback.
 """
 import bisect
+import ctypes
+import errno
 import hashlib
 import json
 import os
+import platform
+import stat
 import struct
 import sys
+import tempfile
 import threading
+from contextlib import contextmanager
 
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives.asymmetric.ed25519 import (
@@ -100,6 +108,63 @@ OPS = {"r": 1, "w": 2, "l": 4}
 DENIED = 8          # attempt blocked by policy / sandbox / race detection
 OUTSIDE = b"!outside"
 DOM_B, DOM_W, DOM_C = b"alibi/broker/v1", b"alibi/witness/v1", b"alibi/cp/v1"
+DOM_RB, DOM_RW = b"alibi/receipt/broker/v1", b"alibi/receipt/witness/v1"
+
+# Journal v2 is deliberately framed.  A record becomes eligible to release an
+# effect only after its complete frame has been written and fsync() has
+# returned.  This lets recovery distinguish an incomplete final write from a
+# complete record; old newline-delimited journals do not have that property.
+JOURNAL_MAGIC = b"WALBJ2\0"
+JOURNAL_DIGEST_LEN = 32
+JOURNAL_MAX_RECORD = 16 * 1024 * 1024
+
+
+class JournalError(OSError):
+    """A journal cannot safely support further evidence production."""
+
+
+class BrokerClosed(RuntimeError):
+    """The broker has failed closed or was explicitly closed."""
+
+
+# Linux openat2(2) lets the broker anchor resolution to its directory handle.
+# All currently supported Linux architectures use syscall number 437.  Keeping
+# this small ctypes wrapper avoids adding a dependency merely for a syscall.
+_OPENAT2_SYSCALLS = {
+    "x86_64": 437, "amd64": 437, "aarch64": 437, "arm64": 437,
+    "riscv64": 437, "ppc64le": 437, "s390x": 437,
+}
+_RESOLVE_NO_MAGICLINKS = 0x02
+_RESOLVE_NO_SYMLINKS = 0x04
+_RESOLVE_IN_ROOT = 0x10
+
+
+class _OpenHow(ctypes.Structure):
+    _fields_ = [("flags", ctypes.c_ulonglong),
+                ("mode", ctypes.c_ulonglong),
+                ("resolve", ctypes.c_ulonglong)]
+
+
+def _openat2(dirfd, rel, flags, mode, resolve):
+    """Open ``rel`` beneath ``dirfd`` or fail without path escape.
+
+    The caller has already rejected lexical attempts to escape the root.  The
+    kernel additionally prevents racing symlinks, magic links, and absolute
+    symlink targets from escaping the held root directory descriptor.
+    """
+    number = _OPENAT2_SYSCALLS.get(platform.machine().lower())
+    if not sys.platform.startswith("linux") or number is None:
+        raise OSError(errno.ENOSYS, "secure path resolution requires Linux openat2")
+    libc = ctypes.CDLL(None, use_errno=True)
+    libc.syscall.restype = ctypes.c_long
+    how = _OpenHow(flags, mode, resolve)
+    result = libc.syscall(ctypes.c_long(number), ctypes.c_int(dirfd),
+                          ctypes.c_char_p(os.fsencode(rel)), ctypes.byref(how),
+                          ctypes.c_size_t(ctypes.sizeof(how)))
+    if result == -1:
+        err = ctypes.get_errno()
+        raise OSError(err, os.strerror(err), rel)
+    return int(result)
 
 def enc_entry(path, mask, count, first_seq):
     return struct.pack(">I", len(path)) + path + struct.pack(">BIQ", mask, count, first_seq)
@@ -136,11 +201,20 @@ def verify_sig(pub, dom, msg, sig):
 class WitnessRefused(Exception):
     pass
 
+
+_LIVE_WITNESS_STATES = set()
+_LIVE_WITNESS_STATES_LOCK = threading.Lock()
+
+
 class Witness:
     def __init__(self, signer=None):
         self.signer = signer or Signer()
         self.heads = {}                 # broker pub hex -> (epoch, cp_hash, seq_hi)
         self._lock = threading.Lock()
+
+    def _store_head(self, broker, head):
+        """Persist a head before any outward signature in durable subclasses."""
+        self.heads[broker] = head
 
     def cosign(self, cp, sig, leaves):
         cpb = canon(cp)
@@ -180,8 +254,234 @@ class Witness:
                 raise WitnessRefused("sequence numbers not contiguous")
             if mth(hs, 0, len(hs)).hex() != cp["root"]:
                 raise WitnessRefused("root does not match leaves")
-            self.heads[cp["broker"]] = (cp["epoch"], h, cp["seq_hi"])
+            self._store_head(cp["broker"], (cp["epoch"], h, cp["seq_hi"]))
             return self.signer.sign(DOM_W, cpb)
+
+    def cosign_receipt(self, receipt, broker_sig):
+        """Co-sign a run receipt only when it names this witness's head.
+
+        This adds a run-bound signature; it does not turn an in-memory witness
+        into durable anti-equivocation evidence.  ``DurableWitness`` should be
+        used when a receipt claims a persisted witness history.
+        """
+        try:
+            broker = receipt["broker"]
+            interval = receipt["interval"]
+            end_epoch = interval["end_epoch"]
+            end_hash = bytes.fromhex(interval["end_checkpoint_hash"])
+        except (KeyError, TypeError, ValueError) as ex:
+            raise WitnessRefused("malformed receipt") from ex
+        payload = canon(receipt)
+        if not verify_sig(bytes.fromhex(broker), DOM_RB, payload, broker_sig):
+            raise WitnessRefused("bad receipt broker signature")
+        with self._lock:
+            head = self.heads.get(broker)
+            if head is None or head[0] != end_epoch or head[1] != end_hash:
+                raise WitnessRefused("receipt is not bound to the current witness head")
+            return self.signer.sign(DOM_RW, payload)
+
+
+class DurableWitness(Witness):
+    """A witness whose checkpoint heads survive restart before it signs.
+
+    The caller owns the state location and signing key.  The state is protected
+    by an exclusive POSIX lease and atomically replaced with fsync ordering:
+    temporary file -> fsync(file) -> rename -> fsync(parent directory).
+    This protects one local witness process from forgetting a previously
+    co-signed head; it is not an external transparency log or a second trust
+    domain by itself.
+    """
+
+    STATE_VERSION = 1
+    RECEIPT_HISTORY_LIMIT = 4096
+
+    def __init__(self, state_path, signer=None):
+        self.state_path = os.path.abspath(state_path)
+        self._state_fd = None
+        self._state_lease_key = None
+        self.receipt_hashes = []
+        super().__init__(signer)
+        try:
+            self._acquire_state_lease()
+            self._load_state()
+        except BaseException:
+            self.close()
+            raise
+
+    def _acquire_state_lease(self):
+        try:
+            import fcntl
+        except ImportError as ex:
+            raise JournalError("durable witness state requires POSIX fcntl") from ex
+        directory = os.path.dirname(self.state_path) or "."
+        os.makedirs(directory, mode=0o700, exist_ok=True)
+        lock_path = self.state_path + ".lock"
+        fd = os.open(lock_path, os.O_RDWR | os.O_CREAT | os.O_CLOEXEC, 0o600)
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as ex:
+            os.close(fd)
+            raise JournalError("durable witness state already has a live writer") from ex
+        try:
+            st = os.fstat(fd)
+            key = (st.st_dev, st.st_ino)
+            with _LIVE_WITNESS_STATES_LOCK:
+                if key in _LIVE_WITNESS_STATES:
+                    raise JournalError("durable witness state already has a live writer")
+                _LIVE_WITNESS_STATES.add(key)
+            self._state_fd, self._state_lease_key = fd, key
+        except BaseException:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            except OSError:
+                pass
+            os.close(fd)
+            raise
+
+    def _state_object(self, heads=None, receipt_hashes=None):
+        heads = self.heads if heads is None else heads
+        receipt_hashes = self.receipt_hashes if receipt_hashes is None else receipt_hashes
+        return {
+            "v": self.STATE_VERSION,
+            "witness": self.signer.pub.hex(),
+            "heads": {
+                broker: {"epoch": epoch, "hash": checkpoint_hash.hex(), "seq_hi": seq_hi}
+                for broker, (epoch, checkpoint_hash, seq_hi) in heads.items()
+            },
+            "receipt_hashes": receipt_hashes,
+        }
+
+    def _load_state(self):
+        if not os.path.exists(self.state_path):
+            return
+        try:
+            with open(self.state_path, "rb") as state_file:
+                raw = state_file.read()
+            obj = json.loads(raw)
+            if canon(obj) != raw:
+                raise ValueError("state is not canonical")
+            if obj["v"] != self.STATE_VERSION or obj["witness"] != self.signer.pub.hex():
+                raise ValueError("wrong state version or witness identity")
+            parsed = {}
+            for broker, item in obj["heads"].items():
+                epoch, seq_hi = item["epoch"], item["seq_hi"]
+                checkpoint_hash = bytes.fromhex(item["hash"])
+                if (type(broker) is not str or len(bytes.fromhex(broker)) != 32 or
+                        type(epoch) is not int or epoch < 0 or
+                        type(seq_hi) is not int or seq_hi < 0 or len(checkpoint_hash) != 32):
+                    raise ValueError("invalid witness head")
+                parsed[broker] = (epoch, checkpoint_hash, seq_hi)
+            receipt_hashes = obj.get("receipt_hashes", [])
+            if (not isinstance(receipt_hashes, list) or len(receipt_hashes) > self.RECEIPT_HISTORY_LIMIT or
+                    any(type(item) is not str or len(bytes.fromhex(item)) != 32 for item in receipt_hashes)):
+                raise ValueError("invalid durable receipt history")
+            self.heads = parsed
+            self.receipt_hashes = receipt_hashes
+        except (OSError, KeyError, TypeError, ValueError, json.JSONDecodeError) as ex:
+            raise JournalError("durable witness state is malformed") from ex
+
+    @staticmethod
+    def _write_all_bytes(fd, data):
+        view = memoryview(data)
+        while view:
+            try:
+                count = os.write(fd, view)
+            except OSError as ex:
+                if ex.errno == errno.EINTR:
+                    continue
+                raise
+            if not isinstance(count, int) or count <= 0:
+                raise OSError(errno.EIO, "witness state write made no progress")
+            view = view[count:]
+
+    def _persist(self, heads, receipt_hashes=None):
+        directory = os.path.dirname(self.state_path) or "."
+        payload = canon(self._state_object(heads, receipt_hashes))
+        fd, temporary = tempfile.mkstemp(prefix=".wolfalibi-witness-", dir=directory)
+        try:
+            os.fchmod(fd, 0o600)
+            self._write_all_bytes(fd, payload)
+            os.fsync(fd)
+            os.close(fd)
+            fd = None
+            os.replace(temporary, self.state_path)
+            directory_fd = os.open(directory, os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        except BaseException:
+            if fd is not None:
+                try:
+                    os.close(fd)
+                except OSError:
+                    pass
+            try:
+                os.unlink(temporary)
+            except FileNotFoundError:
+                pass
+            raise
+
+    def _store_head(self, broker, head):
+        new_heads = dict(self.heads)
+        new_heads[broker] = head
+        # This is deliberately before Witness.cosign returns a signature.
+        self._persist(new_heads, self.receipt_hashes)
+        self.heads = new_heads
+
+    def cosign_receipt(self, receipt, broker_sig):
+        """Persist the exact receipt digest before its witness signature escapes."""
+        try:
+            broker = receipt["broker"]
+            interval = receipt["interval"]
+            end_epoch = interval["end_epoch"]
+            end_hash = bytes.fromhex(interval["end_checkpoint_hash"])
+        except (KeyError, TypeError, ValueError) as ex:
+            raise WitnessRefused("malformed receipt") from ex
+        payload = canon(receipt)
+        if not verify_sig(bytes.fromhex(broker), DOM_RB, payload, broker_sig):
+            raise WitnessRefused("bad receipt broker signature")
+        with self._lock:
+            head = self.heads.get(broker)
+            if head is None or head[0] != end_epoch or head[1] != end_hash:
+                raise WitnessRefused("receipt is not bound to the current witness head")
+            receipt_hash = H(payload).hex()
+            if receipt_hash not in self.receipt_hashes:
+                if len(self.receipt_hashes) >= self.RECEIPT_HISTORY_LIMIT:
+                    raise WitnessRefused("durable receipt history is full")
+                updated = self.receipt_hashes + [receipt_hash]
+                self._persist(self.heads, updated)
+                self.receipt_hashes = updated
+            return self.signer.sign(DOM_RW, payload)
+
+    def close(self):
+        fd, key = self._state_fd, self._state_lease_key
+        self._state_fd, self._state_lease_key = None, None
+        if key is not None:
+            with _LIVE_WITNESS_STATES_LOCK:
+                _LIVE_WITNESS_STATES.discard(key)
+        if fd is not None:
+            try:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            except (ImportError, OSError):
+                pass
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass
 
 # --------------------------------------------------------------------------
 # Broker: the only door
@@ -200,73 +500,427 @@ def exact(path):
     b = path.encode()
     return b, b + b"\0"
 
+_LIVE_JOURNALS = set()
+_LIVE_JOURNALS_LOCK = threading.Lock()
+_LIVE_BROKER_IDENTITIES = set()
+_LIVE_BROKER_IDENTITIES_LOCK = threading.Lock()
+
+
 class Broker:
+    """The mediated filesystem boundary.
+
+    An epoch covers *completed* broker operations.  ``seal()`` first closes
+    an admission gate, waits for every admitted operation to finish (including
+    reads, listings, and durable writes), then commits the resulting epoch.
+    A request admitted after that gate reopens belongs to the next epoch.
+
+    This is deliberately a broker-level guarantee only.  It says nothing
+    about direct host access or other unmediated resource channels.
+    """
+
     def __init__(self, root, signer, witness, deny=(), journal=None):
         self.root = os.path.realpath(root)
         self.signer, self.witness = signer, witness
         self.deny = tuple(d.encode() for d in deny)
-        self.journal = journal
-        self._lock = threading.Lock()
+        self.journal = os.path.abspath(journal) if journal else None
+        self._state_lock = threading.RLock()
+        self._barrier = threading.Condition(threading.Lock())
+        self._resource_lock = threading.Lock()
+        self._active_ops = 0
+        self._sealing = False
+        self._closed = False
+        self._fatal_reason = None
         self.epoch, self.prev, self.seq, self.epoch_start = 0, b"\0" * 32, 0, 0
         self.cur, self.sealed = {}, {}
         self._pre_open_hook = None       # test-only: inject races
         self._jfd = None
-        if journal:
-            self._recover()
-            self._jfd = os.open(journal, os.O_WRONLY | os.O_APPEND | os.O_CREAT, 0o600)
+        self._journal_lease_key = None
+        self._identity_lease_key = None
+        self._root_fd = None
+        try:
+            flags = os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC
+            self._root_fd = os.open(self.root, flags)
+            if not stat.S_ISDIR(os.fstat(self._root_fd).st_mode):
+                raise NotADirectoryError(self.root)
+            self._require_secure_resolver()
+            self._acquire_identity_lease()
+            if self.journal:
+                self._open_journal()
+        except BaseException:
+            self._release_journal()
+            self._release_identity_lease()
+            self._close_root_fd()
+            raise
 
-    # ---- durability ------------------------------------------------------
+    # ---- lifecycle / operation boundary ---------------------------------
+    def _assert_live(self, allow_closed=False):
+        if self._fatal_reason is not None:
+            raise BrokerClosed(f"broker is fail-closed: {self._fatal_reason}")
+        if self._closed and not allow_closed:
+            raise BrokerClosed("broker is closed")
+
+    @contextmanager
+    def _operation(self):
+        """Admit one operation into the current epoch's quiescence barrier."""
+        with self._barrier:
+            while self._sealing and self._fatal_reason is None and not self._closed:
+                self._barrier.wait()
+            self._assert_live()
+            self._active_ops += 1
+        try:
+            yield
+        finally:
+            with self._barrier:
+                self._active_ops -= 1
+                if self._active_ops == 0:
+                    self._barrier.notify_all()
+
+    @contextmanager
+    def _seal_window(self):
+        """Exclude new operations and wait for current effects to quiesce."""
+        with self._barrier:
+            while self._sealing and self._fatal_reason is None and not self._closed:
+                self._barrier.wait()
+            self._assert_live()
+            self._sealing = True
+            while self._active_ops:
+                self._barrier.wait()
+            self._assert_live()
+        try:
+            yield
+        finally:
+            with self._barrier:
+                self._sealing = False
+                self._barrier.notify_all()
+
+    def _fail_closed(self, reason):
+        """Prevent future effects and relinquish a broken writer lease."""
+        with self._barrier:
+            if self._fatal_reason is None:
+                self._fatal_reason = str(reason)
+            self._barrier.notify_all()
+        # A failed append must not be followed by another append in the same
+        # process: it could turn a partial frame into ambiguous journal bytes.
+        self._release_journal()
+        self._release_identity_lease()
+
+    def _close_root_fd(self):
+        if self._root_fd is not None:
+            try:
+                os.close(self._root_fd)
+            except OSError:
+                pass
+            self._root_fd = None
+
+    def _require_secure_resolver(self):
+        """Reject hosts that cannot enforce the advertised rooted resolution."""
+        try:
+            probe = _openat2(self._root_fd, ".", os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC,
+                             0, _RESOLVE_IN_ROOT | _RESOLVE_NO_MAGICLINKS)
+        except OSError as ex:
+            raise JournalError("Linux openat2 rooted resolution is required") from ex
+        else:
+            os.close(probe)
+
+    def _acquire_identity_lease(self):
+        """Reject two live broker objects using one signing identity in-process."""
+        key = self.signer.pub.hex()
+        with _LIVE_BROKER_IDENTITIES_LOCK:
+            if key in _LIVE_BROKER_IDENTITIES:
+                raise JournalError("broker signing identity already has a live writer")
+            _LIVE_BROKER_IDENTITIES.add(key)
+        self._identity_lease_key = key
+
+    def _release_identity_lease(self):
+        key, self._identity_lease_key = self._identity_lease_key, None
+        if key is not None:
+            with _LIVE_BROKER_IDENTITIES_LOCK:
+                _LIVE_BROKER_IDENTITIES.discard(key)
+
+    def close(self):
+        """Stop admitting effects and release held descriptors/leases."""
+        with self._barrier:
+            self._closed = True
+            self._barrier.notify_all()
+            while self._active_ops or self._sealing:
+                self._barrier.wait()
+        self._release_journal()
+        self._release_identity_lease()
+        self._close_root_fd()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        self.close()
+
+    def __del__(self):
+        # Best effort only; callers that need timely lease release should use
+        # close() or a context manager.
+        try:
+            self._release_journal()
+            self._release_identity_lease()
+            self._close_root_fd()
+        except Exception:
+            pass
+
+    # ---- durable single-writer journal ----------------------------------
+    def _open_journal(self):
+        try:
+            import fcntl
+        except ImportError as ex:
+            raise JournalError("exclusive journal leases require POSIX fcntl") from ex
+        flags = os.O_RDWR | os.O_APPEND | os.O_CREAT | os.O_CLOEXEC
+        if hasattr(os, "O_NOFOLLOW"):
+            flags |= os.O_NOFOLLOW
+        fd = os.open(self.journal, flags, 0o600)
+        try:
+            try:
+                fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except BlockingIOError as ex:
+                raise JournalError("journal already has a live broker writer") from ex
+            st = os.fstat(fd)
+            key = (st.st_dev, st.st_ino)
+            with _LIVE_JOURNALS_LOCK:
+                if key in _LIVE_JOURNALS:
+                    raise JournalError("journal already has a live broker writer")
+                _LIVE_JOURNALS.add(key)
+            self._jfd, self._journal_lease_key = fd, key
+            self._recover()
+        except BaseException:
+            if self._journal_lease_key is not None:
+                with _LIVE_JOURNALS_LOCK:
+                    _LIVE_JOURNALS.discard(self._journal_lease_key)
+                self._journal_lease_key = None
+            try:
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            except OSError:
+                pass
+            os.close(fd)
+            self._jfd = None
+            raise
+
+    def _release_journal(self):
+        with self._resource_lock:
+            fd, key = self._jfd, self._journal_lease_key
+            self._jfd, self._journal_lease_key = None, None
+        if key is not None:
+            with _LIVE_JOURNALS_LOCK:
+                _LIVE_JOURNALS.discard(key)
+        if fd is not None:
+            try:
+                import fcntl
+                fcntl.flock(fd, fcntl.LOCK_UN)
+            except (ImportError, OSError):
+                pass
+            try:
+                os.close(fd)
+            except OSError:
+                pass
+
+    def _read_journal(self):
+        if self._jfd is None:
+            return b""
+        os.lseek(self._jfd, 0, os.SEEK_SET)
+        chunks = []
+        while True:
+            block = os.read(self._jfd, 65536)
+            if not block:
+                break
+            chunks.append(block)
+        os.lseek(self._jfd, 0, os.SEEK_END)
+        return b"".join(chunks)
+
+    def _truncate_journal(self, size):
+        os.ftruncate(self._jfd, size)
+        os.fsync(self._jfd)
+        os.lseek(self._jfd, 0, os.SEEK_END)
+
+    @staticmethod
+    def _frame(obj):
+        payload = canon(obj)
+        if len(payload) > JOURNAL_MAX_RECORD:
+            raise JournalError("journal record exceeds configured limit")
+        return (JOURNAL_MAGIC + struct.pack(">I", len(payload)) + payload +
+                H(payload))
+
+    @staticmethod
+    def _write_all(fd, data):
+        view = memoryview(data)
+        while view:
+            try:
+                written = os.write(fd, view)
+            except OSError as ex:
+                if ex.errno == errno.EINTR:
+                    continue
+                raise
+            if not isinstance(written, int) or written <= 0:
+                raise OSError(errno.EIO, "journal write made no progress")
+            view = view[written:]
+
     def _jwrite(self, obj):
         if self._jfd is None:
             return
-        os.write(self._jfd, json.dumps(obj, separators=(",", ":")).encode() + b"\n")
+        self._write_all(self._jfd, self._frame(obj))
         os.fsync(self._jfd)
 
     def _recover(self):
-        if not os.path.exists(self.journal):
+        """Replay complete v2 frames and discard only an incomplete final frame."""
+        data = self._read_journal()
+        if not data:
             return
-        with open(self.journal, "rb") as f:
-            lines = f.read().split(b"\n")
-        lines = lines[:-1]               # drop torn tail (event never released)
-        os.truncate(self.journal, sum(len(l) + 1 for l in lines))
-        for ln in lines:
-            o = json.loads(ln)
-            if o["t"] == "e":
-                self._apply(bytes.fromhex(o["k"]), o["m"], o["seq"])
-            else:
-                cp = o["cp"]
-                self.sealed[o["epoch"]] = dict(
-                    cp=cp, sig=bytes.fromhex(o["sig"]), wsig=bytes.fromhex(o["wsig"]),
-                    leaves=[bytes.fromhex(x) for x in o["leaves"]])
-                self.epoch, self.prev = o["epoch"] + 1, cp_hash(cp)
-                self.epoch_start, self.cur = cp["seq_hi"], {}
+        if not data.startswith(JOURNAL_MAGIC):
+            if JOURNAL_MAGIC.startswith(data):
+                # A crash before the first complete frame cannot have released
+                # an effect, because release follows the full write + fsync.
+                self._truncate_journal(0)
+                return
+            raise JournalError("legacy or malformed journal is not safe to recover")
+
+        records, offset = [], 0
+        header_len = len(JOURNAL_MAGIC) + 4
+        while offset < len(data):
+            start = offset
+            if len(data) - offset < header_len:
+                break
+            if data[offset:offset + len(JOURNAL_MAGIC)] != JOURNAL_MAGIC:
+                # Accept only an *incomplete* non-frame suffix for compatibility
+                # with the historical torn-tail reproducer.  A complete legacy
+                # line/object could represent an effect from an unsafe writer,
+                # so recovery must refuse it rather than silently omit it.
+                tail = data[start:]
+                if b"\n" in tail:
+                    raise JournalError("unexpected complete non-frame journal data")
+                try:
+                    json.loads(tail)
+                except (TypeError, ValueError, UnicodeDecodeError):
+                    pass
+                else:
+                    raise JournalError("unexpected complete non-frame journal data")
+                break
+            offset += len(JOURNAL_MAGIC)
+            (length,) = struct.unpack_from(">I", data, offset)
+            offset += 4
+            if length > JOURNAL_MAX_RECORD:
+                raise JournalError("impossible journal frame length")
+            end = offset + length + JOURNAL_DIGEST_LEN
+            if end > len(data):
+                offset = start
+                break
+            payload, digest = data[offset:offset + length], data[offset + length:end]
+            if H(payload) != digest:
+                raise JournalError("journal frame digest mismatch")
+            try:
+                obj = json.loads(payload)
+            except (TypeError, ValueError, UnicodeDecodeError) as ex:
+                raise JournalError("journal frame is not canonical JSON") from ex
+            if not isinstance(obj, dict) or canon(obj) != payload:
+                raise JournalError("journal frame is not an object")
+            records.append(obj)
+            offset = end
+        if offset != len(data):
+            self._truncate_journal(offset)
+        for obj in records:
+            self._replay(obj)
+
+    def _replay(self, obj):
+        try:
+            kind = obj["t"]
+        except (KeyError, TypeError) as ex:
+            raise JournalError("journal record has no type") from ex
+        if kind == "e":
+            try:
+                seq, key, mask = obj["seq"], bytes.fromhex(obj["k"]), obj["m"]
+            except (KeyError, TypeError, ValueError) as ex:
+                raise JournalError("malformed event record") from ex
+            if (type(seq) is not int or seq != self.seq + 1 or
+                    type(mask) is not int or mask <= 0 or mask & ~15):
+                raise JournalError("non-contiguous or invalid event record")
+            self._apply(key, mask, seq)
+            return
+        if kind != "s":
+            raise JournalError("unknown journal record type")
+        try:
+            epoch, cp = obj["epoch"], obj["cp"]
+            sig, wsig = bytes.fromhex(obj["sig"]), bytes.fromhex(obj["wsig"])
+            leaves = [bytes.fromhex(item) for item in obj["leaves"]]
+        except (KeyError, TypeError, ValueError) as ex:
+            raise JournalError("malformed seal record") from ex
+        if type(epoch) is not int or epoch != self.epoch:
+            raise JournalError("journal seal has an unexpected epoch")
+        items = sorted(self.cur.items())
+        expected_leaves = [enc_entry(k, m, c, f) for k, (m, c, f) in items]
+        expected_cp = self._checkpoint(items)
+        if (leaves != expected_leaves or cp != expected_cp or
+                not verify_sig(self.signer.pub, DOM_B, canon(cp), sig)):
+            raise JournalError("journal seal does not commit the recovered events")
+        self.sealed[epoch] = dict(cp=cp, sig=sig, wsig=wsig, leaves=leaves,
+                                  hs=[leaf_hash(leaf) for leaf in leaves])
+        self.epoch, self.prev = epoch + 1, cp_hash(cp)
+        self.epoch_start, self.cur = self.seq, {}
 
     def _apply(self, key, mask, seq):
-        self.seq = max(self.seq, seq)
-        e = self.cur.get(key)
-        if e is None:
+        self.seq = seq
+        entry = self.cur.get(key)
+        if entry is None:
             self.cur[key] = [mask, 1, seq]
         else:
-            e[0] |= mask
-            e[1] += 1
+            entry[0] |= mask
+            entry[1] += 1
 
     def _record(self, key, mask):
-        """Write-ahead record. Raises -> caller must NOT release data (fail closed)."""
-        with self._lock:
+        """Write-ahead record. Raises -> caller must NOT release data/effects."""
+        with self._state_lock:
+            self._assert_live()
             seq = self.seq + 1
-            self._jwrite({"t": "e", "seq": seq, "k": key.hex(), "m": mask})
+            try:
+                self._jwrite({"t": "e", "seq": seq, "k": key.hex(), "m": mask})
+            except Exception as ex:
+                self._fail_closed(f"event journal append failed: {ex}")
+                raise
             self._apply(key, mask, seq)
 
     # ---- guarded access --------------------------------------------------
+    def _candidate_path(self, rel):
+        """Return a diagnostic resolved path, or None for lexical root escape."""
+        if not isinstance(rel, str):
+            raise TypeError("broker paths must be text")
+        if "\0" in rel or os.path.isabs(rel):
+            return None
+        depth = 0
+        for part in rel.split(os.sep):
+            if part in ("", "."):
+                continue
+            if part == "..":
+                depth -= 1
+                if depth < 0:
+                    return None
+            else:
+                depth += 1
+        return os.path.realpath(os.path.join(self.root, rel))
+
     def _key_for(self, p, is_dir):
-        if p != self.root and not p.startswith(self.root + os.sep):
+        if p is None or (p != self.root and not p.startswith(self.root + os.sep)):
             return OUTSIDE
         rel = os.path.relpath(p, self.root).replace(os.sep, "/")
         rel = "" if rel == "." else rel
         return (rel + "/" if is_dir else rel).encode()
 
+    def _safe_open(self, rel, flags, is_dir, is_write):
+        resolve = _RESOLVE_IN_ROOT | _RESOLVE_NO_MAGICLINKS
+        # Creation follows only non-symlink components.  This prevents a
+        # swapped parent from directing O_CREAT outside the held root before a
+        # post-open check could notice it.
+        if is_write:
+            resolve |= _RESOLVE_NO_SYMLINKS
+        flags |= os.O_CLOEXEC | (os.O_DIRECTORY if is_dir else 0)
+        return _openat2(self._root_fd, rel, flags, 0o600 if is_write else 0, resolve)
+
+    def _record_unsafe_resolution(self, op):
+        self._record(OUTSIDE, OPS[op] | DENIED)
+
     def _guarded_open(self, rel, flags, op, is_dir):
-        p = os.path.realpath(os.path.join(self.root, rel))     # resolves symlinks / ..
+        p = self._candidate_path(rel)
         key = self._key_for(p, is_dir)
         denied = key == OUTSIDE or any(key.startswith(d) for d in self.deny)
         self._record(key, OPS[op] | (DENIED if denied else 0))  # BEFORE any release
@@ -274,7 +928,23 @@ class Broker:
             raise PermissionError("blocked: " + ("outside sandbox" if key == OUTSIDE else "policy"))
         if self._pre_open_hook:
             self._pre_open_hook(p)
-        fd = os.open(p, flags | os.O_NOFOLLOW | os.O_CLOEXEC | (os.O_DIRECTORY if is_dir else 0), 0o600)
+        # This is a diagnostic race check, not the boundary enforcement (that
+        # is openat2 below).  It retains the actual resolved in-root target in
+        # the evidence as a denied attempt, while refusing before any data is
+        # released or an O_CREAT call can create a file.
+        actual = os.path.realpath(os.path.join(self.root, rel))
+        if actual != p:
+            self._record(self._key_for(actual, is_dir), OPS[op] | DENIED)
+            raise PermissionError("path changed during resolution (race detected)")
+        try:
+            fd = self._safe_open(rel, flags, is_dir, op == "w")
+        except OSError as ex:
+            if ex.errno in (errno.EXDEV, errno.ELOOP, errno.EPERM, errno.EACCES):
+                self._record_unsafe_resolution(op)
+                raise PermissionError("blocked: unsafe path resolution") from ex
+            if ex.errno in (errno.ENOSYS, errno.EINVAL):
+                raise BrokerClosed("secure path resolution is unsupported on this host") from ex
+            raise
         try:
             actual = os.path.realpath(f"/proc/self/fd/{fd}")
             if actual != p:              # raced: log what we REALLY opened, release nothing
@@ -286,59 +956,84 @@ class Broker:
         return fd
 
     def read(self, rel):
-        fd = self._guarded_open(rel, os.O_RDONLY, "r", False)
-        with os.fdopen(fd, "rb") as f:
-            return f.read()
+        with self._operation():
+            fd = self._guarded_open(rel, os.O_RDONLY, "r", False)
+            with os.fdopen(fd, "rb") as f:
+                return f.read()
 
     def listdir(self, rel="."):
-        fd = self._guarded_open(rel, os.O_RDONLY, "l", True)
-        try:
-            return sorted(os.listdir(fd))
-        finally:
-            os.close(fd)
+        with self._operation():
+            fd = self._guarded_open(rel, os.O_RDONLY, "l", True)
+            try:
+                return sorted(os.listdir(fd))
+            finally:
+                os.close(fd)
 
     def write(self, rel, data):
-        fd = self._guarded_open(rel, os.O_WRONLY | os.O_CREAT, "w", False)
-        try:
-            os.ftruncate(fd, 0)          # truncate only AFTER the path check passed
-            os.write(fd, data)
-        finally:
-            os.close(fd)
+        # Validate/copy caller data before opening or truncating any target.
+        # An invalid buffer must not turn into an empty-file side effect.
+        if not isinstance(data, (bytes, bytearray, memoryview)):
+            raise TypeError("broker writes require bytes-like data")
+        payload = bytes(data)
+        with self._operation():
+            fd = self._guarded_open(rel, os.O_WRONLY | os.O_CREAT, "w", False)
+            try:
+                os.ftruncate(fd, 0)      # only after secure resolution + logging
+                self._write_all(fd, payload)
+                os.fsync(fd)
+            finally:
+                os.close(fd)
 
     # ---- sealing & proving ----------------------------------------------
+    def _checkpoint(self, items):
+        leaves = [enc_entry(k, m, c, f) for k, (m, c, f) in items]
+        hs = [leaf_hash(leaf) for leaf in leaves]
+        cp = {"v": 1, "broker": self.signer.pub.hex(), "epoch": self.epoch,
+              "prev": self.prev.hex(), "size": len(leaves),
+              "root": mth(hs, 0, len(hs)).hex(),
+              "events": sum(c for _, (m, c, f) in items),
+              "seq_lo": self.epoch_start + 1, "seq_hi": self.seq}
+        return cp
+
     def seal(self):
-        with self._lock:
-            items = sorted(self.cur.items())
-            leaves = [enc_entry(k, m, c, f) for k, (m, c, f) in items]
-            hs = [leaf_hash(l) for l in leaves]
-            cp = {"v": 1, "broker": self.signer.pub.hex(), "epoch": self.epoch,
-                  "prev": self.prev.hex(), "size": len(leaves),
-                  "root": mth(hs, 0, len(hs)).hex(),
-                  "events": sum(c for _, (m, c, f) in items),
-                  "seq_lo": self.epoch_start + 1, "seq_hi": self.seq}
-            sig = self.signer.sign(DOM_B, canon(cp))
-            wsig = self.witness.cosign(cp, sig, leaves)         # may raise
-            rec = dict(cp=cp, sig=sig, wsig=wsig, leaves=leaves, hs=hs)
-            self.sealed[self.epoch] = rec
-            self._jwrite({"t": "s", "epoch": self.epoch, "cp": cp, "sig": sig.hex(),
-                          "wsig": wsig.hex(), "leaves": [l.hex() for l in leaves]})
-            self.epoch, self.prev = self.epoch + 1, cp_hash(cp)
-            self.epoch_start, self.cur = self.seq, {}
-            return cp
+        with self._seal_window():
+            with self._state_lock:
+                self._assert_live()
+                items = sorted(self.cur.items())
+                leaves = [enc_entry(k, m, c, f) for k, (m, c, f) in items]
+                hs = [leaf_hash(leaf) for leaf in leaves]
+                cp = self._checkpoint(items)
+                sig = self.signer.sign(DOM_B, canon(cp))
+                wsig = self.witness.cosign(cp, sig, leaves)     # may refuse safely
+                try:
+                    self._jwrite({"t": "s", "epoch": self.epoch, "cp": cp,
+                                  "sig": sig.hex(), "wsig": wsig.hex(),
+                                  "leaves": [leaf.hex() for leaf in leaves]})
+                except Exception as ex:
+                    self._fail_closed(f"seal journal append failed: {ex}")
+                    raise
+                self.sealed[self.epoch] = dict(cp=cp, sig=sig, wsig=wsig,
+                                               leaves=leaves, hs=hs)
+                self.epoch, self.prev = self.epoch + 1, cp_hash(cp)
+                self.epoch_start, self.cur = self.seq, {}
+                return cp
 
     def prove_empty(self, lo, hi, e_from, e_to):
+        with self._state_lock:
+            self._assert_live(allow_closed=True)
+            records = [self.sealed[e] for e in range(e_from, e_to + 1)]
         out = []
-        for e in range(e_from, e_to + 1):
-            rec = self.sealed[e]
-            hs = rec.get("hs") or [leaf_hash(l) for l in rec["leaves"]]
-            keys = [dec_entry(l)[0] for l in rec["leaves"]]
+        for e, rec in zip(range(e_from, e_to + 1), records):
+            hs = rec.get("hs") or [leaf_hash(leaf) for leaf in rec["leaves"]]
+            keys = [dec_entry(leaf)[0] for leaf in rec["leaves"]]
             i = bisect.bisect_left(keys, lo)
             if i < len(keys) and keys[i] < hi:
                 raise NotEmpty(e, keys[i])
             def node(j):
                 return {"idx": j, "leaf": rec["leaves"][j].hex(),
-                        "path": [x.hex() for x in audit_path(hs, j)]}
-            out.append({"cp": rec["cp"], "sig": rec["sig"].hex(), "wsig": rec["wsig"].hex(),
+                        "path": [item.hex() for item in audit_path(hs, j)]}
+            out.append({"cp": rec["cp"], "sig": rec["sig"].hex(),
+                        "wsig": rec["wsig"].hex(),
                         "proof": {"pred": node(i - 1) if i > 0 else None,
                                   "succ": node(i) if i < len(keys) else None}})
         return {"query": {"lo": lo.hex(), "hi": hi.hex()}, "epochs": out}

@@ -198,7 +198,13 @@ class Witnessing(unittest.TestCase):
             br.read("finance/q3.xlsx" if touch_finance else "docs/notes.txt"); br.seal()
             br.read("docs/notes.txt"); br.seal()
             return br, bs, ws
-        A, B = history(False), history(True)
+        # Stage 1 rejects two live brokers with the same signing identity.
+        # Keep the first sealed history for the splice check, then release its
+        # live identity lease before constructing the deliberately separate
+        # witness-amnesia history.
+        A = history(False)
+        A[0].close()
+        B = history(True)
         lo, hi = subtree("finance")
         with self.assertRaises(NotEmpty):
             B[0].prove_empty(lo, hi, 0, 1)                       # truth: finance WAS touched
@@ -325,6 +331,9 @@ class Crash(unittest.TestCase):
         br2.read("src/main.py"); br2.seal()                                        # journal still appendable
         keys = [dec_entry(l)[0] for l in br2.sealed[0]["leaves"]]
         self.assertEqual(keys, [b"docs/notes.txt", b"src/main.py"])
+        # Stage 1 now enforces a single live journal writer.  Release the
+        # recovered broker's lease before checking a second clean recovery.
+        br2.close()
         br3 = Broker(tmp, Signer(self.SEED), Witness(), journal=jp)               # second recovery is clean
         self.assertEqual(br3.epoch, 1)
 
