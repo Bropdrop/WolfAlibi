@@ -72,8 +72,8 @@ class GatewayReferenceTests(unittest.TestCase):
 
 
 class OwnerHandoffTests(unittest.TestCase):
-    def _material(self):
-        now = int(time.time())
+    def _material(self, *, now=None):
+        now = int(time.time()) if now is None else now
         owner, gateway, target, broker, witness, supervisor = (Signer() for _ in range(6))
         expected, terminal = bytes(range(32)), bytes(range(32, 64))
         contract = agent_solitary_contract("fixture-owner-handoff", bytes(reversed(range(32))), now + 60)
@@ -148,6 +148,17 @@ class OwnerHandoffTests(unittest.TestCase):
             record = self._record(material)
             with self.assertRaisesRegex(fixture.FixtureError, "signature|pinned"):
                 fixture.verify_owner_handoff(record, owner_pub=Signer().pub)
+
+    def test_historical_handoff_remains_parseable_after_its_grant_window(self):
+        # Reconciliation consumes the already signed packet/journal state.  It
+        # must not reinterpret a historical handoff as a current dispatch
+        # authorization merely because wall time later advanced.
+        material = self._material(now=1_700_000_000)
+        verification = {"outcome": "VERIFIED", "witness_state_digest": material["terminal"].hex()}
+        with patch.object(fixture, "verify_solitary", return_value=verification):
+            record = self._record(material)
+            payload = fixture.verify_owner_handoff(record, owner_pub=material["owner"].pub)
+        self.assertLess(payload["owner_grant"]["payload"]["expires_at"], int(time.time()))
 
 
 class RolePreflightTests(unittest.TestCase):
