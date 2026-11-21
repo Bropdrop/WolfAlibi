@@ -21,6 +21,10 @@ Read [the architecture](docs/ARCHITECTURE.md), [threat model](docs/security/THRE
 
 WolfAlibi does not confine a real agent to the broker, attest code execution, establish every direct filesystem/network/API route is closed, create an external witness transparency log, or authorize a downstream effect. It must not be used for real secrets, compliance, financial, regulatory, or safety decisions.
 
+## Agent Lab
+
+Test an authorized agent with `wolfalibi agent test --manifest agent.json`. The runner requires consent before importing agent code and writes a local report of explicitly observed tool callbacks. [Setup, pinned adapters and synthetic examples](docs/AGENT_LAB_RUNNER.md)
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.

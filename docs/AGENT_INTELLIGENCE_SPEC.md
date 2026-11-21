@@ -62,7 +62,7 @@ Before any aggregated public dataset:
 
 **A.** Framework adapters for the current OpenAI Agents SDK, LangChain and MCP documented callback surfaces, with host-only synthetic fixtures and explicit permissions. Validate API versions against authoritative documentation before implementation.
 
-**B.** A local `agent test` CLI that can load a manifest describing an authorized Python entrypoint, a known tool registry, synthetic corpus, declared observations and explicit human consent. No arbitrary remote code fetching, hidden credentials or default network exposure.
+**B.** A local `agent test` CLI that loads a manifest describing an authorized Python entrypoint, tool bindings, synthetic fixtures, expected observations and explicit operator consent. The harness loads operator-supplied local modules and forwards only explicitly selected credential variables. Those modules retain their ordinary OS and network permissions.
 
 **C.** An experimental worker bridge to the Stage 3.5 broker that permits a narrow, declared resource set under a measured Linux execution profile. Never promote coverage to complete because a framework callback fired.
 
@@ -73,7 +73,7 @@ Before any aggregated public dataset:
 - Tool wrapper does not alter return values or swallow exceptions; supports sync/async callbacks.
 - No data collection when consent is absent.
 - No sensitive payload capture even if tool arguments, output or exceptions contain fabricated secrets.
-- No automatic network transmissions.
+- The harness sends no telemetry or reports. Provider and network activity of authorized agent code follows the operator's own configuration.
 - Thread-safe bounded aggregate counters with close/in-flight handling.
 - Reports clearly labeled observational rather than security proof.
 - Unknown external frameworks or missing hooks do not receive misleading coverage claims.

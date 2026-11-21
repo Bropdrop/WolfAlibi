@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wolfalibi"
+version = "0.4.0.dev0"
+description = "Local agent observation and broker evidence research"
+requires-python = ">=3.11"
+dependencies = ["cryptography==50.0.0"]
+
+[project.optional-dependencies]
+mcp = ["mcp==2.3.0"]
+langchain = ["langchain==1.5.2", "langchain-core==1.8.4"]
+openai-agents = ["openai-agents==0.25.0"]
+agent-all = ["mcp==2.3.0", "langchain==1.5.2", "langchain-core==1.8.4", "openai-agents==0.25.0"]
+
+[project.scripts]
+wolfalibi = "wolfalibi_cli:main"
+
+[tool.setuptools]
+py-modules = ["alibi", "wolfalibi_cli"]
+
+[tool.setuptools.packages.find]
+include = ["wolfalibi", "wolfalibi.*"]
