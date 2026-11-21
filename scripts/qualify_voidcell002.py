@@ -14,6 +14,8 @@ import re
 import shutil
 import sqlite3
 import sys
+from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
 import cryptography
 
@@ -91,7 +93,14 @@ def main(argv=None):
         return 2
 
     doctor = _doctor()
-    focused = unit_suite("-v", "test_voidcell002.py")
+    with TemporaryDirectory(prefix="wolfalibi-voidcell002-evidence-") as directory:
+        case_path = Path(directory) / "lost-reply.json"
+        with patch.dict(os.environ, {"WOLFALIBI_VOIDCELL002_EVIDENCE_FILE": str(case_path)}):
+            focused = unit_suite("-v", "test_voidcell002.py")
+        try:
+            case = json.loads(case_path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            case = None
     full = unit_suite("discover", "-v")
     mutations = run(sys.executable, "-u", "mutation_test.py")
     mutations["detected"] = len(re.findall(r"^CAUGHT\s+M\d+", mutations["stdout"], re.MULTILINE))
@@ -104,6 +113,7 @@ def main(argv=None):
         _clean(after)
         and unchanged
         and focused["outcome"] == full["outcome"] == "PASS"
+        and case is not None
         and inherited >= 214
         and mutations["exit_code"] == 0
         and mutations["detected"] == 8
@@ -113,6 +123,7 @@ def main(argv=None):
         revision_unchanged=unchanged,
         doctor=doctor,
         focused_tests=focused,
+        synthetic_reconciliation=case,
         full_suite=full,
         inherited_tests=inherited,
         mutation_suite=mutations,

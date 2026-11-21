@@ -35,6 +35,9 @@ The target configuration accepts these fields.
 The target needs trusted source, interpreter, and dependencies and protected
 ancestors for its state and socket directories.
 It retains a separate latest signed ledger anchor outside the database tree.
+The service rejects state and anchor directories with the same observed
+identity and rejects observed nesting. The operator establishes the separate
+rollback domains.
 The anchor binds both the SQLite authorization pins and the owner configuration,
 including the UID admitted by the transport.
 Before each effect it compares the committed SQLite state with that anchor;
@@ -106,10 +109,12 @@ python -m pip install -e '.[agent-all]'
 python scripts/qualify_voidcell002.py
 ```
 
-The qualification reports the inherited regressions and the explicit custody
-preflight.  Here its overall result and exit status are intentionally
-`UNSUPPORTED` / `2`; that is the expected fail-closed result, not a test skip
-or an assurance downgrade.
+The JSON qualification records the exact revision, commands, test outcomes,
+and custody preflight. It also records a synthetic lost-response trial with
+the signed dispatch header, owner grant, target receipt, gateway outcomes,
+and before/after effect counts. Private keys and witness journal contents
+stay outside the report. Here a successful protocol run returns custody
+`UNSUPPORTED` with exit status `2`.
 
 Production deployment, arbitrary-agent/process confinement, denial-of-service
 containment, complete route inventory, independently administered owner/

@@ -41,13 +41,15 @@ def _private_directory(path):
     entry = path.lstat()
     if uid == 0 or not stat.S_ISDIR(entry.st_mode) or entry.st_uid != uid or stat.S_IMODE(entry.st_mode) != 0o700:
         raise AuthorityError("a private directory owned by a non-root target UID is required")
+    lineage = [(entry.st_dev, entry.st_ino)]
     for parent in path.parents:
         info = parent.lstat()
         sticky_root = info.st_uid == 0 and info.st_mode & stat.S_ISVTX
         if (not stat.S_ISDIR(info.st_mode) or info.st_uid not in (0, uid)
                 or (info.st_mode & 0o022 and not sticky_root)):
             raise AuthorityError("target state ancestors must exclude non-owner writes")
-    return path
+        lineage.append((info.st_dev, info.st_ino))
+    return path, lineage
 
 
 def _owner_file(info):
@@ -81,7 +83,7 @@ def _sync_directory(path):
 
 def init_key(state_dir):
     """Generate the private target seed under the actual owner UID."""
-    state = _private_directory(state_dir)
+    state, _ = _private_directory(state_dir)
     seed = secrets.token_bytes(32)
     fd = os.open(state / KEY_FILE, os.O_CREAT | os.O_EXCL | os.O_WRONLY | os.O_NOFOLLOW, 0o600)
     with os.fdopen(fd, "wb") as stream:
@@ -124,10 +126,9 @@ class TargetAuthority:
     """Keep target keys, effect ledger and retained checkpoint in the owner role."""
 
     def __init__(self, state_dir, anchor_dir, *, _new_config=None):
-        self._state = _private_directory(state_dir)
-        self._anchor_dir = _private_directory(anchor_dir)
-        if (self._state == self._anchor_dir or self._state in self._anchor_dir.parents
-                or self._anchor_dir in self._state.parents):
+        self._state, state_lineage = _private_directory(state_dir)
+        self._anchor_dir, anchor_lineage = _private_directory(anchor_dir)
+        if state_lineage[0] in anchor_lineage or anchor_lineage[0] in state_lineage:
             raise AuthorityError("retain the anchor outside the target ledger directory")
         self._lock = Lock()
         self._resources = ExitStack()

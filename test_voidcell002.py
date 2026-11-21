@@ -19,12 +19,32 @@ from unittest.mock import patch
 from alibi import DurableWitness, Signer, canon, verify_sig
 from wolfalibi.agent_solitary import agent_solitary_contract, run_agent_solitary
 from wolfalibi.stage3_worker import UnsupportedWorker
-from wolfalibi.voidcell002 import TargetAuthority, init_key, initialize
+from wolfalibi.voidcell002 import AuthorityError, TargetAuthority, init_key, initialize
 from wolfalibi.voidcell002_anchor import AnchorError, LedgerAnchor
 from wolfalibi.voidcell002_probe import preflight, probe
-from wolfalibi.voidcell002_transport import Voidcell002TransportError, request, serve
+from wolfalibi.voidcell002_transport import Voidcell002TransportError, _decode_request, request, serve
 from wolfalibi.voidcell_gateway import EffectGateway
 from wolfalibi.voidcell_records import dispatch_digest, grant, revoke, sign_dispatch, verify_receipt
+
+
+_EVIDENCE_FILE = "WOLFALIBI_VOIDCELL002_EVIDENCE_FILE"
+
+
+def _write_public_evidence(path, evidence):
+    data = canon(evidence) + b"\n"
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC
+    with os.fdopen(os.open(path, flags, 0o600), "wb") as output:
+        os.fchmod(output.fileno(), 0o600)
+        output.write(data)
+        output.flush()
+        os.fsync(output.fileno())
+
+
+def _public_gateway_phase(path):
+    with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as db:
+        entry = db.execute("SELECT state, outcome, dispatch_sha256 FROM intent WHERE slot = 1").fetchone()
+    phase, outcome, digest = entry if entry is not None else ("EMPTY", None, None)
+    return {"phase": phase, "outcome": outcome, "dispatch_sha256": digest}
 
 
 def _serve_fixture(state, anchor, endpoint, gateway_uid, ready):
@@ -149,8 +169,11 @@ class Voidcell002TargetTests(unittest.TestCase):
             self.assertEqual(reopened.status()["effect_count"], 0)
 
     def test_lost_reply_recovers_one_target_receipt_after_reopen(self):
+        output = os.environ.get(_EVIDENCE_FILE)
         calls = []
         captured = []
+        gateway_journal = {}
+        target_counts = {}
         with self._target() as target:
             def lose_ack(action, packet):
                 self.assertEqual(action, "dispatch")
@@ -159,16 +182,23 @@ class Voidcell002TargetTests(unittest.TestCase):
                 raise TimeoutError("synthetic lost reply after target commit")
 
             with self._gateway(target, lose_ack) as gateway:
+                target_counts["before_dispatch"] = target.status()["effect_count"]
+                self.assertEqual(target_counts["before_dispatch"], 0)
+                if output is not None:
+                    gateway_journal["before_dispatch"] = _public_gateway_phase(self.gateway_path)
                 approval = self._grant(target.scope)
                 uncertain = gateway.dispatch(qualification=self.envelope, owner_grant=approval)
                 self.assertEqual(uncertain["outcome"], "AMBIGUOUS", uncertain)
                 self.assertNotIn("receipt", uncertain)
                 packet, applied = captured[0]
                 self._verified(target, applied, packet, "ACCEPTED_EVIDENCED")
-                self.assertEqual(target.status()["effect_count"], 1)
+                target_counts["after_lost_reply"] = target.status()["effect_count"]
+                self.assertEqual(target_counts["after_lost_reply"], 1)
                 replay = gateway.dispatch(qualification=self.envelope, owner_grant=approval)
                 self.assertEqual(replay["outcome"], "AMBIGUOUS", replay)
                 self.assertEqual(calls, ["dispatch"])
+                if output is not None:
+                    gateway_journal["after_lost_reply"] = _public_gateway_phase(self.gateway_path)
         with self._target() as reopened:
             def reconcile_only(action, record):
                 self.assertEqual(action, "reconcile")
@@ -180,8 +210,51 @@ class Voidcell002TargetTests(unittest.TestCase):
                 self._verified(reopened, result, packet, "ACCEPTED_EVIDENCED")
                 self.assertEqual(result["receipt"], applied["receipt"])
                 self.assertEqual(gateway.reconcile(), result)
-            self.assertEqual(reopened.status()["effect_count"], 1)
+                if output is not None:
+                    gateway_journal["after_reconcile"] = _public_gateway_phase(self.gateway_path)
+            target_counts["after_reconcile"] = reopened.status()["effect_count"]
+            self.assertEqual(target_counts["after_reconcile"], 1)
         self.assertEqual(calls, ["dispatch", "reconcile"])
+        if output is not None:
+            expected = {
+                "initial_dispatch": "AMBIGUOUS", "repeat_dispatch": "AMBIGUOUS",
+                "reconcile": "ACCEPTED_EVIDENCED", "same_receipt": True,
+                "transport_actions": ["dispatch", "reconcile"],
+                "gateway_phases": ["EMPTY", "PENDING", "TERMINAL"],
+            }
+            observed = {
+                "initial_dispatch": uncertain["outcome"], "repeat_dispatch": replay["outcome"],
+                "reconcile": result["outcome"], "same_receipt": result["receipt"] == applied["receipt"],
+                "transport_actions": calls,
+                "gateway_phases": [entry["phase"] for entry in gateway_journal.values()],
+            }
+            self.assertEqual(observed, expected)
+            _write_public_evidence(output, {
+                "schema": "WOLFALIBI_VOIDCELL_002_LOST_REPLY_EVIDENCE_V1",
+                "assurance": "SAME_UID_PROTOCOL_ONLY",
+                "case": "committed_target_effect_lost_reply_reconciliation",
+                "public_keys": {
+                    "target": self.target_pub.hex(), "owner": self.owner.pub.hex(),
+                    "gateway": self.gateway_signer.pub.hex(), "broker": self.broker.pub.hex(),
+                    "witness": self.witness_signer.pub.hex(), "supervisor": self.supervisor.pub.hex(),
+                },
+                "witness": {
+                    "expected_initial_state_sha256": self.genesis.hex(),
+                    "retained_terminal_state_sha256": self.terminal.hex(),
+                },
+                "qualification": {
+                    "type": self.envelope["supervisor_record"]["payload"]["type"],
+                    "sha256": packet["route"]["payload"]["qualification_sha256"],
+                },
+                "dispatch_sha256": dispatch_digest(packet),
+                "signed_dispatch": packet["route"],
+                "signed_owner_grant": packet["grant"],
+                "signed_target_receipt": result["receipt"],
+                "target_ledger_counts": target_counts,
+                "gateway_journal": gateway_journal,
+                "expected": expected,
+                "observed": observed,
+            })
 
     def test_lost_request_fences_absence_and_late_packet_after_reopen(self):
         undelivered = []
@@ -237,6 +310,19 @@ class Voidcell002TargetTests(unittest.TestCase):
         self.assertEqual(result["uid"], os.getuid())
         self.assertEqual(result["euid"], os.geteuid())
         self.assertNotIn("observations", result)
+
+    def test_same_directory_identity_cannot_hold_the_retained_anchor(self):
+        alias = self.root / "alternate-anchor"
+        alias.mkdir(mode=0o700)
+        lstat = Path.lstat
+
+        def observe(path):
+            return lstat(self.state if path == alias else path)
+
+        with patch.object(Path, "lstat", observe):
+            with self.assertRaisesRegex(AuthorityError, "retain the anchor outside"):
+                TargetAuthority(self.state, alias)
+        self.assertEqual(list(alias.iterdir()), [])
 
     def test_independently_retained_anchor_detects_an_older_ledger_snapshot(self):
         ledger = self.state / "ledger.sqlite"
@@ -359,6 +445,11 @@ class Voidcell002TargetTests(unittest.TestCase):
     @unittest.skipUnless(sys.platform == "linux" and hasattr(socket, "SCM_CREDENTIALS"),
                          "requires Linux Unix peer credentials")
     def test_owner_uid_cannot_dispatch_as_configured_distinct_gateway_uid(self):
+        wrong_version = canon({
+            "type": "wolfalibi.voidcell002.local-transport.v999", "action": "status", "packet": None,
+        })
+        with self.assertRaises(Voidcell002TransportError):
+            _decode_request(wrong_version)
         with self._target() as target:
             packet = self._packet(target)
         endpoint_dir = self.root / "endpoint"

@@ -82,7 +82,8 @@ def _decode_request(raw: bytes) -> tuple[str, object]:
         frame = _decode(raw, maximum=MAX_FRAME_BYTES)
     except Exception as exc:
         raise Voidcell002TransportError("invalid request frame") from exc
-    if type(frame) is not dict or frozenset(frame) != {"type", "action", "packet"}:
+    if (type(frame) is not dict or frozenset(frame) != {"type", "action", "packet"}
+            or frame["type"] != _TYPE):
         raise Voidcell002TransportError("invalid request frame")
     action, packet = frame["action"], frame["packet"]
     if type(action) is not str or action not in _ACTIONS:
