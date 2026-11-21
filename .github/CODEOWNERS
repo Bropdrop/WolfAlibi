@@ -1,0 +1,5 @@
+# Ownership routing for proposed changes. This file alone does not enforce approval.
+# Enable a matching GitHub branch ruleset with code-owner review before relying on it.
+* @Bropdrop
+.github/ @Bropdrop
+SECURITY.md @Bropdrop
