@@ -1,0 +1,11 @@
+{
+  "schema": "wolfalibi.agent_lab.manifest.v2",
+  "agent_type": "langchain",
+  "entrypoint": {"module": "examples.agent_langchain_sample", "callable": "run"},
+  "tools": [
+    {"alias": "lookup", "module": "examples.agent_langchain_sample", "callable": "lookup",
+     "surface": "tool", "operation": "invoke"}
+  ],
+  "fixtures": {"query": "hello"},
+  "expect_counts": {"tool.invoke.success": 1}
+}

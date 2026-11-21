@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Local CLI for synthetic WolfAlibi receipts and explicit verification.
 
-This command intentionally has no network, cloud, or credential integration.
-Its demo subcommand uses only the synthetic fixture supplied by alibi.py.
+The broker demo uses synthetic fixtures. Agent Lab supports explicitly
+consented execution of operator-owned agents with local observational reports.
 """
 from __future__ import annotations
 
@@ -187,9 +187,19 @@ def parser() -> argparse.ArgumentParser:
                        help="synthetic file outside workdir that must be absent in child")
     probe.add_argument("--timeout", type=float, default=30.0)
     probe.set_defaults(handler=cmd_confinement_probe)
+
+    from wolfalibi.agent_lab import configure_parser, run_cli
+    agent = sub.add_parser("agent", help="inspect authorized agent tool callbacks")
+    agent_subcommands = agent.add_subparsers(dest="agent_command", required=True)
+    test = configure_parser(agent_subcommands.add_parser("test", help="run a trusted local manifest"))
+    test.set_defaults(handler=lambda args: run_cli(args, child=True))
     return result
 
 
+def main(argv=None):
+    arguments = parser().parse_args(argv)
+    return arguments.handler(arguments)
+
+
 if __name__ == "__main__":
-    arguments = parser().parse_args()
-    raise SystemExit(arguments.handler(arguments))
+    raise SystemExit(main())

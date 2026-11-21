@@ -1,92 +1,57 @@
-# WolfAlibi Agent Lab — Manifest Runner v0
+# WolfAlibi Agent Lab
 
-**Status:** experimental plug-in testing for Python agents *you own or have permission to run*. This is **not** the Stage 3.5 confinement system, not a security sandbox, and not a cryptographic negative-access receipt.
+Agent Lab runs operator-approved Python entrypoints with observed tool bindings and creates a local JSON report. Use it with your own agents or agents you have explicit authorization to run. The report's assurance is `OBSERVATIONAL_ONLY`.
 
-## Start in 30 seconds
+## Run one local test
 
-From the repository root on the `feat/agent-lab-manifest-runner` branch:
-
-```bash
-# Parse the manifest without importing or executing any agent code.
-python3 -m wolfalibi.agent_lab \
-  --manifest examples/agent_lab_manifest.json --dry-run
-
-# Execute a synthetic agent after explicit opt-in.
-python3 -m wolfalibi.agent_lab \
-  --manifest examples/agent_lab_manifest.json \
-  --consent --allow-local-code \
-  --output agent-observation-summary.json
-
-# Reproduce the focused integration tests.
-python3 -m unittest -v test_agent_lab.py test_agent_probe.py
-```
-
-The JSON report is created locally, mode 0600, and never overwritten. The observer sends no telemetry to WolfAlibi. An error is reported by coarse status only, without serializing tool arguments, results, exception strings or prompts. **Your agent itself may still access the network or your files**, because this runner does not restrict its privileges. Use local synthetic fixtures by default, or run in a separately configured, appropriately reviewed sandbox.
-
-## Connect your own Python agent
-
-Write an importable Python module exposing:
-
-```python
-def my_tool(text):
-    return text.upper()
-
-def run(tools, fixtures):
-    # Re-register your agent's tool callbacks with the wrappers below.
-    return tools["my_tool"](fixtures["query"])
-```
-
-Then point a local JSON manifest at those functions. The entrypoint receives `tools` (a dictionary of callbacks instrumented by `AgentProbe`) and `fixtures` (a dictionary of operator-provided strings). A tool may also be `async def`, and the entrypoint may return a coroutine. **The agent or operator must actually use the passed wrappers; direct calls and hidden framework tools are not observed.**
-
-A manifest looks like:
-
-```json
-{
-  "schema": "wolfalibi.agent_lab.manifest.v1",
-  "agent_type": "custom",
-  "entrypoint": {"module": "my_agent", "callable": "run"},
-  "tools": [
-    {"alias": "my_tool", "module": "my_agent", "callable": "my_tool",
-     "surface": "tool", "operation": "invoke"}
-  ],
-  "fixtures": {"query": "synthetic hello"}
-}
-```
-
-Run it only after inspecting the trusted module and explicitly approving local-code execution:
+Run from a repository checkout with Python 3.11 or newer. Install only the base project for custom agents, or use the pinned `agent-all` extra for all example manifests.
 
 ```bash
-python3 -m wolfalibi.agent_lab --manifest my_agent_lab.json \
-  --consent --allow-local-code --output local-summary.json
+python3 -m venv .venv
+. .venv/bin/activate
+python -m pip install -e '.[agent-all]'
+wolfalibi agent test --manifest examples/agent_lab_manifest.json --dry-run
+wolfalibi agent test --manifest examples/agent_lab_manifest.json \
+  --consent --allow-local-code --output /tmp/custom.agent-observation.json
 ```
 
-If integrating with a framework, register the wrapped callbacks into its actual tool registry before invoking the agent. MCP, LangChain and OpenAI Agents SDK specific automatic adapters are **future work**; there is no auto-discovery of installed agents or hidden monitoring.
+Dry runs validate configuration without importing the manifest's modules. Every execution requires both consent flags. Every report uses create-only local file creation with permissions at most `0600`. Omitting `--output` uses `<manifest-stem>.agent-observation.json` in the current directory.
 
-## Data collected
+The installed command starts a separate worker with a reduced environment. It forwards provider credentials only when named with `--credential-env NAME`, after both run consent flags are supplied. The bundled framework examples use local fake models or in-memory MCP. They require no provider credentials. SDK tracing is disabled by default in the worker environment. Trusted code can change its runtime configuration and retains ordinary OS and network permissions.
 
-- Counts of explicitly wrapped call categories and coarse outcomes: success, error, denied, timeout or cancelled.
-- Coarse elapsed-time buckets.
-- A random local run ID and a local manifest digest (a fingerprint, not plaintext).
-- An explicit `OBSERVATIONAL_ONLY` assurance level and `EXPLICITLY_WRAPPED_CALLS_ONLY` coverage marker.
+## Attach an agent
 
-**Never collected by the observer:** prompts, raw arguments, tool return values, private file names, exception messages, credentials, cookies, API response bodies or chat transcripts.
+The module's `run(tools, fixtures)` entrypoint receives a mapping of explicit bindings. Register and use the bindings in your agent. Direct calls, SDK operations outside those callbacks, and framework tools registered elsewhere fall outside the observation scope.
 
-The runner does not export the manifest itself; however, the digest can identify an identical low-entropy manifest if reports are shared. Do not upload reports by default. Any community submission must have separate per-report consent, data minimization, retention controls and privacy review.
+| V2 `agent_type` | Binding and exact qualified SDK | Synthetic manifest |
+| --- | --- | --- |
+| `custom` | Python callback wrapped by AgentProbe | [Custom Python](../examples/agent_lab_manifest.json) |
+| `mcp` | Wrapped callback for `MCPServer.add_tool` in `mcp==2.3.0`. The programmatic adapter can also wrap a supplied `Client` or `ClientSession.call_tool`. Select one observation point to avoid counting the same operation on both sides. | [MCP](../examples/agent_mcp_manifest.json) |
+| `langchain` | `StructuredTool` through `langchain==1.5.2` and `langchain-core==1.8.4` | [LangChain](../examples/agent_langchain_manifest.json) |
+| `openai-agents` | `FunctionTool` through `openai-agents==0.25.0` | [OpenAI Agents](../examples/agent_openai_manifest.json) |
 
-## Hard limits
+Use the individual extras `.[mcp]`, `.[langchain]` or `.[openai-agents]` if you only need one SDK. Missing or different pins return `UNSUPPORTED` for an applicable V2 manifest. V1 manifests retain their Python-callback behavior. Their `agent_type` is a label.
 
-- Loading an authorized module runs its code with the ordinary Python process's OS privileges. `--dry-run` never performs imports, but `--allow-local-code` is **not** a confinement control.
-- Only explicitly wrapped calls appear in reports. A clean report cannot prove that other accesses did not occur.
-- The wrapper cannot guarantee the underlying tool's side effects or actual external delivery.
-- A synchronous callback returning a coroutine or arbitrary awaitable is not yet treated as an async instrumented operation by the SDK; declare it `async def` where possible.
-- No timeouts, child process scope, provider authentication management, network blocking, automatic consent verification, or independent trust anchor is supplied by this basic runner.
-- Agent-owned code may print its own prompts, secrets, outputs or logs directly to the terminal; the observer does not suppress them. Use only synthetic data and do not share raw console logs without inspection.
-- No Web UI or hosting. No automatic telemetry upload. The exit status of an agent test is not a production security verdict.
+V2 optionally accepts `limits.max_calls`, a cooperative `limits.agent_timeout_ms`, a per-tool `timeout_ms` for awaitable tools, and `expect_counts` with exact expected observations keyed by `surface.operation.outcome`. A timed tool is exposed as an async callback. Use `async def` for framework tools that await work. Blocking synchronous Python and tasks that suppress cancellation depend on the installed command's `--process-timeout`; child-process termination has limited scope. The run reports unfinished work or interruption explicitly.
 
-## Qualification
+Framework schema rejection before dispatch produces zero callback events. Retried or duplicate admissions produce separate events. `complete_wrapped_calls` refers to the admitted callbacks. A timed-out or incomplete run also carries a coarse `outcome`. Manual SDK events are labeled separately.
 
-The developer's local isolated harness passed **19/19 new manifest runner tests** for consent, dry-run non-import, JSON schema/duplicate rejection, sync/async callbacks, error redaction, create-only local reporting and execution behavior. A separate dry-run and synthetic two-tool example also completed locally.
+The API references cover the exact entrypoints exercised by the tests. [MCP v2.3.0 and migration](https://github.com/modelcontextprotocol/python-sdk/releases/tag/v2.3.0) · [LangChain StructuredTool 1.8.4](https://github.com/langchain-ai/langchain/blob/langchain-core%3D%3D1.8.4/libs/core/langchain_core/tools/structured.py) · [OpenAI Agents SDK v0.25.0](https://github.com/openai/openai-agents-python/tree/v0.25.0)
 
-The existing Stage 3.5 suite and the Stage 3.5 mutation harness have **not yet been rerun on this published branch**. Qualification of this PR is required before any merge or release. All changes are isolated from the cryptographic engine.
+## Reports and consent
 
-See [Agent SDK](AGENT_TESTING.md) and [Research intelligence model](AGENT_INTELLIGENCE_SPEC.md) for limits and future opt-in aggregation.
+The observation file contains aggregate counts and coarse duration buckets, adapter and outcome labels, and a local run identifier. The observer does not store prompts, callback inputs or outputs, credential values, resource names, or exception strings. An installed-command worker suppresses normal Python console writes during the run. Code and libraries still control their own file, descriptor, provider, and logging behavior.
+
+Add `--research-consent --research-output /tmp/agent-research.json` to create a separate local aggregate for review. It omits the run ID, manifest digest, paths, aliases, and configuration. Its schema and bucket definitions support interpretation of results. It is unsigned and replayable and can still contain distinctive count patterns. Sharing requires separate consent and review.
+
+**Evidence boundary.** Agent Lab observes callback lifecycles. Its reports cannot establish absence of access or receipt freshness. Stage 3.5's signed broker receipts carry the distinct `BROKER_ONLY` assurance. Independently qualified confinement and production operation remain `BLOCKED`. [Stage 3.5 evidence](STAGE35_EVIDENCE.md) · [Research privacy model](AGENT_INTELLIGENCE_SPEC.md)
+
+## Qualification commands
+
+```bash
+python -m unittest discover -v
+python -m unittest -v test_agent_probe.py test_agent_probe_stage4.py \
+  test_agent_lab.py test_agent_lab_stage4.py test_agent_research.py \
+  test_agent_mcp.py test_agent_langchain.py test_agent_openai.py
+python -u mutation_test.py
+```
