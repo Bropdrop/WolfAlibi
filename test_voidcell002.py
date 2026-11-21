@@ -264,6 +264,15 @@ class Voidcell002TargetTests(unittest.TestCase):
             self._target()
         self.assertEqual(anchored.read_bytes(), retained_before)
 
+    def test_changed_gateway_uid_cannot_rebind_retained_authority(self):
+        config = self.state / "authority.json"
+        altered = dict(self.config, gateway_uid=self.gateway_uid - 2)
+        with self._target() as target:
+            config.write_bytes(canon(altered))
+            self.assertEqual(target.status()["outcome"], "BLOCKED")
+        with self.assertRaises(AnchorError):
+            self._target()
+
     def test_crash_window_after_sql_commit_blocks_receipt_and_reopen(self):
         anchored = self.anchor / "ledger-anchor.json"
         retained_before = anchored.read_bytes()

@@ -42,7 +42,7 @@ def _private_file(item):
             and stat.S_IMODE(item.st_mode) == 0o600 and item.st_nlink == 1)
 
 
-def _ledger_state(db, *, integrity):
+def _ledger_state(db, *, integrity, authority_policy_digest):
     if integrity and db.execute("PRAGMA quick_check(1)").fetchall() != [("ok",)]:
         raise AnchorError("target SQLite integrity check failed")
     digest = hashlib.sha256(b"wolfalibi/voidcell/002/logical-ledger/v1\n")
@@ -68,7 +68,7 @@ def _ledger_state(db, *, integrity):
             if table == "configuration":
                 if policy_digest is not None:
                     raise AnchorError("target ledger contains multiple policy rows")
-                policy_digest = H(row[0]).hex()
+                policy_digest = H(canon([H(row[0]).hex(), authority_policy_digest])).hex()
             append([value.hex() if type(value) is bytes else value for value in row])
     if policy_digest is None:
         raise AnchorError("target ledger policy row is missing")
@@ -78,7 +78,7 @@ def _ledger_state(db, *, integrity):
 class LedgerAnchor:
     """Hold the target's exclusive lease across verification and an RPC."""
 
-    def __init__(self, directory, *, signer):
+    def __init__(self, directory, *, signer, authority_policy):
         self._directory = self._lease = None
         self._current = None
         try:
@@ -87,6 +87,7 @@ class LedgerAnchor:
             if type(signer.pub) is not bytes or len(signer.pub) != 32:
                 raise AnchorError("invalid target signing identity")
             self._signer = signer
+            self._authority_policy_digest = H(authority_policy).hex()
             self._directory = os.open(
                 Path(directory), os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW,
             )
@@ -150,7 +151,8 @@ class LedgerAnchor:
                     raise AnchorError("checkpoint requires a committed target ledger")
                 db.execute("BEGIN IMMEDIATE")
                 try:
-                    yield _ledger_state(db, integrity=integrity)
+                    yield _ledger_state(db, integrity=integrity,
+                                        authority_policy_digest=self._authority_policy_digest)
                 finally:
                     db.rollback()
         except (AttributeError, sqlite3.Error, OSError) as exc:

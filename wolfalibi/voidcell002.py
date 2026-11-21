@@ -109,7 +109,7 @@ def _file_id(path):
     return (info.st_dev, info.st_ino)
 
 
-def _key_state(path):
+def _static_file_state(path):
     info = _owner_file(path.lstat())
     return (info.st_dev, info.st_ino, info.st_size, info.st_ctime_ns)
 
@@ -148,19 +148,21 @@ class TargetAuthority:
         if len(seed) != 32:
             raise AuthorityError("invalid provisioned target key")
         signer = self._signer = Signer(seed)
-        self._anchor = self._resources.enter_context(LedgerAnchor(self._anchor_dir, signer=signer))
         config_path = self._state / _CONFIG_FILE
         ledger = self._state / LEDGER_FILE
         witness = self._anchor_dir / _WITNESS_FILE
+        config = (_checked_config(new_config) if new_config is not None
+                  else _checked_config(_json_private(config_path, 65536)))
+        self._anchor = self._resources.enter_context(LedgerAnchor(
+            self._anchor_dir, signer=signer, authority_policy=canon(config),
+        ))
         if new_config is not None:
-            config = _checked_config(new_config)
             if any(os.path.lexists(path) for path in
                    (config_path, ledger, witness, self._anchor_dir / "ledger-anchor.json")):
                 raise AuthorityError("initialization is create-only")
             _write_new(config_path, config)
             _write_new(witness, {"head": config["initial_witness_head"]})
         else:
-            config = _checked_config(_json_private(config_path, 65536))
             _file_id(ledger)
         self._gateway_uid = config["gateway_uid"]
         self._target_pub = signer.pub.hex()
@@ -171,7 +173,8 @@ class TargetAuthority:
             **{name: bytes.fromhex(config[name]) for name in _KEY_FIELDS},
         ))
         self._ledger_id = _file_id(ledger)
-        self._key_state = _key_state(self._state / KEY_FILE)
+        self._key_state = _static_file_state(self._state / KEY_FILE)
+        self._config_state = _static_file_state(config_path)
         if new_config is None:
             self._anchor.verify(self._vault)
         else:
@@ -193,8 +196,9 @@ class TargetAuthority:
 
     def _files_unchanged(self):
         if (_file_id(self._state / LEDGER_FILE) != self._ledger_id
-                or _key_state(self._state / KEY_FILE) != self._key_state):
-            raise AuthorityError("target ledger or signing key file was replaced")
+                or _static_file_state(self._state / KEY_FILE) != self._key_state
+                or _static_file_state(self._state / _CONFIG_FILE) != self._config_state):
+            raise AuthorityError("target ledger, signing key or authority configuration changed")
 
     def _inventory(self):
         directory = self._state.lstat()

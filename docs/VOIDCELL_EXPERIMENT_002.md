@@ -35,6 +35,8 @@ The target configuration accepts these fields.
 The target needs trusted source, interpreter, and dependencies and protected
 ancestors for its state and socket directories.
 It retains a separate latest signed ledger anchor outside the database tree.
+The anchor binds both the SQLite authorization pins and the owner configuration,
+including the UID admitted by the transport.
 Before each effect it compares the committed SQLite state with that anchor;
 after a committed operation it advances the anchor before any reply.
 Rollback of the ledger alone causes fail-stop. A crash between SQL commit and

@@ -98,11 +98,13 @@ def main(argv=None):
     after = _status()
     final = run("git", "rev-parse", "HEAD", "HEAD^{tree}")
     unchanged = final["exit_code"] == 0 and final["stdout"] == revision["stdout"]
+    inherited = (full["tests"] - focused["tests"]
+                 if full["tests"] is not None and focused["tests"] is not None else None)
     protocol_passed = (
         _clean(after)
         and unchanged
         and focused["outcome"] == full["outcome"] == "PASS"
-        and (full["tests"] or 0) >= 214
+        and inherited >= 214
         and mutations["exit_code"] == 0
         and mutations["detected"] == 8
     )
@@ -112,10 +114,11 @@ def main(argv=None):
         doctor=doctor,
         focused_tests=focused,
         full_suite=full,
+        inherited_tests=inherited,
         mutation_suite=mutations,
         protocol_qualification="PASS" if protocol_passed else "BLOCKED",
         custody=doctor["result"].get("custody", "BLOCKED"),
-        outcome="UNSUPPORTED" if doctor["expected_here"] else "BLOCKED",
+        outcome="UNSUPPORTED" if protocol_passed and doctor["expected_here"] else "BLOCKED",
     )
     print(json.dumps(result, indent=2, sort_keys=True))
     # A local protocol pass is not a custody attestation.  The documented
