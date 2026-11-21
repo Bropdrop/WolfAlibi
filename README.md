@@ -39,6 +39,8 @@ VOIDCELL Experiment 003 provides a two-account synthetic trial, a bounded Unix s
 
 Quorvane Gate 002 runs one fictional school-record read against a local target process and independently verifies its signed admission against pre-dispatch expectations. [Education demo and qualification commands](docs/QUORVANE_EDUCATION_GATE_002.md)
 
+Quorvane Gate 003 records synthetic payment intents at a local resource-owned target. It supports exact-packet reconciliation after a lost reply and issues a signed pending-intent receipt. [Finance demo, recovery semantics and qualification](docs/QUORVANE_FINANCE_GATE_003.md)
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.
