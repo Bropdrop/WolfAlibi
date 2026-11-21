@@ -31,6 +31,8 @@ For the separate Solitary experiment, run `wolfalibi byoa doctor` to check Linux
 
 [Stage 5 Solitary integration](docs/STAGE5_BYOA_SOLITARY.md) runs the fixed Stage 4 Python callback inside the measured cell and records its observation separately from the broker and owner decisions.
 
+[VOIDCELL Experiment 001](docs/VOIDCELL_EXPERIMENT_001.md) moves the authorization decision to an offline synthetic target that records its own effect and signed receipt.
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.
