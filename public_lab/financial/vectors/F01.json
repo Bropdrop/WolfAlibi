@@ -1,0 +1,48 @@
+{
+  "evidence": {
+    "attestation": {
+      "payload": {
+        "anchor_sha256": "76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c",
+        "authorized_at": 1795267107,
+        "challenge": "e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff",
+        "disposition": "PENDING_EXTERNAL_SETTLEMENT",
+        "finance_expectations_sha256": "b4d41da2b5aa92ed0050b66b8b382d1348c529952d4adebf12c37f6b521ef541",
+        "inquiry_sha256": "b34da2ac4b773b0c2455297bd66a9506b87855910710558c9a90aa9553f14a69",
+        "original_receipt_sha256": "c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4",
+        "type": "QUORVANE_HISTORICAL_INTENT_DISCLOSURE_V1"
+      },
+      "signature": "989d41d5ea3a3ba745d5a35e72919ca7cd09f2ed790763e1065007cbb77e14b0d191e9eb3b309a303cf6dea1357886ff533929bb173f3dc73fbc769c13e92301"
+    },
+    "request": {
+      "auditor_proof": {
+        "payload": {
+          "challenge": "e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff",
+          "grant_sha256": "4f28cccd2f11ecb7bfea13ef55a42d060bf673c52911fc5d625d942ea6b22b3b",
+          "scope_sha256": "febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617",
+          "type": "QUORVANE_HISTORY_AUDITOR_INQUIRY_V1"
+        },
+        "signature": "196921bac7fd547dbad06fbf0e6e9ccfcdc5483361bd58cebf3bcad927f047603237b95d9e2d22d3f681d88469c025cb7811c45c1c412316d90e99d7e6c17f0a"
+      },
+      "challenge": "e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff",
+      "grant": {
+        "payload": {
+          "auditor_pub": "dd22e39988460947d80cb98b62e75767ead401eb9768fdfbf33835862ec43042",
+          "expires_at": 1795267167,
+          "grant_id": "fictional-history-grant",
+          "not_before": 1795267107,
+          "scope_sha256": "febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617",
+          "type": "QUORVANE_HISTORY_OWNER_GRANT_V1"
+        },
+        "signature": "55be1bfad43c1834687e0e2274a568b55bd1285c6ae49d780a646443da5c1643ad9b64828438b942da4180fc8bd526aa7e5f0c3ac9776c43660b8e4e04959700"
+      },
+      "scope": {
+        "account": "fictional-checking",
+        "operation": "fin.payment.initiate",
+        "purpose": "fin.payment.history.inquire",
+        "request_id": "dbef04d23557d3747402d18859f50d01",
+        "target_pub": "f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db",
+        "tenant": "fictional-bank"
+      }
+    }
+  }
+}

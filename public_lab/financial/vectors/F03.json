@@ -1,0 +1,37 @@
+{
+  "anchor_sha256": "3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c3c",
+  "auditor_pub": "dd22e39988460947d80cb98b62e75767ead401eb9768fdfbf33835862ec43042",
+  "challenge": "e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff",
+  "finance": {
+    "owner_pub": "aebfee7609a9a1bfdb1c1cdc641d8666b95f22a78304b70a33285496a92c8235",
+    "peer": {
+      "argv_sha256": "19960d630fceb19ab2235f6601dac456171fa073f27146d6816c34619777ebc8",
+      "boot_id": "0e7c7856-e9a9-47ee-9530-76b9d642969e",
+      "exe_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+      "gid": 1000,
+      "pid": 58189,
+      "source_sha256": "278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4",
+      "start_ticks": 4896871,
+      "uid": 1000
+    },
+    "scope": {
+      "account": "fictional-checking",
+      "amount_minor": 4500,
+      "caller_pub": "2b2221c5d1270f0ba85f4c5d708d91cf001d62d55ca1c661b07d31207ab233a2",
+      "challenge": "acc913cbff5dfa2bda5b158044636a9065341b29e000584506281a6b41e5cbdd",
+      "currency": "CAD",
+      "operation": "fin.payment.initiate",
+      "payee": "fictional-supplier",
+      "policy_epoch": 1,
+      "request_id": "dbef04d23557d3747402d18859f50d01",
+      "run_id": "d6ef71c79b5c7318b6d2b815cdcf951e",
+      "target_pub": "f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db",
+      "tenant": "fictional-bank"
+    },
+    "supervisor_pub": "af420977b3a3491e23338784b29c2d794aa9d88d68ed056572a63344505d668b",
+    "target_pub": "f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db",
+    "witness_head": "2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5",
+    "witness_pub": "eb390678729a380ca87b8c8fb14412af7c8101cacd90b5af5b6ee8c47058cc92"
+  },
+  "history_pub": "70a0b4173aea2c00ecae690d43bfe6b97a201e3d37e4a4e4c2d56f0209a89091"
+}

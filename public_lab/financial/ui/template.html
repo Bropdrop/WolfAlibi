@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light"><meta name="description" content="Review synthetic financial authorization and signed evidence with WolfAlibi’s offline verifiers.">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<link rel="icon" href="data:,"><title>Financial Security Challenge · Quorvane Public Lab</title>
+<!-- STYLE -->
+</head>
+<body><a class="skip" href="#matrix">Skip to challenge selection</a>
+<header class="mast wrap"><div class="brand"><span class="seal" aria-hidden="true"><i></i><i></i><i></i></span><span><strong>Quorvane</strong><small>Public research lab</small></span></div>
+<nav aria-label="Research resources"><a href="../index.html">Evidence Explorer 001</a><a href="../REVIEW_SCOPE.md">Review scope</a></nav></header>
+<main class="wrap">
+<section class="intro" aria-labelledby="heading"><div><p class="eyebrow">Public Lab 002 <span>/</span> Offline evidence explorer</p>
+<h1 id="heading">Financial security<br>challenge</h1>
+<p class="lede">Examine what a signed fictional payment record can establish about authorization, historical disclosure, and settlement.</p></div>
+<aside class="boundary" aria-label="Profile limits"><p class="small-title">Assurance boundaries</p><dl>
+<div><dt>Policy experiment</dt><dd>SIMULATED_POLICY_ONLY</dd></div><div><dt>Cross-UID custody</dt><dd>UNSUPPORTED</dd></div>
+<div><dt>Production</dt><dd>BLOCKED</dd></div><div><dt>Confinement</dt><dd>BLOCKED</dd></div><div><dt>Certification</dt><dd>NOT_ISSUED</dd></div></dl></aside></section>
+<noscript><p>Open <a href="cases.json">cases.json</a> for the matrix. Run <code>python scripts/finance_challenge.py run</code> from the extracted package root. The interactive explorer requires JavaScript.</p></noscript>
+<div class="workbench"><aside class="rail" id="matrix" tabindex="-1" aria-labelledby="matrix-title"><p class="eyebrow">Review index</p><h2 id="matrix-title">Challenge matrix</h2>
+<label for="family">Challenge family</label><select id="family"></select><label for="case">Case</label><select id="case"></select>
+<div class="pager"><button id="prev" type="button" aria-label="Previous case">← Previous</button><button id="next" type="button" aria-label="Next case">Next →</button></div>
+<p class="index-note" id="index-note"></p></aside>
+<article id="review" aria-label="Selected challenge"><header class="case-head"><p class="eyebrow" id="case-code"></p><h2 id="case-title"></h2><p id="hypothesis"></p></header>
+<dl class="context"><div><dt>Reviewer controls</dt><dd id="inputs"></dd></div><div><dt>Trust assumptions</dt><dd id="assumptions"></dd></div><div><dt>Coverage limit</dt><dd id="limit"></dd></div></dl>
+<p id="target-note" hidden>For a disposable target ledger and effect counts, follow the <a href="README.md">supplementary Linux target procedure</a>.</p>
+<section class="block" aria-labelledby="result-title"><h3 id="result-title">Compare outcomes</h3><div class="twins">
+<div class="decision"><p class="small-title">Expected</p><strong id="expected"></strong><p id="expected-reason"></p></div>
+<div class="decision recorded"><p class="small-title">Recorded in this package</p><strong id="recorded"></strong><p id="recorded-reason"></p></div></div><p class="note" id="recorded-scope"></p><details><summary>Recorded verification evidence</summary><pre id="recorded-details"></pre></details></section>
+<section class="block" aria-labelledby="fixture-title"><h3 id="fixture-title">Inspect fixture bytes</h3><p id="difference" class="note"></p>
+<div class="twins" id="byte-panes"></div><button id="hash" type="button">Check fixture SHA-256</button><p id="hash-result" class="feedback" role="status"></p></section>
+<section class="block" aria-labelledby="run-title"><h3 id="run-title">Run the local verifier</h3>
+<p>From the extracted package root, run the Python command below. It uses WolfAlibi’s historical verifiers and the profile’s input checks. This browser compares bytes and displays reports. Signature and authority checks run in Python.</p>
+<div class="cmd"><code id="command"></code><button id="copy-command" type="button">Copy</button></div><p id="copy-result" class="feedback" role="status"></p>
+<details class="custom"><summary>Check your own fictional envelope</summary><p>Copy a genuine envelope to <code>my-evidence.json</code>. After editing the copy, check it against the original public pins. This command produces a separate submitted-envelope diagnostic.</p><code id="custom-command"></code></details>
+<label for="import-report">Compare a local JSON report</label><input id="import-report" type="file" accept=".json,application/json">
+<p class="note">The file stays on this device. Its author supplies the results. This view cannot authenticate a submitted report.</p><p id="import-state" class="feedback" role="status"></p></section>
+<section class="block finding" aria-labelledby="finding-title"><h3 id="finding-title">Export a finding</h3><p>Save the case, checksums, command and results. Share the JSON only through a separately agreed channel.</p>
+<label for="note">Review note <span>(optional)</span></label><textarea id="note" rows="2" maxlength="1200" placeholder="Describe the reproducible observation using fictional data only."></textarea>
+<p class="note">Omit names, credentials and real account details. File attachments are excluded.</p>
+<button id="export" type="button" class="primary">Save finding JSON ↓</button><p id="export-state" class="feedback" role="status"></p></section></article></div></main>
+<footer class="wrap"><span>Quorvane Public Lab 002</span><span>Built on WolfAlibi’s synthetic financial experiments</span></footer>
+<!-- DATA -->
+<!-- SCRIPT -->
+</body></html>

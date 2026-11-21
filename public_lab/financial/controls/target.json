@@ -1,0 +1,139 @@
+{
+  "schema": "QUORVANE_FINANCIAL_EFFECT_SCENARIOS_V1",
+  "assumptions": "An honest local operator, kernel, SQLite, canonical verifier and synthetic signers. Caller and target are separate processes under one UID. The operator controls both ledger and checkpoint storage.",
+  "limits": "Finite local scenarios with fresh keys per run. The observations cover pending synthetic intents; settlement, cross-UID custody, external anchoring and production operation remain unqualified.",
+  "controls": [
+    {
+      "id": "B-T01",
+      "title": "Concurrent duplicates and exact retry",
+      "hypothesis": "Concurrent copies of one valid dispatch could create multiple intents.",
+      "inputs": "Two identical initiation calls, then one sequential retry.",
+      "expected": {
+        "initial_pair": [
+          "HISTORICAL_INTENT",
+          "INTENT_RECORDED"
+        ],
+        "live_retry": "HISTORICAL_INTENT",
+        "same_receipts": true,
+        "intent_count": 1,
+        "effect": "PENDING_EXTERNAL_SETTLEMENT"
+      }
+    },
+    {
+      "id": "B-T02",
+      "title": "Conflicting request ID",
+      "hypothesis": "A separately signed amount change under an existing request ID could replace its original intent.",
+      "inputs": "Original owner-approved dispatch followed by a freshly owner-approved dispatch for 4,501 fictional minor units using the same ID.",
+      "expected": {
+        "conflict": {
+          "outcome": "DENIED",
+          "reason": "REQUEST_ID_CONFLICT"
+        },
+        "original_reconciled": true,
+        "intent_count": 1,
+        "effect": "PENDING_EXTERNAL_SETTLEMENT"
+      }
+    },
+    {
+      "id": "B-T03",
+      "title": "Lost reply across restart",
+      "hypothesis": "A dropped response could cause reconciliation to redispatch an intent.",
+      "inputs": "Send once over the local socket, close before reading, restart the target and reconcile twice.",
+      "expected": {
+        "delivery": {
+          "outcome": "UNKNOWN",
+          "response_read": false
+        },
+        "checkpoint_advanced": true,
+        "replies": [
+          "RECONCILED",
+          "RECONCILED"
+        ],
+        "same_archived_receipt": true,
+        "intent_count": 1,
+        "effect": "PENDING_EXTERNAL_SETTLEMENT"
+      }
+    },
+    {
+      "id": "B-T04",
+      "title": "Repeated historical verification",
+      "hypothesis": "Rechecking a signed historical receipt might change the stopped target ledger or create another intent.",
+      "inputs": "Verify one newly recorded synthetic intent concurrently twice without a running target.",
+      "expected": {
+        "claims": [
+          "HISTORICAL_SYNTHETIC_PAYMENT_INTENT",
+          "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+        ],
+        "effects": [
+          "PENDING_EXTERNAL_SETTLEMENT",
+          "PENDING_EXTERNAL_SETTLEMENT"
+        ],
+        "same_receipt_digest": true,
+        "ledger_unchanged": true,
+        "checkpoint_unchanged": true,
+        "count_before": 1,
+        "count_after": 1
+      }
+    },
+    {
+      "id": "C-T01",
+      "title": "Expired grant at a live target",
+      "hypothesis": "A valid signature over an expired permission might admit a current dispatch.",
+      "inputs": "An exact grant with its entire validity interval in the target clock’s past, then an authorized positive control.",
+      "expected": {
+        "expired": {
+          "outcome": "DENIED",
+          "reason": "AUTHORIZATION_OR_QUALIFICATION_UNVERIFIED"
+        },
+        "count_after_expired": 0,
+        "positive": "INTENT_RECORDED",
+        "count_after_positive": 1
+      }
+    },
+    {
+      "id": "C-T02",
+      "title": "Historical signature after revocation",
+      "hypothesis": "An authentic retained receipt might reinstate authority after the target owner revokes the grant.",
+      "inputs": "Recheck the historical signature and send a current operation under its revoked grant.",
+      "expected": {
+        "revocation": "REVOKED",
+        "history": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT",
+        "live": {
+          "outcome": "DENIED",
+          "reason": "OWNER_GRANT_REVOKED"
+        },
+        "effect": "PENDING_EXTERNAL_SETTLEMENT",
+        "intent_count": 1
+      }
+    },
+    {
+      "id": "C-T03",
+      "title": "Historical auditor at a live target",
+      "hypothesis": "A valid signed grant for the published historical auditor might authorize a new payment.",
+      "inputs": "The genuine audit inquiry grant from the Lab 001 archive, used in the current fictional grant slot.",
+      "expected": {
+        "history": "HISTORICAL_INTENT_DISCLOSURE",
+        "historical_settlement": "UNESTABLISHED",
+        "live": {
+          "outcome": "DENIED",
+          "reason": "AUTHORIZATION_OR_QUALIFICATION_UNVERIFIED"
+        },
+        "count_after_auditor": 0,
+        "positive": "INTENT_RECORDED",
+        "count_after_positive": 1
+      }
+    },
+    {
+      "id": "F-T01",
+      "title": "Older target ledger with retained checkpoint",
+      "hypothesis": "A stopped target could accept the prior ledger despite a newer retained local head.",
+      "inputs": "Two genuine snapshots from the same disposable target and its unchanged post-intent checkpoint.",
+      "expected": {
+        "clean_reopen": 1,
+        "old_ledger": "REJECTED_LEDGER_DIVERGENCE",
+        "checkpoint_preserved": true,
+        "restored_reopen": 1
+      }
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+  "evidence": {
+    "packet": {
+      "caller_proof": {
+        "payload": {
+          "grant_sha256": "2e9a6adb27e8dcd2dd01a1244b4c2feacdc6ba73942cc8c7e7dc91a58d67f50a",
+          "qualification_sha256": "0c9b3fbcfc10a2b34b9b189f15982997b0a61ade6cff02a41057389fad94b619",
+          "scope_sha256": "14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34",
+          "type": "QUORVANE_FINANCE_CALLER_DISPATCH_V1"
+        },
+        "signature": "4dd254f4957b0cce9c73d26ec095d77638e47ef663220ec999e4b7b3c0bfd550f145d122321771200aa11cae686dd6067da3bb34da488c17a776f38292597803"
+      },
+      "grant": {
+        "payload": {
+          "expires_at": 1795265273,
+          "grant_id": "fictional-payment-grant",
+          "not_before": 1795265183,
+          "scope_sha256": "14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34",
+          "type": "QUORVANE_FINANCE_OWNER_GRANT_V1"
+        },
+        "signature": "a6cac50ff1108c5b00b5604d92e6ac63c4d13647d0df2608dc095d487df0095d504eb8d9037b750049e89b104ab4aa89ae56cb2e0204aeff7a71972688dcbb0a"
+      },
+      "qualification": {
+        "payload": {
+          "expires_at": 1795265273,
+          "not_before": 1795265183,
+          "peer": {
+            "argv_sha256": "540de73e437657409191dd9208e19e0714bcd0b01205e172cdc9253e6384df24",
+            "boot_id": "0e7c7856-e9a9-47ee-9530-76b9d642969e",
+            "exe_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+            "gid": 1000,
+            "pid": 51552,
+            "source_sha256": "278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4",
+            "start_ticks": 4704734,
+            "uid": 1000
+          },
+          "scope_sha256": "1b0859d3b037b19aebbdadc87a7c47c1439e61b608ff5187e7cc94942bcebaaa",
+          "type": "QUORVANE_FINANCE_LIVE_QUALIFICATION_V1"
+        },
+        "supervisor_signature": "158a8cd72f36592f96ed5e8c92c7a3331004e4553e2dfe58ca3863615fa49ed0faf66685b73e38ba2ddb0f26e3d784da98e73b45194194dc4cbad122a66b8804",
+        "witness_signature": "946c3b19eadb385310174e2b330e4fa59608376e24bf508b30cf08aef2876de57a3c06283da9d344ef4d45a6e6479996a933dbaa12068d55f61a891e23da4a06"
+      },
+      "scope": {
+        "account": "fictional-checking",
+        "amount_minor": 4500,
+        "caller_pub": "4c8201961e0e3d5af9c00de3611cb9a4d2e7bec4f3f0ff336a33860f4e0f1675",
+        "challenge": "78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0",
+        "currency": "CAD",
+        "operation": "fin.payment.initiate",
+        "payee": "fictional-books",
+        "policy_epoch": 1,
+        "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+        "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+        "target_pub": "de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda",
+        "tenant": "fictional-bank"
+      }
+    },
+    "receipt": {
+      "payload": {
+        "authorized_at": 1795265184,
+        "business_sha256": "b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0",
+        "caller_proof_sha256": "f72021af6c78f3e57b09f10559f1ac013abb7447ad1e3e044c227ce583fbab39",
+        "grant_sha256": "2e9a6adb27e8dcd2dd01a1244b4c2feacdc6ba73942cc8c7e7dc91a58d67f50a",
+        "idempotency_key": "38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e",
+        "outcome": "PENDING_EXTERNAL_SETTLEMENT",
+        "packet_sha256": "38de2cd0b561420ea21744eeb25081733518ec637cf0b9eea5b47c17a7cb57b3",
+        "qualification_sha256": "0c9b3fbcfc10a2b34b9b189f15982997b0a61ade6cff02a41057389fad94b619",
+        "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+        "scope_sha256": "14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34",
+        "target_pub": "de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda",
+        "type": "QUORVANE_FINANCE_TARGET_RECEIPT_V1"
+      },
+      "signature": "0df671e249fb8d7b38f4674cc83da4e3421c42dcf4ed338ca06fd74b120e0c6c78ed40eff1bfb1715babc0886f17fd54d7da5d6642fcc9e6255e88c96219a606"
+    }
+  }
+}

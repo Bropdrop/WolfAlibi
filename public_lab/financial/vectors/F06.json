@@ -1,0 +1,168 @@
+{
+  "schema": "QUORVANE_PUBLIC_LAB_MANIFEST_V1",
+  "name": "Quorvane Evidence Explorer",
+  "edition": "Public Lab 001",
+  "base": {
+    "pr": 33,
+    "commit": "536b1499c7376dd9466a59da87394c1e65506082",
+    "tree": "a2f23d5315c281d197380e134a4ca0bb2f7d8291"
+  },
+  "assurance": "SIMULATED_POLICY_ONLY",
+  "cross_uid_custody": "UNSUPPORTED",
+  "production": "BLOCKED",
+  "certification": "NOT_ISSUED",
+  "experiments": [
+    {
+      "id": "education",
+      "title": "Education admission",
+      "category": "Education",
+      "description": "Inspect the signed response to one authorized read of a fictional student support record.",
+      "operation": "edu.student_record.read",
+      "claim": "HISTORICAL_SYNTHETIC_ADMISSION",
+      "scope": "One student · one approved support read",
+      "source": {
+        "pr": 32,
+        "commit": "6b4eda2f2e80cc02d8e6639e1a093f49e6de6e35",
+        "tree": "69b90aa33760eb8e5526548fd9abcf5b731d1f37"
+      },
+      "tamper": {
+        "path": "/evidence/response/support_level",
+        "description": "The response changes from scheduled-check-in to immediate-follow-up. The signed response digest stays the same."
+      },
+      "files": {
+        "challenge.txt": "afa5630e07f01bf06bdb9ec0493fee8255536b78f04fe8390ec03074d8e99498",
+        "genuine.json": "b395731f1ee8db2c9284ac88d5d22de0508f8a66f0868b1e98371de7772a9f6d",
+        "pins.json": "61679d24cc823c8b0450ecb65a17603ef8d0217d8d27f55c9b7f33487f08a9ee",
+        "tampered.json": "517d2ae7bf0d13d100f7a17d6bfb822f9b3acd635ecd9f53028d418c57efbcd0"
+      }
+    },
+    {
+      "id": "finance",
+      "title": "Financial intent",
+      "category": "Finance",
+      "description": "Check the target’s original receipt for a fictional CAD 45.00 payment intent. The recorded disposition is pending.",
+      "operation": "fin.payment.initiate",
+      "claim": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT",
+      "scope": "One account · one pending payment intent",
+      "source": {
+        "pr": 33,
+        "commit": "536b1499c7376dd9466a59da87394c1e65506082",
+        "tree": "a2f23d5315c281d197380e134a4ca0bb2f7d8291"
+      },
+      "tamper": {
+        "path": "/evidence/packet/scope/amount_minor",
+        "description": "The amount changes from 4,500 to 4,600 minor units. The original grant, receipt and expected amount stay fixed."
+      },
+      "files": {
+        "challenge.txt": "09ae42d13fdbed91c793319eb85bc897e0c99c82fe6d0a2f8369a592b7d31a3e",
+        "genuine.json": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+        "pins.json": "0285995e486c19e806d01c1788a79e6a9a6d3eb0fa00ef1806f7387a6efd7305",
+        "tampered.json": "2d64fd1f127b8d8266a8d94ed09762ceaeddfb930681f470faa3d80d4d69e22c"
+      }
+    },
+    {
+      "id": "history",
+      "title": "Historical audit",
+      "category": "Audit",
+      "description": "Inspect an auditor’s separately authorized disclosure of an archived, pending fictional payment intent.",
+      "operation": "fin.payment.history.inquire",
+      "claim": "HISTORICAL_INTENT_DISCLOSURE",
+      "scope": "One auditor · one archived intent",
+      "source": {
+        "pr": 34,
+        "commit": "bb4d1737e481f4e0c776cb57d47c0d27f3c7f11e",
+        "tree": "f527cc8d58f343fe43d649b613d8033babbd38ac"
+      },
+      "tamper": {
+        "path": "/evidence/request/challenge",
+        "description": "The inquiry presents a different challenge. The auditor’s proof and the independently supplied challenge stay fixed."
+      },
+      "files": {
+        "challenge.txt": "92a6c9405f3f2755e179b9e7936425d6e9a53b0f3874f5189cecd627a8425ad1",
+        "genuine.json": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789",
+        "pins.json": "4ea815b30bcf9d47421935771068fd4642d24cf6d3df0826aca1ceb333397237",
+        "tampered.json": "3a0df1ab876e767c3620ed6711fa042a6175ac5b27a891d8476ad81beffcf736"
+      }
+    }
+  ],
+  "conditions": [
+    {
+      "id": "education",
+      "title": "Education admission",
+      "status": "TESTED",
+      "detail": "The target receipt, owner grant, caller, qualification and fictional response match the published expectations at admission."
+    },
+    {
+      "id": "finance",
+      "title": "Financial intent",
+      "status": "TESTED",
+      "detail": "The original target signature binds the amount, payee, request and pending disposition."
+    },
+    {
+      "id": "history",
+      "title": "Historical disclosure",
+      "status": "TESTED",
+      "detail": "The original intent and disclosure have separate authorization records, signatures, challenges and signed times."
+    },
+    {
+      "id": "tampering",
+      "title": "Altered evidence",
+      "status": "TESTED",
+      "detail": "The canonical verifier rejects each of the three specified substitutions against its original inputs."
+    },
+    {
+      "id": "custody",
+      "title": "Cross-UID custody",
+      "status": "UNSUPPORTED",
+      "detail": "The published trials used one Linux UID. Independent key and archive custody need a two-account demonstration."
+    },
+    {
+      "id": "witness",
+      "title": "Independent witness custody",
+      "status": "NOT_ASSESSED",
+      "detail": "The samples include witness signatures. The reviewer still trusts the distribution and retention of the public pins."
+    },
+    {
+      "id": "freshness",
+      "title": "Current revocation and replay state",
+      "status": "NOT_ASSESSED",
+      "detail": "The portable disclosure omits an independently retained commitment to current revocations and consumed challenges."
+    },
+    {
+      "id": "rollback",
+      "title": "Coordinated rollback",
+      "status": "NOT_ASSESSED",
+      "detail": "Restoring the ledger, its retained head and external references together is outside these trials."
+    },
+    {
+      "id": "power",
+      "title": "Storage power loss",
+      "status": "NOT_ASSESSED",
+      "detail": "The inherited crash controls exercise process death. A sudden loss of host power was not tested."
+    },
+    {
+      "id": "settlement",
+      "title": "Real financial settlement",
+      "status": "NOT_ASSESSED",
+      "detail": "The ordinary audit returns settlement UNESTABLISHED. The preview includes no settlement authority or transfer service."
+    },
+    {
+      "id": "confinement",
+      "title": "Production confinement",
+      "status": "BLOCKED",
+      "detail": "Independent measurements for the full runtime and all resource paths remain outstanding."
+    },
+    {
+      "id": "production",
+      "title": "Production operation",
+      "status": "BLOCKED",
+      "detail": "The experiments use fixed local synthetic resources and an operator-provisioned trust root."
+    },
+    {
+      "id": "certification",
+      "title": "Formal certification",
+      "status": "NOT_ISSUED",
+      "detail": "This preview carries no formal certification."
+    }
+  ]
+}

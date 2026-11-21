@@ -1,0 +1,31 @@
+{
+  "owner_pub": "ea8f9aaeb246a7239eeb2d397e8c8f57ddc96a3429875d18075923b61b596219",
+  "peer": {
+    "argv_sha256": "540de73e437657409191dd9208e19e0714bcd0b01205e172cdc9253e6384df24",
+    "boot_id": "0e7c7856-e9a9-47ee-9530-76b9d642969e",
+    "exe_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+    "gid": 1000,
+    "pid": 51552,
+    "source_sha256": "278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4",
+    "start_ticks": 4704734,
+    "uid": 1000
+  },
+  "scope": {
+    "account": "fictional-checking",
+    "amount_minor": 4500,
+    "caller_pub": "4c8201961e0e3d5af9c00de3611cb9a4d2e7bec4f3f0ff336a33860f4e0f1675",
+    "challenge": "78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0",
+    "currency": "CAD",
+    "operation": "fin.payment.initiate",
+    "payee": "fictional-supplier",
+    "policy_epoch": 1,
+    "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+    "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+    "target_pub": "de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda",
+    "tenant": "fictional-bank"
+  },
+  "supervisor_pub": "a9ee5a91f9a2e79b580ad415a68420262a0a81db821f8de0d863f4ece640dcf0",
+  "target_pub": "de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda",
+  "witness_head": "2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5",
+  "witness_pub": "c0ba155f8b08d129467691b6fd091ae501a9d6a6fc98d71e1006d47bc082c5cb"
+}

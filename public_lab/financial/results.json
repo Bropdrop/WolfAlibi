@@ -1,0 +1,754 @@
+{
+  "assurance": "SIMULATED_POLICY_ONLY",
+  "baseline": {
+    "commit": "1d6dddd654489ebdc3ddc028dc23b59d8d407281",
+    "tree": "20f161ffa00045d795fc7ee76740002d89c9506f"
+  },
+  "cases": [
+    {
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "id": "P01",
+      "observed": {
+        "details": {
+          "canonical": {
+            "assurance": "SIMULATED_POLICY_ONLY",
+            "authorized_at": 1795265184,
+            "business_sha256": "b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0",
+            "certification": "NOT_ISSUED",
+            "confinement": "BLOCKED",
+            "cross_uid_custody": "UNSUPPORTED",
+            "effect": "PENDING_EXTERNAL_SETTLEMENT",
+            "grant_id": "fictional-payment-grant",
+            "idempotency_key": "38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e",
+            "outcome": "VERIFIED",
+            "production": "BLOCKED",
+            "receipt_sha256": "464338b4acbe1b513eac2d07c3a09cd158ddd59b8cc301fa2f474978088d0b6d",
+            "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+            "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+            "verified": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+          },
+          "operational_authority": "NOT_ISSUED",
+          "settlement": "UNESTABLISHED"
+        },
+        "outcome": "VERIFIED",
+        "phase": "historical_verifier",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "result": "MATCH",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df"
+    },
+    {
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_INTENT_DISCLOSURE"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/history/genuine.json",
+      "id": "P02",
+      "observed": {
+        "details": {
+          "canonical": {
+            "anchor_sha256": "76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c",
+            "assurance": "SIMULATED_POLICY_ONLY",
+            "authorized_at": 1795267107,
+            "certification": "NOT_ISSUED",
+            "confinement": "BLOCKED",
+            "cross_uid_custody": "UNSUPPORTED",
+            "effect": "PENDING_EXTERNAL_SETTLEMENT",
+            "grant_id": "fictional-history-grant",
+            "outcome": "VERIFIED",
+            "production": "BLOCKED",
+            "receipt_sha256": "c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4",
+            "request_id": "dbef04d23557d3747402d18859f50d01",
+            "settlement": "UNESTABLISHED",
+            "verified": "HISTORICAL_INTENT_DISCLOSURE"
+          },
+          "operational_authority": "NOT_ISSUED",
+          "settlement": "UNESTABLISHED"
+        },
+        "outcome": "VERIFIED",
+        "phase": "historical_verifier",
+        "reason": "HISTORICAL_INTENT_DISCLOSURE"
+      },
+      "result": "MATCH",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A01.json",
+      "id": "A01",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "result": "MATCH",
+      "sha256": "9997006904ba6f2de988e3a3402b3343d16289a32fc974c766adcb6cd209d6ff"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A02.json",
+      "id": "A02",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "result": "MATCH",
+      "sha256": "de3ca4d21de08c536431b30df275a715a884d284732643165f6dfb0cd7eeaada"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A03.json",
+      "id": "A03",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "result": "MATCH",
+      "sha256": "ae8b6596c6989ba41212d64699aadfeb3cf3718a66d1d2062a748d8312b72fdc"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A04.json",
+      "id": "A04",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "result": "MATCH",
+      "sha256": "81ca390811cfca887c8fdb438f39a664739c46bf2a73a32fcb113cef7a88fdfb"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A05.json",
+      "id": "A05",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "scope differs from the fixed synthetic payment profile"
+      },
+      "result": "MATCH",
+      "sha256": "6b1bd1267a7f6f864a2079ba58873ae652bacec0ee186e7781a4335057a0aed0"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/A06.json",
+      "id": "A06",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "result": "MATCH",
+      "sha256": "15b14b3767785f9a3ea24c402797320bcfee1ccec2201dea4066eb4df57a8134"
+    },
+    {
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "id": "B01",
+      "observed": {
+        "details": {
+          "canonical": {
+            "assurance": "SIMULATED_POLICY_ONLY",
+            "authorized_at": 1795265184,
+            "business_sha256": "b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0",
+            "certification": "NOT_ISSUED",
+            "confinement": "BLOCKED",
+            "cross_uid_custody": "UNSUPPORTED",
+            "effect": "PENDING_EXTERNAL_SETTLEMENT",
+            "grant_id": "fictional-payment-grant",
+            "idempotency_key": "38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e",
+            "outcome": "VERIFIED",
+            "production": "BLOCKED",
+            "receipt_sha256": "464338b4acbe1b513eac2d07c3a09cd158ddd59b8cc301fa2f474978088d0b6d",
+            "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+            "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+            "verified": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+          },
+          "operational_authority": "NOT_ISSUED",
+          "schedule": "repeat",
+          "settlement": "UNESTABLISHED",
+          "verifications": 2
+        },
+        "outcome": "VERIFIED",
+        "phase": "historical_verifier",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "result": "MATCH",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df"
+    },
+    {
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "id": "B02",
+      "observed": {
+        "details": {
+          "canonical": {
+            "assurance": "SIMULATED_POLICY_ONLY",
+            "authorized_at": 1795265184,
+            "business_sha256": "b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0",
+            "certification": "NOT_ISSUED",
+            "confinement": "BLOCKED",
+            "cross_uid_custody": "UNSUPPORTED",
+            "effect": "PENDING_EXTERNAL_SETTLEMENT",
+            "grant_id": "fictional-payment-grant",
+            "idempotency_key": "38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e",
+            "outcome": "VERIFIED",
+            "production": "BLOCKED",
+            "receipt_sha256": "464338b4acbe1b513eac2d07c3a09cd158ddd59b8cc301fa2f474978088d0b6d",
+            "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+            "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+            "verified": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+          },
+          "operational_authority": "NOT_ISSUED",
+          "schedule": "parallel",
+          "settlement": "UNESTABLISHED",
+          "verifications": 2
+        },
+        "outcome": "VERIFIED",
+        "phase": "historical_verifier",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "result": "MATCH",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/B03.json",
+      "id": "B03",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "receipt differs from the exact payment scope"
+      },
+      "result": "MATCH",
+      "sha256": "e16537e4953caa5cf240ed5baac3f4d763ea4b8df2b8a673d6cedadc761f65e1"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/B04.json",
+      "id": "B04",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid finance evidence fields"
+      },
+      "result": "MATCH",
+      "sha256": "d215af73b14802843875a9d655009efa101ea117ff55be050ae542cddad7ad64"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "education authorization is outside its validity window"
+      },
+      "expected_phase": "payment_packet_check_at_expiry",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "id": "C01",
+      "observed": {
+        "details": {
+          "canonical": {
+            "assurance": "SIMULATED_POLICY_ONLY",
+            "authorized_at": 1795265184,
+            "business_sha256": "b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0",
+            "certification": "NOT_ISSUED",
+            "confinement": "BLOCKED",
+            "cross_uid_custody": "UNSUPPORTED",
+            "effect": "PENDING_EXTERNAL_SETTLEMENT",
+            "grant_id": "fictional-payment-grant",
+            "idempotency_key": "38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e",
+            "outcome": "VERIFIED",
+            "production": "BLOCKED",
+            "receipt_sha256": "464338b4acbe1b513eac2d07c3a09cd158ddd59b8cc301fa2f474978088d0b6d",
+            "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+            "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+            "verified": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+          },
+          "operational_authority": "NOT_ISSUED",
+          "settlement": "UNESTABLISHED",
+          "synthetic_check_time": 1795265273
+        },
+        "outcome": "REJECTED",
+        "phase": "payment_packet_check_at_expiry",
+        "reason": "education authorization is outside its validity window"
+      },
+      "result": "MATCH",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/C02.json",
+      "id": "C02",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid finance evidence fields"
+      },
+      "result": "MATCH",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid grant fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/C03.json",
+      "id": "C03",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid grant fields"
+      },
+      "result": "MATCH",
+      "sha256": "88e71c8a63efda8fe8d0802d23130c273d3638f071894890f03486f245096404"
+    },
+    {
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "id": "D01",
+      "observed": {
+        "details": {
+          "canonical": {
+            "assurance": "SIMULATED_POLICY_ONLY",
+            "authorized_at": 1795265184,
+            "business_sha256": "b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0",
+            "certification": "NOT_ISSUED",
+            "confinement": "BLOCKED",
+            "cross_uid_custody": "UNSUPPORTED",
+            "effect": "PENDING_EXTERNAL_SETTLEMENT",
+            "grant_id": "fictional-payment-grant",
+            "idempotency_key": "38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e",
+            "outcome": "VERIFIED",
+            "production": "BLOCKED",
+            "receipt_sha256": "464338b4acbe1b513eac2d07c3a09cd158ddd59b8cc301fa2f474978088d0b6d",
+            "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+            "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+            "verified": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+          },
+          "operational_authority": "NOT_ISSUED",
+          "settlement": "UNESTABLISHED"
+        },
+        "outcome": "VERIFIED",
+        "phase": "historical_verifier",
+        "reason": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "result": "MATCH",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/D02.json",
+      "id": "D02",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid education record signature"
+      },
+      "result": "MATCH",
+      "sha256": "ce5e5a1207c608faf9d7de38f1da9098bfd220d6500aa5a0ef39a61cb946157b"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid signed education record fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/D03.json",
+      "id": "D03",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid signed education record fields"
+      },
+      "result": "MATCH",
+      "sha256": "d3793d2f28dcd8fd310eb3bdcce2fc9bc259b34bb8718c9dd93ae2277fc9d358"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/D04.json",
+      "id": "D04",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid finance evidence fields"
+      },
+      "result": "MATCH",
+      "sha256": "74e2a6ff3fec4ac79964a3f99a65c6428f79fa6d760cb9ea202d39b54c2953ff"
+    },
+    {
+      "expected": {
+        "outcome": "VERIFIED",
+        "reason": "HISTORICAL_INTENT_DISCLOSURE"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/vectors/history/genuine.json",
+      "id": "D05",
+      "observed": {
+        "details": {
+          "canonical": {
+            "anchor_sha256": "76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c",
+            "assurance": "SIMULATED_POLICY_ONLY",
+            "authorized_at": 1795267107,
+            "certification": "NOT_ISSUED",
+            "confinement": "BLOCKED",
+            "cross_uid_custody": "UNSUPPORTED",
+            "effect": "PENDING_EXTERNAL_SETTLEMENT",
+            "grant_id": "fictional-history-grant",
+            "outcome": "VERIFIED",
+            "production": "BLOCKED",
+            "receipt_sha256": "c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4",
+            "request_id": "dbef04d23557d3747402d18859f50d01",
+            "settlement": "UNESTABLISHED",
+            "verified": "HISTORICAL_INTENT_DISCLOSURE"
+          },
+          "operational_authority": "NOT_ISSUED",
+          "settlement": "UNESTABLISHED"
+        },
+        "outcome": "VERIFIED",
+        "phase": "historical_verifier",
+        "reason": "HISTORICAL_INTENT_DISCLOSURE"
+      },
+      "result": "MATCH",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E01.json",
+      "id": "E01",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid education record signature"
+      },
+      "result": "MATCH",
+      "sha256": "0e429370d331cfaaa7bcda4b642e74b2f38d3ab5db3979210918f62253e146a0"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E02.json",
+      "id": "E02",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid education record signature"
+      },
+      "result": "MATCH",
+      "sha256": "3ac04d0822f852e5fd2d0c51f0e58bf323d72a16add003c76eeeb6c86849bf4c"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid education record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E03.json",
+      "id": "E03",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid education record signature"
+      },
+      "result": "MATCH",
+      "sha256": "beb38ff9c2ad0d554da83808f2eeddeea3148e631a6d0d1fe2a8b2338b0d19ad"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "inquiry challenge differs from the verifier's expectations"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E04.txt",
+      "id": "E04",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "inquiry challenge differs from the verifier's expectations"
+      },
+      "result": "MATCH",
+      "sha256": "52a5bfa31e999db6966711f5d7a40e05a73f42200bbf37e61f44c1b0b7bfe063"
+    },
+    {
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "duplicate JSON member"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E05.json",
+      "id": "E05",
+      "observed": {
+        "outcome": "INPUT_REFUSED",
+        "phase": "wire_format",
+        "reason": "duplicate JSON member"
+      },
+      "result": "MATCH",
+      "sha256": "8549b2eace67c4c43da41ed8b084a0311cd0ca836ea9cba6f1324331a15f7060"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid finance evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E06.json",
+      "id": "E06",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid finance evidence fields"
+      },
+      "result": "MATCH",
+      "sha256": "5259a2908931b4cd1f2b3afe7fd509b2dabe7fa7ece2ef4a66355bd9452eeb3d"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "noncanonical record signature"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/E07.json",
+      "id": "E07",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "noncanonical record signature"
+      },
+      "result": "MATCH",
+      "sha256": "2b0c09437664c290812e1a4b40fd55f9f15e60e55fa8c4c9b0a439dd64fe95c1"
+    },
+    {
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "fixture is not complete JSON"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E08.json",
+      "id": "E08",
+      "observed": {
+        "outcome": "INPUT_REFUSED",
+        "phase": "wire_format",
+        "reason": "fixture is not complete JSON"
+      },
+      "result": "MATCH",
+      "sha256": "28669b0f6b5bb329332873df409fb94f93a97b8c740a966248660a298be622a9"
+    },
+    {
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "profile requires integer JSON numbers"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E09.json",
+      "id": "E09",
+      "observed": {
+        "outcome": "INPUT_REFUSED",
+        "phase": "wire_format",
+        "reason": "profile requires integer JSON numbers"
+      },
+      "result": "MATCH",
+      "sha256": "eff404779cf1f97998d868e595f39b75937fbddd82fb3e0af672e4145d258442"
+    },
+    {
+      "expected": {
+        "outcome": "INPUT_REFUSED",
+        "reason": "UTF-8 byte order mark is outside the wire profile"
+      },
+      "expected_phase": "wire_format",
+      "fixture": "public_lab/financial/vectors/E10.json",
+      "id": "E10",
+      "observed": {
+        "outcome": "INPUT_REFUSED",
+        "phase": "wire_format",
+        "reason": "UTF-8 byte order mark is outside the wire profile"
+      },
+      "result": "MATCH",
+      "sha256": "3e55de8bc1ad2879b164ed85a64596a2098765455955f6416ac88d8dcf3939e2"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "invalid history evidence fields"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/F01.json",
+      "id": "F01",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "invalid history evidence fields"
+      },
+      "result": "MATCH",
+      "sha256": "e395505e04bb33f60be2ef69ddcdaf668652278a9e793be6c5157ddb62db6f19"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "finance qualification differs from the retained witness digest"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/F02.json",
+      "id": "F02",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "finance qualification differs from the retained witness digest"
+      },
+      "result": "MATCH",
+      "sha256": "a035e31cd27ba1447c0a97a582a26800b31d35c47cacac45b0d59afaafd35d54"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "historical disclosure differs from external pins or original evidence"
+      },
+      "expected_phase": "historical_verifier",
+      "fixture": "public_lab/financial/vectors/F03.json",
+      "id": "F03",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "historical_verifier",
+        "reason": "historical disclosure differs from external pins or original evidence"
+      },
+      "result": "MATCH",
+      "sha256": "c5556682681ca23388dbe272a845dfacb40b928eec686f22a047d474fcf1608d"
+    },
+    {
+      "expected": {
+        "outcome": "UNSUPPORTED",
+        "reason": "independent cross-UID custody is outside this profile"
+      },
+      "expected_phase": "coverage",
+      "fixture": "public_lab/vectors/finance/genuine.json",
+      "id": "F04",
+      "observed": {
+        "outcome": "UNSUPPORTED",
+        "phase": "coverage",
+        "reason": "independent cross-UID custody is outside this profile"
+      },
+      "result": "UNASSESSED",
+      "sha256": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df"
+    },
+    {
+      "expected": {
+        "outcome": "NOT_ASSESSED",
+        "reason": "no independently held later checkpoint is available"
+      },
+      "expected_phase": "coverage",
+      "fixture": "public_lab/vectors/history/genuine.json",
+      "id": "F05",
+      "observed": {
+        "outcome": "NOT_ASSESSED",
+        "phase": "coverage",
+        "reason": "no independently held later checkpoint is available"
+      },
+      "result": "UNASSESSED",
+      "sha256": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789"
+    },
+    {
+      "expected": {
+        "outcome": "REJECTED",
+        "reason": "manifest bytes differ from the pinned PR #35 manifest"
+      },
+      "expected_phase": "inventory",
+      "fixture": "public_lab/financial/vectors/F06.json",
+      "id": "F06",
+      "observed": {
+        "outcome": "REJECTED",
+        "phase": "inventory",
+        "reason": "manifest bytes differ from the pinned PR #35 manifest"
+      },
+      "result": "MATCH",
+      "sha256": "a4c5a4308fd19d76a30f690b30b79736e6efe3279e506778cac0668d5334059f"
+    }
+  ],
+  "certification": "NOT_ISSUED",
+  "confinement": "BLOCKED",
+  "cross_uid_custody": "UNSUPPORTED",
+  "matrix_sha256": "de3a0b1519a4ecabe6ff445a7b6584c77035819954688e5c3ac66dd89cb2b1d4",
+  "outcome": "PASS",
+  "production": "BLOCKED",
+  "provenance": {
+    "mode": "PORTABLE"
+  },
+  "schema": "QUORVANE_FINANCIAL_REVIEW_V1",
+  "selected_case": "all",
+  "summary": {
+    "errors": 0,
+    "executed": 36,
+    "matched": 34,
+    "mismatched": 0,
+    "scheduled": 36,
+    "unassessed": 2
+  }
+}
