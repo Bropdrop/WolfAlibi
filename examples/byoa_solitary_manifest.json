@@ -1,0 +1,5 @@
+{
+  "schema": "wolfalibi.byoa.solitary.manifest.v1",
+  "profile": "solitary-synthetic",
+  "fixture": "protected.txt"
+}
