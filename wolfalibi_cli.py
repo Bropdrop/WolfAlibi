@@ -193,6 +193,8 @@ def parser() -> argparse.ArgumentParser:
     agent_subcommands = agent.add_subparsers(dest="agent_command", required=True)
     test = configure_parser(agent_subcommands.add_parser("test", help="run a trusted local manifest"))
     test.set_defaults(handler=lambda args: run_cli(args, child=True))
+    from wolfalibi.solitary_cli import add_byoa_parser
+    add_byoa_parser(sub)
     return result
 
 

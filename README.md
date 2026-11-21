@@ -25,6 +25,8 @@ WolfAlibi does not confine a real agent to the broker, attest code execution, es
 
 Test an authorized agent with `wolfalibi agent test --manifest agent.json`. The runner requires consent before importing agent code and writes a local report of explicitly observed tool callbacks. [Setup, pinned adapters and synthetic examples](docs/AGENT_LAB_RUNNER.md)
 
+For the separate Solitary experiment, run `wolfalibi byoa doctor` to check Linux prerequisites. The fixed synthetic worker produces `BROKER_ONLY` evidence that can be verified offline with separate expectations. [Solitary setup, control pairs and limitations](docs/BYOA_SOLITARY_V1.md)
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.

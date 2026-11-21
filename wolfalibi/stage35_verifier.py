@@ -180,6 +180,8 @@ class VerifierStore:
         if supervisor_pub is not None and (not _digest(supervisor_pub) or
                                            supervisor_pub in (broker_pub, witness_pub)):
             return _blocked("expected a distinct 32-byte supervisor key")
+        if "solitary" in contract["profile"] and supervisor_pub is None:
+            return _blocked("Solitary issuance requires a pinned supervisor key")
         if checked_at >= contract["expires_at"]:
             return _rejected("challenge expired")
 
@@ -257,7 +259,11 @@ class VerifierStore:
             return _rejected(f"invalid evidence encoding: {exc}")
         references = dict(contract=contract, broker_pub=broker, witness_pub=witness,
                           expected_witness_state_digest=expected, now=checked_at)
-        if supervisor is not None:
+        if "solitary" in contract["profile"]:
+            from .solitary_evidence import verify_solitary
+
+            verified = verify_solitary(envelope, supervisor_pub=supervisor, **references)
+        elif supervisor is not None:
             from .stage35 import verify_measured_trial
 
             verified = verify_measured_trial(
