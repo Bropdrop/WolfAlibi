@@ -21,7 +21,7 @@ The live profile works on Linux x86_64 with the fixed Stage 3 Bubblewrap and sys
 python3 scripts/qualify_stage35.py > /tmp/wolfalibi-stage35-qualification.json
 ```
 
-The JSON captures exact commit and tree, environment, test counts and output, mutation results, and the signed transcripts and snapshots for both fixture paths. A skipped required test makes qualification `BLOCKED`. Read `stage35_tests`, `full_suite`, `mutation_suite` and `trials` for the exact commands and outputs. The tests use synthetic fixtures and local temporary directories.
+The JSON captures exact commit and tree, environment, test counts and output, mutation results, and the signed transcripts and snapshots for both fixture paths. A skipped required test, dirty tree or changed revision makes exact-tree qualification `BLOCKED`. Read `stage35_tests`, `full_suite`, `mutation_suite` and `trials` for the exact commands and outputs. The tests use synthetic fixtures and local temporary directories.
 
 To run just one measured trial, give it a new private state directory and a fresh nonce.
 
@@ -38,7 +38,7 @@ For the transactional path, create `VerifierStore` with `bootstrap_heads` pinned
 
 ## Remaining qualification gates
 
-- The snapshot applies at one pre-read point. It relies on a trusted supervisor, kernel and runtime. Argv source is an observation. Continuous execution identity, effective syscall rules, complete descendant closure and a measured process scope need further evidence.
+- The supervisor collects the snapshot in the pre-read gate and signs it with the finished transcript afterward. Ordering relies on the trusted supervisor code path and kernel, without an external timing witness. Argv source is an observation. Continuous execution identity, effective syscall rules, complete descendant closure and a measured process scope need further evidence.
 - The fixed corpus covers two paths in separate runs under private, stable directories. The broker policy and snapshot checks cover the declared fixture layout and the measured mounts. Complete mediation over the entire run, alternate copies, concurrent host changes and resource routes outside this test profile remain open.
 - The single-store transaction rejects a competing history relative to its retained head. The Stage 3 schema starts each run at fresh witness genesis. Retained heads detect rollback across accepted transitions. A snapshot with only pending-issuance changes can have the same head. Independent custody, multirun continuation, rollback of all retained copies and equivocation across disconnected verifier stores remain open.
 - Existing Stage 3 and V1/V2 receipt checks remain valid. This increment preserves the distinction between a broker event, response send, worker acknowledgement and actual byte consumption.

@@ -52,6 +52,7 @@ def main():
     if revision["exit_code"]:
         raise SystemExit(revision["stderr"])
     commit, tree = revision["stdout"].splitlines()
+    before = run("git", "status", "--porcelain")
     bwrap = shutil.which("bwrap")
     independent_cases = unit_suite(
         "-v", "test_stage35_measurement.py", "test_stage35_policy.py", "test_stage35_verifier.py",
@@ -60,13 +61,19 @@ def main():
     mutations = run(sys.executable, "-u", "mutation_test.py")
     mutations["detected"] = len(re.findall(r"^CAUGHT\s+M\d+", mutations["stdout"], re.MULTILINE))
     trials = [synthetic_trial(key) for key in ("protected.txt", "reports/summary.txt")]
-    passed = (not mutations["exit_code"] and mutations["detected"] == 8
+    after = run("git", "status", "--porcelain")
+    final_revision = run("git", "rev-parse", "HEAD", "HEAD^{tree}")
+    clean = (before["exit_code"] == after["exit_code"] == 0
+             and before["stdout"] == after["stdout"] == "")
+    same_revision = (not final_revision["exit_code"]
+                     and revision["stdout"] == final_revision["stdout"])
+    passed = (clean and same_revision and not mutations["exit_code"] and mutations["detected"] == 8
               and independent_cases["outcome"] == full["outcome"] == "PASS"
               and all(item["exit_code"] == 0 for item in trials))
     print(json.dumps({
         "schema": "wolfalibi.stage35.local-qualification.v1",
         "commit": commit, "tree": tree,
-        "working_tree_clean": run("git", "status", "--porcelain")["stdout"] == "",
+        "working_tree_clean": clean, "revision_unchanged": same_revision,
         "environment": {
             "system": platform.platform(),
             "python": platform.python_version(),
