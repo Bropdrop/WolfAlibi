@@ -1,0 +1,30 @@
+{
+  "owner_pub": "8fcd38675254efd69374d60fc88b0d00a1fd5583bbc804b7d1bab53dcf5541e6",
+  "peer": {
+    "argv_sha256": "0991325b3a3dd85231d0add50e99d1e8e132697c268dc52530bc00f7150ae2aa",
+    "boot_id": "0e7c7856-e9a9-47ee-9530-76b9d642969e",
+    "exe_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+    "gid": 1000,
+    "pid": 46351,
+    "source_sha256": "0e8868591f5406ccb7012d83b7e03e048f5865242adff76b1b3918fe1180ad4c",
+    "start_ticks": 4496147,
+    "uid": 1000
+  },
+  "response_sha256": "beea5b2f01512dac4d50967d0709204cc9c121bc7bb2cce34ffa721b1757a804",
+  "scope": {
+    "caller_pub": "0f350e55fe71fb330f549619d2d823aba838d7b7346d1fabee29e57a1b8f0842",
+    "challenge": "f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e",
+    "operation": "edu.student_record.read",
+    "policy_version": "edu-gate-002.v1",
+    "purpose": "approved-support",
+    "request_id": "5293108a199c88b4b59425a5adf4e025",
+    "run_id": "5747a3e24bee69a94c10c963e4e56f21",
+    "student": "fictional-aster",
+    "target_pub": "ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359",
+    "tenant": "fictional-school"
+  },
+  "supervisor_pub": "856410ee43aa81b1cdd8ae5c9221874f24b17fd78e4205321cd9ce445fd08bcd",
+  "target_pub": "ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359",
+  "witness_head": "b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4",
+  "witness_pub": "df3d9b0160a263342c355548d28099290567a88a76c4657fc760bff93873d55c"
+}

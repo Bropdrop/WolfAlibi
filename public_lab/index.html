@@ -1,0 +1,1303 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="Offline Quorvane evidence explorer for synthetic WolfAlibi research experiments.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; connect-src 'none'; img-src data:; style-src 'unsafe-inline'; script-src 'unsafe-inline'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <link rel="icon" href="data:,">
+  <title>Evidence Explorer</title>
+  <style>
+:root {
+  --paper: #f5f0e4;
+  --paper-wash: #eee5d4;
+  --paper-dark: #ded1bc;
+  --paper-glass: rgba(255, 252, 244, 0.72);
+  --ink: #163d37;
+  --ink-soft: #48615a;
+  --ink-faint: #708077;
+  --rust: #a94d35;
+  --rust-deep: #7d3022;
+  --ochre: #b47b2d;
+  --line: #cfc2ac;
+  --line-dark: #a99b85;
+  --white: #fffcf5;
+  --alert: #8c3127;
+  --ok: #245c49;
+  --shadow: 0 16px 38px rgba(49, 52, 39, 0.10), 0 2px 5px rgba(49, 52, 39, 0.08);
+  --serif: "Instrument Serif", Georgia, "Times New Roman", serif;
+  --sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html { background: var(--paper); }
+
+body {
+  min-width: 320px;
+  margin: 0;
+  color: var(--ink);
+  background:
+    radial-gradient(circle at 14% 4%, rgba(181, 130, 50, 0.11), transparent 24rem),
+    radial-gradient(circle at 88% 18%, rgba(54, 99, 84, 0.09), transparent 27rem),
+    linear-gradient(135deg, rgba(255,255,255,.35), transparent 45%),
+    var(--paper);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+body::before {
+  position: fixed;
+  z-index: -1;
+  inset: 0;
+  content: "";
+  opacity: .38;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(0deg, rgba(22,61,55,.018) 0 1px, transparent 1px 5px),
+    repeating-linear-gradient(90deg, rgba(169,77,53,.012) 0 1px, transparent 1px 7px);
+}
+
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .58; }
+
+a { color: var(--rust-deep); }
+
+.lab-shell { max-width: 1440px; margin: 0 auto; padding: 0 30px; }
+
+.skip-link {
+  position: fixed;
+  z-index: 20;
+  top: 10px;
+  left: 12px;
+  transform: translateY(-160%);
+  padding: 9px 13px;
+  color: var(--white);
+  background: var(--ink);
+  border-radius: 3px;
+  box-shadow: var(--shadow);
+}
+.skip-link:focus { transform: translateY(0); }
+
+.site-header { padding: 30px 0 0; }
+
+.masthead {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line-dark);
+}
+
+.wordmark { display: inline-flex; align-items: center; gap: 12px; color: var(--ink); }
+.wordmark strong {
+  display: block;
+  font-family: var(--serif);
+  font-size: clamp(1.48rem, 3vw, 2rem);
+  font-weight: 600;
+  letter-spacing: -.035em;
+  line-height: .95;
+}
+.wordmark small {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: .62rem;
+  letter-spacing: .105em;
+  text-transform: uppercase;
+}
+.wordmark-mark {
+  position: relative;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--ink);
+  border-radius: 50%;
+}
+.wordmark-mark::before, .wordmark-mark::after {
+  position: absolute;
+  width: 23px;
+  height: 23px;
+  content: "";
+  border: 1px solid var(--rust);
+  border-radius: 50%;
+}
+.wordmark-mark::after { width: 12px; height: 12px; border-color: var(--ink); }
+.wordmark-mark i { position: absolute; display: block; width: 1px; height: 30px; background: var(--ink); transform: rotate(var(--angle)); opacity: .8; }
+.wordmark-mark i:nth-child(1) { --angle: 18deg; }
+.wordmark-mark i:nth-child(2) { --angle: 72deg; }
+.wordmark-mark i:nth-child(3) { --angle: 136deg; }
+
+.offline-note {
+  max-width: 380px;
+  margin: 0;
+  color: var(--ink-soft);
+  font-family: var(--mono);
+  font-size: .69rem;
+  letter-spacing: .045em;
+  line-height: 1.45;
+  text-align: right;
+  text-transform: uppercase;
+}
+
+.primary-nav { display: flex; gap: 2px; padding-top: 12px; overflow-x: auto; }
+.nav-tab {
+  position: relative;
+  min-height: 43px;
+  padding: 10px 15px 12px;
+  color: var(--ink-soft);
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font-size: .83rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.nav-tab:hover { color: var(--ink); }
+.nav-tab.is-active { color: var(--ink); border-bottom-color: var(--rust); }
+
+main { padding: 34px 0 60px; }
+.view-panel[hidden] { display: none; }
+.view-panel:focus { outline: none; }
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.12fr) minmax(300px, .88fr);
+  min-height: 324px;
+  overflow: hidden;
+  border: 1px solid var(--line-dark);
+  background: var(--paper-glass);
+  box-shadow: var(--shadow);
+}
+.hero-copy { display: flex; flex-direction: column; justify-content: center; padding: clamp(30px, 5vw, 68px); }
+.eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  color: var(--rust-deep);
+  font-family: var(--mono);
+  font-size: .66rem;
+  font-weight: 700;
+  letter-spacing: .13em;
+  text-transform: uppercase;
+}
+.eyebrow::before { width: 27px; height: 1px; content: ""; background: currentColor; }
+.hero h1 {
+  max-width: 680px;
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(2.2rem, 5vw, 4.55rem);
+  font-weight: 500;
+  letter-spacing: -.052em;
+  line-height: .91;
+}
+.hero h1 em { color: var(--rust); font-style: normal; }
+.hero-lede { max-width: 620px; margin: 22px 0 0; color: var(--ink-soft); font-size: clamp(.98rem, 1.7vw, 1.12rem); }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 7px 25px; margin-top: 28px; color: var(--ink-soft); font-family: var(--mono); font-size: .7rem; }
+.hero-meta span { display: inline-flex; gap: 7px; align-items: baseline; }
+.hero-meta b { color: var(--ink); font-weight: 700; }
+
+.fingerprint {
+  position: relative;
+  min-height: 300px;
+  overflow: hidden;
+  border-left: 1px solid var(--line);
+  background: var(--ink);
+}
+.fingerprint::before {
+  position: absolute;
+  z-index: 1;
+  inset: 18px;
+  content: "";
+  pointer-events: none;
+  border: 1px solid rgba(245,240,228,.28);
+}
+.fingerprint-canvas { display: block; width: 100%; height: 100%; min-height: 300px; }
+.fingerprint-caption {
+  position: absolute;
+  z-index: 2;
+  right: 29px;
+  bottom: 27px;
+  left: 29px;
+  color: rgba(255,252,245,.9);
+  font-family: var(--mono);
+  font-size: .63rem;
+  letter-spacing: .07em;
+  line-height: 1.6;
+  text-transform: uppercase;
+}
+.fingerprint-caption code { display: block; overflow: hidden; color: #f4c27a; text-overflow: ellipsis; white-space: nowrap; }
+
+.section-head { display: flex; align-items: end; justify-content: space-between; gap: 20px; margin: 54px 0 18px; }
+.section-head h2, .detail-title, .assurance-title, .review-title {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(1.55rem, 3vw, 2.35rem);
+  font-weight: 500;
+  letter-spacing: -.035em;
+  line-height: 1;
+}
+.section-head p { max-width: 500px; margin: 0; color: var(--ink-soft); font-size: .91rem; text-align: right; }
+
+.experiment-rail { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.experiment-card {
+  display: grid;
+  min-height: 183px;
+  padding: 20px;
+  color: var(--ink);
+  text-align: left;
+  background: rgba(255,252,245,.56);
+  border: 1px solid var(--line);
+  border-radius: 1px;
+  transition: transform .18s ease, border-color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+.experiment-card:hover { border-color: var(--ink-soft); transform: translateY(-2px); box-shadow: 0 8px 16px rgba(49,52,39,.08); }
+.experiment-card.is-selected { color: var(--white); background: var(--ink); border-color: var(--ink); }
+.experiment-card.is-selected .experiment-card-meta, .experiment-card.is-selected .experiment-card-desc { color: rgba(255,252,245,.72); }
+.experiment-card-index { color: var(--rust); font-family: var(--mono); font-size: .68rem; letter-spacing: .1em; }
+.experiment-card.is-selected .experiment-card-index { color: #e9b066; }
+.experiment-card-title { align-self: center; margin: 14px 0 7px; font-family: var(--serif); font-size: 1.45rem; font-weight: 500; letter-spacing: -.025em; line-height: 1.03; }
+.experiment-card-desc { margin: 0; color: var(--ink-soft); font-size: .79rem; line-height: 1.42; }
+.experiment-card-meta { margin-top: 17px; color: var(--ink-faint); font-family: var(--mono); font-size: .61rem; letter-spacing: .05em; text-transform: uppercase; }
+
+.experiment-detail { margin-top: 16px; border-top: 3px solid var(--ink); background: var(--paper-glass); box-shadow: var(--shadow); }
+.detail-header { display: grid; grid-template-columns: minmax(0, 1fr) minmax(210px, .55fr); gap: 36px; padding: 30px 32px; border-bottom: 1px solid var(--line); }
+.detail-kicker { margin: 0 0 8px; color: var(--rust-deep); font-family: var(--mono); font-size: .66rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.detail-description { max-width: 760px; margin: 16px 0 0; color: var(--ink-soft); }
+.claim-block { align-self: center; padding: 18px 0 18px 21px; border-left: 2px solid var(--rust); }
+.micro-label { display: block; margin-bottom: 8px; color: var(--ink-faint); font-family: var(--mono); font-size: .62rem; font-weight: 700; letter-spacing: .09em; text-transform: uppercase; }
+.claim-block p { margin: 0; font-family: var(--serif); font-size: 1.05rem; line-height: 1.22; }
+.claim-block p { overflow-wrap: anywhere; }
+
+.source-strip { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+.source-cell { min-width: 0; padding: 13px 18px; border-right: 1px solid var(--line); }
+.source-cell:last-child { border-right: 0; }
+.source-cell code { display: block; overflow: hidden; color: var(--ink); font-family: var(--mono); font-size: .7rem; text-overflow: ellipsis; white-space: nowrap; }
+
+.detail-workbench { display: grid; grid-template-columns: minmax(310px, .86fr) minmax(0, 1.14fr); }
+.verification-column { min-width: 0; padding: 28px 28px 31px; border-right: 1px solid var(--line); }
+.evidence-column { min-width: 0; padding: 28px; }
+.subhead { display: flex; justify-content: space-between; gap: 15px; align-items: baseline; margin: 0 0 15px; }
+.subhead h3 { margin: 0; font-family: var(--serif); font-size: 1.32rem; font-weight: 500; letter-spacing: -.02em; }
+.subhead p { margin: 0; color: var(--ink-soft); font-size: .76rem; }
+
+.variant-control { margin: 0 0 18px; }
+.variant-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+.variant-button {
+  min-height: 48px;
+  padding: 9px 11px;
+  color: var(--ink-soft);
+  text-align: left;
+  background: rgba(255,252,245,.65);
+  border: 1px solid var(--line-dark);
+  border-radius: 2px;
+}
+.variant-button:hover { border-color: var(--ink); color: var(--ink); }
+.variant-button.is-active { color: var(--white); background: var(--ink); border-color: var(--ink); }
+.variant-button strong { display: block; font-size: .8rem; }
+.variant-button small { display: block; margin-top: 2px; font-family: var(--mono); font-size: .57rem; letter-spacing: .035em; text-transform: uppercase; }
+
+.verdict-panel { padding: 17px; background: #eee7d8; border: 1px solid var(--line); }
+.verdict-panel.is-rejected { background: #f0ddd5; border-color: #c88a7b; }
+.verdict-panel.is-verified { background: #e0ebe2; border-color: #8fa79a; }
+.verdict-panel.is-neutral { background: #eee7d8; }
+.verdict-label { margin: 0 0 10px; color: var(--ink-soft); font-family: var(--mono); font-size: .62rem; font-weight: 700; letter-spacing: .075em; text-transform: uppercase; }
+.verdict-outcome { display: flex; align-items: baseline; gap: 12px; margin: 0; }
+.verdict-outcome b { font-family: var(--serif); font-size: 1.56rem; font-weight: 500; letter-spacing: -.03em; }
+.verdict-outcome code { overflow: hidden; color: var(--rust-deep); font-family: var(--mono); font-size: .65rem; text-overflow: ellipsis; white-space: nowrap; }
+.verdict-detail { margin: 11px 0 0; color: var(--ink-soft); font-size: .81rem; }
+
+.check-stack { display: grid; gap: 11px; margin-top: 18px; }
+.check-card { padding: 15px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.check-card h4 { margin: 0; font-size: .81rem; }
+.check-card p { margin: 5px 0 0; color: var(--ink-soft); font-size: .75rem; line-height: 1.45; }
+.check-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+
+.button, .button-quiet, .file-label {
+  min-height: 35px;
+  padding: 7px 10px;
+  border-radius: 2px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+.button { color: var(--white); background: var(--ink); border: 1px solid var(--ink); }
+.button:hover { background: #0d2d28; }
+.button-rust { background: var(--rust); border-color: var(--rust); }
+.button-rust:hover { background: var(--rust-deep); }
+.button-quiet, .file-label { color: var(--ink); background: transparent; border: 1px solid var(--line-dark); }
+.button-quiet:hover, .file-label:hover { border-color: var(--ink); background: rgba(255,252,245,.7); }
+.file-label input { position: absolute; inline-size: 1px; block-size: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.integrity-result { min-height: 1.1em; color: var(--ink-soft); font-family: var(--mono); font-size: .64rem; line-height: 1.45; }
+.integrity-result.is-match { color: var(--ok); }
+.integrity-result.is-mismatch { color: var(--alert); }
+
+.command-panel { margin-top: 20px; padding: 16px; background: #e5dcc9; border-left: 2px solid var(--rust); }
+.command-panel h4 { margin: 0; font-family: var(--serif); font-size: 1.05rem; font-weight: 500; }
+.command-panel p { margin: 5px 0 11px; color: var(--ink-soft); font-size: .74rem; }
+.command-line { position: relative; display: flex; align-items: stretch; gap: 7px; }
+.command-line code { flex: 1; min-width: 0; padding: 9px; overflow: auto hidden; color: #f7eddb; background: #153b35; font-family: var(--mono); font-size: .65rem; line-height: 1.4; white-space: nowrap; }
+.command-line .button-quiet { flex: 0 0 auto; background: var(--paper); }
+
+.artifact-tabs { display: flex; gap: 5px; padding-bottom: 13px; overflow-x: auto; border-bottom: 1px solid var(--line); }
+.artifact-tab { min-height: 32px; padding: 5px 8px; color: var(--ink-soft); background: transparent; border: 0; border-bottom: 2px solid transparent; font-family: var(--mono); font-size: .66rem; white-space: nowrap; }
+.artifact-tab.is-active { color: var(--rust-deep); border-bottom-color: var(--rust); font-weight: 700; }
+.artifact-tools { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: center; padding: 13px 0; }
+.artifact-meta { max-width: 100%; overflow: hidden; color: var(--ink-soft); font-family: var(--mono); font-size: .62rem; text-overflow: ellipsis; white-space: nowrap; }
+.artifact-actions { display: flex; flex-wrap: wrap; gap: 7px; }
+.evidence-pre {
+  min-height: 315px;
+  max-height: 610px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  color: #ebeadc;
+  background: #153b35;
+  border: 1px solid #0b2723;
+  font-family: var(--mono);
+  font-size: .7rem;
+  line-height: 1.55;
+  tab-size: 2;
+  white-space: pre;
+}
+
+.assurance-intro, .review-intro { max-width: 750px; margin: 0 0 27px; color: var(--ink-soft); font-size: 1.02rem; }
+.assurance-matrix { overflow: auto; border-top: 3px solid var(--ink); box-shadow: var(--shadow); }
+.condition-table { width: 100%; min-width: 700px; border-collapse: collapse; background: var(--paper-glass); }
+.condition-table th, .condition-table td { padding: 18px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--line); }
+.condition-table th { color: var(--ink-soft); font-family: var(--mono); font-size: .64rem; letter-spacing: .08em; text-transform: uppercase; }
+.condition-table td:first-child { width: 26%; font-family: var(--serif); font-size: 1.04rem; }
+.condition-table td:last-child { color: var(--ink-soft); font-size: .84rem; }
+.condition-status { display: inline-block; min-width: 116px; color: var(--ink); font-family: var(--mono); font-size: .65rem; font-weight: 700; letter-spacing: .055em; }
+.condition-status::before { display: inline-block; width: 7px; height: 7px; margin-right: 7px; content: ""; background: var(--ink-faint); border-radius: 50%; }
+.condition-status.status-TESTED::before { background: var(--ok); }
+.condition-status.status-UNSUPPORTED::before, .condition-status.status-NOT_ASSESSED::before { background: var(--ochre); }
+.condition-status.status-BLOCKED::before, .condition-status.status-NOT_ISSUED::before { background: var(--rust); }
+.assurance-notice { margin-top: 22px; padding: 18px 20px; color: var(--ink-soft); border: 1px solid var(--line-dark); border-left: 3px solid var(--rust); }
+.assurance-notice strong { color: var(--ink); }
+
+.review-layout { display: grid; grid-template-columns: minmax(220px, .5fr) minmax(0, 1fr); gap: 34px; align-items: start; }
+.review-aside { padding: 23px; border-top: 3px solid var(--rust); background: rgba(229,220,201,.58); }
+.review-aside h3 { margin: 0; font-family: var(--serif); font-size: 1.5rem; font-weight: 500; }
+.review-aside p, .review-aside li { color: var(--ink-soft); font-size: .8rem; }
+.review-aside ul { padding-left: 18px; }
+.review-aside code { display: block; padding: 9px; overflow-x: auto; color: #f7eddb; background: var(--ink); font-family: var(--mono); font-size: .61rem; line-height: 1.5; }
+.finding-form { padding: 27px; border-top: 3px solid var(--ink); background: var(--paper-glass); box-shadow: var(--shadow); }
+.finding-form h3 { margin: 0; font-family: var(--serif); font-size: 1.65rem; font-weight: 500; letter-spacing: -.025em; }
+.finding-form > p { margin: 7px 0 22px; color: var(--ink-soft); font-size: .82rem; }
+.finding-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px; }
+.finding-grid > div { min-width: 0; }
+.finding-grid .field-wide { grid-column: 1 / -1; }
+.field-label { display: block; margin: 0 0 6px; color: var(--ink-soft); font-family: var(--mono); font-size: .64rem; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+.field-readout { display: block; min-width: 0; min-height: 39px; padding: 9px 10px; overflow: hidden; color: var(--ink); background: #eee6d5; border: 1px solid var(--line); font-family: var(--mono); font-size: .69rem; text-overflow: ellipsis; white-space: nowrap; }
+.finding-form input, .finding-form textarea {
+  width: 100%;
+  color: var(--ink);
+  background: rgba(255,252,245,.78);
+  border: 1px solid var(--line-dark);
+  border-radius: 1px;
+}
+.finding-form input { min-height: 39px; padding: 8px 10px; }
+.finding-form textarea { min-height: 94px; padding: 10px; resize: vertical; }
+.finding-form input:focus, .finding-form textarea:focus { border-color: var(--rust); outline: 3px solid rgba(169,77,53,.17); }
+.form-note { margin: 15px 0; color: var(--ink-soft); font-size: .74rem; }
+.form-status { min-height: 1.4em; margin: 11px 0 0; color: var(--ink-soft); font-family: var(--mono); font-size: .68rem; }
+.form-status.is-error { color: var(--alert); }
+.form-status.is-ok { color: var(--ok); }
+
+.toast {
+  position: fixed;
+  z-index: 30;
+  right: 20px;
+  bottom: 20px;
+  max-width: min(390px, calc(100vw - 40px));
+  padding: 12px 15px;
+  color: var(--white);
+  background: var(--ink);
+  box-shadow: var(--shadow);
+  font-size: .8rem;
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(10px);
+  transition: opacity .18s ease, transform .18s ease;
+}
+.toast.is-visible { opacity: 1; transform: translateY(0); }
+
+.site-footer { display: flex; justify-content: space-between; gap: 20px; padding: 19px 0 25px; color: var(--ink-soft); border-top: 1px solid var(--line-dark); font-family: var(--mono); font-size: .63rem; letter-spacing: .04em; text-transform: uppercase; }
+.noscript-note { max-width: 900px; margin: 20px auto; padding: 16px; color: var(--ink); background: #f0ddd5; border-left: 3px solid var(--rust); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+
+:focus-visible { outline: 3px solid rgba(169,77,53,.75); outline-offset: 3px; }
+
+@media (max-width: 980px) {
+  .hero { grid-template-columns: 1fr; }
+  .fingerprint { min-height: 240px; border-top: 1px solid var(--line); border-left: 0; }
+  .fingerprint-canvas { min-height: 240px; }
+  .experiment-rail { grid-template-columns: 1fr; }
+  .experiment-card { min-height: 130px; }
+  .detail-workbench { grid-template-columns: minmax(0, 1fr); }
+  .verification-column { border-right: 0; border-bottom: 1px solid var(--line); }
+  .review-layout { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 680px) {
+  .lab-shell { padding: 0 16px; }
+  .site-header { padding-top: 17px; }
+  .masthead { align-items: start; flex-direction: column; gap: 13px; padding-bottom: 16px; }
+  .offline-note { text-align: left; }
+  main { padding-top: 23px; }
+  .hero-copy { padding: 29px 23px 33px; }
+  .hero h1 { font-size: clamp(2.2rem, 13vw, 3.2rem); }
+  .section-head { align-items: start; flex-direction: column; margin-top: 37px; }
+  .section-head p { text-align: left; }
+  .detail-header { grid-template-columns: minmax(0, 1fr); gap: 20px; padding: 24px 20px; }
+  .detail-header > * { min-width: 0; }
+  .source-strip { grid-template-columns: 1fr; }
+  .source-cell { border-right: 0; border-bottom: 1px solid var(--line); }
+  .source-cell:last-child { border-bottom: 0; }
+  .verification-column, .evidence-column { padding: 22px 18px; }
+  .evidence-pre { min-height: 245px; padding: 13px; font-size: .64rem; }
+  .artifact-tools { align-items: start; flex-direction: column; }
+  .finding-form { padding: 22px 17px; }
+  .finding-grid { grid-template-columns: minmax(0, 1fr); }
+  .finding-grid .field-wide { grid-column: auto; }
+  .site-footer { align-items: start; flex-direction: column; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+}
+
+</style>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to evidence</a>
+  <div class="lab-shell">
+    <header class="site-header">
+      <div class="masthead">
+        <div class="wordmark" aria-label="Quorvane Public Lab 001 Evidence Explorer">
+          <span class="wordmark-mark" aria-hidden="true"><i></i><i></i><i></i></span>
+          <span>
+            <strong>Quorvane</strong>
+            <small>public research lab</small>
+          </span>
+        </div>
+      </div>
+      <nav class="primary-nav" aria-label="Evidence explorer sections" role="tablist">
+        <button id="tab-overview" class="nav-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="panel-overview" tabindex="0" data-view="overview">Experiments</button>
+        <button id="tab-assurance" class="nav-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-assurance" tabindex="-1" data-view="assurance">Assurance</button>
+        <button id="tab-review" class="nav-tab" type="button" role="tab" aria-selected="false" aria-controls="panel-review" tabindex="-1" data-view="review">Findings</button>
+      </nav>
+    </header>
+
+    <main id="main-content" tabindex="-1">
+      <section id="panel-overview" class="view-panel is-active" role="tabpanel" aria-labelledby="tab-overview" data-panel="overview"></section>
+      <section id="panel-assurance" class="view-panel" role="tabpanel" aria-labelledby="tab-assurance" data-panel="assurance" hidden></section>
+      <section id="panel-review" class="view-panel" role="tabpanel" aria-labelledby="tab-review" data-panel="review" hidden></section>
+    </main>
+
+    <footer class="site-footer">
+      <span>Assurance: SIMULATED_POLICY_ONLY · Certification: NOT_ISSUED</span>
+    </footer>
+  </div>
+  <noscript>
+    <div class="noscript-note">This offline explorer needs JavaScript to render its embedded evidence records. The JSON data remains in this file.</div>
+  </noscript>
+  <script type="application/json" id="lab-data">{"manifest":{"schema":"QUORVANE_PUBLIC_LAB_MANIFEST_V1","name":"Quorvane Evidence Explorer","edition":"Public Lab 001","base":{"pr":34,"commit":"bb4d1737e481f4e0c776cb57d47c0d27f3c7f11e","tree":"f527cc8d58f343fe43d649b613d8033babbd38ac"},"assurance":"SIMULATED_POLICY_ONLY","cross_uid_custody":"UNSUPPORTED","production":"BLOCKED","certification":"NOT_ISSUED","experiments":[{"id":"education","title":"Education admission","category":"Education","description":"Inspect the signed response to one authorized read of a fictional student support record.","operation":"edu.student_record.read","claim":"HISTORICAL_SYNTHETIC_ADMISSION","scope":"One student \u00b7 one approved support read","source":{"pr":32,"commit":"6b4eda2f2e80cc02d8e6639e1a093f49e6de6e35","tree":"69b90aa33760eb8e5526548fd9abcf5b731d1f37"},"tamper":{"path":"/evidence/response/support_level","description":"The response changes from scheduled-check-in to immediate-follow-up. The signed response digest stays the same."},"files":{"challenge.txt":"afa5630e07f01bf06bdb9ec0493fee8255536b78f04fe8390ec03074d8e99498","genuine.json":"b395731f1ee8db2c9284ac88d5d22de0508f8a66f0868b1e98371de7772a9f6d","pins.json":"61679d24cc823c8b0450ecb65a17603ef8d0217d8d27f55c9b7f33487f08a9ee","tampered.json":"517d2ae7bf0d13d100f7a17d6bfb822f9b3acd635ecd9f53028d418c57efbcd0"}},{"id":"finance","title":"Financial intent","category":"Finance","description":"Check the target\u2019s original receipt for a fictional CAD 45.00 payment intent. The recorded disposition is pending.","operation":"fin.payment.initiate","claim":"HISTORICAL_SYNTHETIC_PAYMENT_INTENT","scope":"One account \u00b7 one pending payment intent","source":{"pr":33,"commit":"536b1499c7376dd9466a59da87394c1e65506082","tree":"a2f23d5315c281d197380e134a4ca0bb2f7d8291"},"tamper":{"path":"/evidence/packet/scope/amount_minor","description":"The amount changes from 4,500 to 4,600 minor units. The original grant, receipt and expected amount stay fixed."},"files":{"challenge.txt":"09ae42d13fdbed91c793319eb85bc897e0c99c82fe6d0a2f8369a592b7d31a3e","genuine.json":"6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df","pins.json":"0285995e486c19e806d01c1788a79e6a9a6d3eb0fa00ef1806f7387a6efd7305","tampered.json":"2d64fd1f127b8d8266a8d94ed09762ceaeddfb930681f470faa3d80d4d69e22c"}},{"id":"history","title":"Historical audit","category":"Audit","description":"Inspect an auditor\u2019s separately authorized disclosure of an archived, pending fictional payment intent.","operation":"fin.payment.history.inquire","claim":"HISTORICAL_INTENT_DISCLOSURE","scope":"One auditor \u00b7 one archived intent","source":{"pr":34,"commit":"bb4d1737e481f4e0c776cb57d47c0d27f3c7f11e","tree":"f527cc8d58f343fe43d649b613d8033babbd38ac"},"tamper":{"path":"/evidence/request/challenge","description":"The inquiry presents a different challenge. The auditor\u2019s proof and the independently supplied challenge stay fixed."},"files":{"challenge.txt":"92a6c9405f3f2755e179b9e7936425d6e9a53b0f3874f5189cecd627a8425ad1","genuine.json":"2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789","pins.json":"4ea815b30bcf9d47421935771068fd4642d24cf6d3df0826aca1ceb333397237","tampered.json":"3a0df1ab876e767c3620ed6711fa042a6175ac5b27a891d8476ad81beffcf736"}}],"conditions":[{"id":"education","title":"Education admission","status":"TESTED","detail":"The target receipt, owner grant, caller, qualification and fictional response match the published expectations at admission."},{"id":"finance","title":"Financial intent","status":"TESTED","detail":"The original target signature binds the amount, payee, request and pending disposition."},{"id":"history","title":"Historical disclosure","status":"TESTED","detail":"The original intent and disclosure have separate authorization records, signatures, challenges and signed times."},{"id":"tampering","title":"Altered evidence","status":"TESTED","detail":"The canonical verifier rejects each of the three specified substitutions against its original inputs."},{"id":"custody","title":"Cross-UID custody","status":"UNSUPPORTED","detail":"The published trials used one Linux UID. Independent key and archive custody need a two-account demonstration."},{"id":"witness","title":"Independent witness custody","status":"NOT_ASSESSED","detail":"The samples include witness signatures. The reviewer still trusts the distribution and retention of the public pins."},{"id":"freshness","title":"Current revocation and replay state","status":"NOT_ASSESSED","detail":"The portable disclosure omits an independently retained commitment to current revocations and consumed challenges."},{"id":"rollback","title":"Coordinated rollback","status":"NOT_ASSESSED","detail":"Restoring the ledger, its retained head and external references together is outside these trials."},{"id":"power","title":"Storage power loss","status":"NOT_ASSESSED","detail":"The inherited crash controls exercise process death. A sudden loss of host power was not tested."},{"id":"settlement","title":"Real financial settlement","status":"NOT_ASSESSED","detail":"The ordinary audit returns settlement UNESTABLISHED. The preview includes no settlement authority or transfer service."},{"id":"confinement","title":"Production confinement","status":"BLOCKED","detail":"Independent measurements for the full runtime and all resource paths remain outstanding."},{"id":"production","title":"Production operation","status":"BLOCKED","detail":"The experiments use fixed local synthetic resources and an operator-provisioned trust root."},{"id":"certification","title":"Formal certification","status":"NOT_ISSUED","detail":"This preview carries no formal certification."}]},"manifest_sha256":"83c707ef06be9e9f2623f32605c48d4135841300dd694a9f1fe361b99f011fc8","cases":{"education":{"raw":{"pins.json":"{\n  \"owner_pub\": \"8fcd38675254efd69374d60fc88b0d00a1fd5583bbc804b7d1bab53dcf5541e6\",\n  \"peer\": {\n    \"argv_sha256\": \"0991325b3a3dd85231d0add50e99d1e8e132697c268dc52530bc00f7150ae2aa\",\n    \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n    \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n    \"gid\": 1000,\n    \"pid\": 46351,\n    \"source_sha256\": \"0e8868591f5406ccb7012d83b7e03e048f5865242adff76b1b3918fe1180ad4c\",\n    \"start_ticks\": 4496147,\n    \"uid\": 1000\n  },\n  \"response_sha256\": \"beea5b2f01512dac4d50967d0709204cc9c121bc7bb2cce34ffa721b1757a804\",\n  \"scope\": {\n    \"caller_pub\": \"0f350e55fe71fb330f549619d2d823aba838d7b7346d1fabee29e57a1b8f0842\",\n    \"challenge\": \"f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e\",\n    \"operation\": \"edu.student_record.read\",\n    \"policy_version\": \"edu-gate-002.v1\",\n    \"purpose\": \"approved-support\",\n    \"request_id\": \"5293108a199c88b4b59425a5adf4e025\",\n    \"run_id\": \"5747a3e24bee69a94c10c963e4e56f21\",\n    \"student\": \"fictional-aster\",\n    \"target_pub\": \"ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359\",\n    \"tenant\": \"fictional-school\"\n  },\n  \"supervisor_pub\": \"856410ee43aa81b1cdd8ae5c9221874f24b17fd78e4205321cd9ce445fd08bcd\",\n  \"target_pub\": \"ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359\",\n  \"witness_head\": \"b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4\",\n  \"witness_pub\": \"df3d9b0160a263342c355548d28099290567a88a76c4657fc760bff93873d55c\"\n}\n","challenge.txt":"f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e\n","genuine.json":"{\n  \"evidence\": {\n    \"packet\": {\n      \"caller_proof\": {\n        \"payload\": {\n          \"grant_sha256\": \"1f3a672fa77a2f3b9a5d8ea450d6befedb9a2cd0b7843ef481c066566a3e4633\",\n          \"qualification_sha256\": \"b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4\",\n          \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n          \"type\": \"QUORVANE_EDUCATION_CALLER_DISPATCH_V1\"\n        },\n        \"signature\": \"d0ca6687f3bbafcffdf892a2eb5e74e14c024b3c1ebe12eb45dea5fcb4e6011d33d2879a304b0b4b4c0938da351c1526fe5669fc13e471c1106f0465b409a40f\"\n      },\n      \"grant\": {\n        \"payload\": {\n          \"expires_at\": 1795263187,\n          \"grant_id\": \"fictional-support-grant\",\n          \"not_before\": 1795263097,\n          \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n          \"type\": \"QUORVANE_EDUCATION_OWNER_GRANT_V1\"\n        },\n        \"signature\": \"a0300d48c45bb2adffca81d0ecddf63e72d9eb91379467622c0a0345e4d2b1118681fb2b31c5ecc5e8dc4a1ca4b7bd3f468538d8e63b2f9b9f3f077df35b460b\"\n      },\n      \"qualification\": {\n        \"payload\": {\n          \"expires_at\": 1795263187,\n          \"not_before\": 1795263097,\n          \"peer\": {\n            \"argv_sha256\": \"0991325b3a3dd85231d0add50e99d1e8e132697c268dc52530bc00f7150ae2aa\",\n            \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n            \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n            \"gid\": 1000,\n            \"pid\": 46351,\n            \"source_sha256\": \"0e8868591f5406ccb7012d83b7e03e048f5865242adff76b1b3918fe1180ad4c\",\n            \"start_ticks\": 4496147,\n            \"uid\": 1000\n          },\n          \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n          \"type\": \"QUORVANE_EDUCATION_LIVE_QUALIFICATION_V1\"\n        },\n        \"supervisor_signature\": \"703cd8bbdb13ad4764e390abc1d2b83ea7ab6a6aab50c450ad378ac2124b79bd658fa4d665831e3c9dab9d88ae4f28ed20d7a0ccdef1bf32acdb5b084f24e00e\",\n        \"witness_signature\": \"4acb970c4ecb06aedf973d18fc9504e745e82e6c7e8bfe839dcdeadd96bddfd595f1b7c25332277fa3a422433ccf99184a80b06234bd0e1f01591b6c060c5009\"\n      },\n      \"scope\": {\n        \"caller_pub\": \"0f350e55fe71fb330f549619d2d823aba838d7b7346d1fabee29e57a1b8f0842\",\n        \"challenge\": \"f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e\",\n        \"operation\": \"edu.student_record.read\",\n        \"policy_version\": \"edu-gate-002.v1\",\n        \"purpose\": \"approved-support\",\n        \"request_id\": \"5293108a199c88b4b59425a5adf4e025\",\n        \"run_id\": \"5747a3e24bee69a94c10c963e4e56f21\",\n        \"student\": \"fictional-aster\",\n        \"target_pub\": \"ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359\",\n        \"tenant\": \"fictional-school\"\n      }\n    },\n    \"receipt\": {\n      \"payload\": {\n        \"authorized_at\": 1795263098,\n        \"caller_proof_sha256\": \"2ef5feb170e7e7cfea6bcd6c5bcce9ae34be5c8bb6ce6aab671d4b2b88a77239\",\n        \"grant_sha256\": \"1f3a672fa77a2f3b9a5d8ea450d6befedb9a2cd0b7843ef481c066566a3e4633\",\n        \"packet_sha256\": \"c51e601f189393f12bd63b3861430d91706c9c83de028c7c60834c75e7b3823c\",\n        \"qualification_sha256\": \"b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4\",\n        \"request_id\": \"5293108a199c88b4b59425a5adf4e025\",\n        \"response_sha256\": \"beea5b2f01512dac4d50967d0709204cc9c121bc7bb2cce34ffa721b1757a804\",\n        \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n        \"target_pub\": \"ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359\",\n        \"type\": \"QUORVANE_EDUCATION_TARGET_RECEIPT_V1\"\n      },\n      \"signature\": \"94a626261f195e17e0ef1f801ea1628f138fb1c9ee2ac5cb49c7765626cb87e905d5be3a66b9799f8df4aa712dce38c4d1358aee4f2f33a276de3e75bc213b0f\"\n    },\n    \"response\": {\n      \"student_ref\": \"fictional-aster\",\n      \"support_level\": \"scheduled-check-in\"\n    }\n  }\n}\n","tampered.json":"{\n  \"evidence\": {\n    \"packet\": {\n      \"caller_proof\": {\n        \"payload\": {\n          \"grant_sha256\": \"1f3a672fa77a2f3b9a5d8ea450d6befedb9a2cd0b7843ef481c066566a3e4633\",\n          \"qualification_sha256\": \"b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4\",\n          \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n          \"type\": \"QUORVANE_EDUCATION_CALLER_DISPATCH_V1\"\n        },\n        \"signature\": \"d0ca6687f3bbafcffdf892a2eb5e74e14c024b3c1ebe12eb45dea5fcb4e6011d33d2879a304b0b4b4c0938da351c1526fe5669fc13e471c1106f0465b409a40f\"\n      },\n      \"grant\": {\n        \"payload\": {\n          \"expires_at\": 1795263187,\n          \"grant_id\": \"fictional-support-grant\",\n          \"not_before\": 1795263097,\n          \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n          \"type\": \"QUORVANE_EDUCATION_OWNER_GRANT_V1\"\n        },\n        \"signature\": \"a0300d48c45bb2adffca81d0ecddf63e72d9eb91379467622c0a0345e4d2b1118681fb2b31c5ecc5e8dc4a1ca4b7bd3f468538d8e63b2f9b9f3f077df35b460b\"\n      },\n      \"qualification\": {\n        \"payload\": {\n          \"expires_at\": 1795263187,\n          \"not_before\": 1795263097,\n          \"peer\": {\n            \"argv_sha256\": \"0991325b3a3dd85231d0add50e99d1e8e132697c268dc52530bc00f7150ae2aa\",\n            \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n            \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n            \"gid\": 1000,\n            \"pid\": 46351,\n            \"source_sha256\": \"0e8868591f5406ccb7012d83b7e03e048f5865242adff76b1b3918fe1180ad4c\",\n            \"start_ticks\": 4496147,\n            \"uid\": 1000\n          },\n          \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n          \"type\": \"QUORVANE_EDUCATION_LIVE_QUALIFICATION_V1\"\n        },\n        \"supervisor_signature\": \"703cd8bbdb13ad4764e390abc1d2b83ea7ab6a6aab50c450ad378ac2124b79bd658fa4d665831e3c9dab9d88ae4f28ed20d7a0ccdef1bf32acdb5b084f24e00e\",\n        \"witness_signature\": \"4acb970c4ecb06aedf973d18fc9504e745e82e6c7e8bfe839dcdeadd96bddfd595f1b7c25332277fa3a422433ccf99184a80b06234bd0e1f01591b6c060c5009\"\n      },\n      \"scope\": {\n        \"caller_pub\": \"0f350e55fe71fb330f549619d2d823aba838d7b7346d1fabee29e57a1b8f0842\",\n        \"challenge\": \"f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e\",\n        \"operation\": \"edu.student_record.read\",\n        \"policy_version\": \"edu-gate-002.v1\",\n        \"purpose\": \"approved-support\",\n        \"request_id\": \"5293108a199c88b4b59425a5adf4e025\",\n        \"run_id\": \"5747a3e24bee69a94c10c963e4e56f21\",\n        \"student\": \"fictional-aster\",\n        \"target_pub\": \"ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359\",\n        \"tenant\": \"fictional-school\"\n      }\n    },\n    \"receipt\": {\n      \"payload\": {\n        \"authorized_at\": 1795263098,\n        \"caller_proof_sha256\": \"2ef5feb170e7e7cfea6bcd6c5bcce9ae34be5c8bb6ce6aab671d4b2b88a77239\",\n        \"grant_sha256\": \"1f3a672fa77a2f3b9a5d8ea450d6befedb9a2cd0b7843ef481c066566a3e4633\",\n        \"packet_sha256\": \"c51e601f189393f12bd63b3861430d91706c9c83de028c7c60834c75e7b3823c\",\n        \"qualification_sha256\": \"b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4\",\n        \"request_id\": \"5293108a199c88b4b59425a5adf4e025\",\n        \"response_sha256\": \"beea5b2f01512dac4d50967d0709204cc9c121bc7bb2cce34ffa721b1757a804\",\n        \"scope_sha256\": \"e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e\",\n        \"target_pub\": \"ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359\",\n        \"type\": \"QUORVANE_EDUCATION_TARGET_RECEIPT_V1\"\n      },\n      \"signature\": \"94a626261f195e17e0ef1f801ea1628f138fb1c9ee2ac5cb49c7765626cb87e905d5be3a66b9799f8df4aa712dce38c4d1358aee4f2f33a276de3e75bc213b0f\"\n    },\n    \"response\": {\n      \"student_ref\": \"fictional-aster\",\n      \"support_level\": \"immediate-follow-up\"\n    }\n  }\n}\n"},"commands":{"genuine":"python -m wolfalibi.education_verify --expectations public_lab/vectors/education/pins.json --evidence public_lab/vectors/education/genuine.json --challenge f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e","tampered":"python -m wolfalibi.education_verify --expectations public_lab/vectors/education/pins.json --evidence public_lab/vectors/education/tampered.json --challenge f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e"},"results":{"genuine":{"assurance":"SIMULATED_POLICY_ONLY","authorized_at":1795263098,"certification":"NOT_ISSUED","confinement":"BLOCKED","cross_uid_custody":"UNSUPPORTED","grant_id":"fictional-support-grant","outcome":"VERIFIED","production":"BLOCKED","receipt_sha256":"074a47a7c6969ac2bd180c201a49051bae3bb5fc7a2c9bfae6ba750108f50de7","request_id":"5293108a199c88b4b59425a5adf4e025","response_sha256":"beea5b2f01512dac4d50967d0709204cc9c121bc7bb2cce34ffa721b1757a804","run_id":"5747a3e24bee69a94c10c963e4e56f21","verified":"HISTORICAL_SYNTHETIC_ADMISSION"},"tampered":{"assurance":"SIMULATED_POLICY_ONLY","certification":"NOT_ISSUED","confinement":"BLOCKED","cross_uid_custody":"UNSUPPORTED","outcome":"REJECTED","production":"BLOCKED","reason":"response differs from the expected fictional record"}}},"finance":{"raw":{"pins.json":"{\n  \"owner_pub\": \"ea8f9aaeb246a7239eeb2d397e8c8f57ddc96a3429875d18075923b61b596219\",\n  \"peer\": {\n    \"argv_sha256\": \"540de73e437657409191dd9208e19e0714bcd0b01205e172cdc9253e6384df24\",\n    \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n    \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n    \"gid\": 1000,\n    \"pid\": 51552,\n    \"source_sha256\": \"278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4\",\n    \"start_ticks\": 4704734,\n    \"uid\": 1000\n  },\n  \"scope\": {\n    \"account\": \"fictional-checking\",\n    \"amount_minor\": 4500,\n    \"caller_pub\": \"4c8201961e0e3d5af9c00de3611cb9a4d2e7bec4f3f0ff336a33860f4e0f1675\",\n    \"challenge\": \"78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0\",\n    \"currency\": \"CAD\",\n    \"operation\": \"fin.payment.initiate\",\n    \"payee\": \"fictional-supplier\",\n    \"policy_epoch\": 1,\n    \"request_id\": \"5540e7af6970a6710d4e0c523dbb76ce\",\n    \"run_id\": \"6e944b2a4ad82bf62a3bf25df9cce9cc\",\n    \"target_pub\": \"de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda\",\n    \"tenant\": \"fictional-bank\"\n  },\n  \"supervisor_pub\": \"a9ee5a91f9a2e79b580ad415a68420262a0a81db821f8de0d863f4ece640dcf0\",\n  \"target_pub\": \"de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda\",\n  \"witness_head\": \"0c9b3fbcfc10a2b34b9b189f15982997b0a61ade6cff02a41057389fad94b619\",\n  \"witness_pub\": \"c0ba155f8b08d129467691b6fd091ae501a9d6a6fc98d71e1006d47bc082c5cb\"\n}\n","challenge.txt":"78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0\n","genuine.json":"{\n  \"evidence\": {\n    \"packet\": {\n      \"caller_proof\": {\n        \"payload\": {\n          \"grant_sha256\": \"2e9a6adb27e8dcd2dd01a1244b4c2feacdc6ba73942cc8c7e7dc91a58d67f50a\",\n          \"qualification_sha256\": \"0c9b3fbcfc10a2b34b9b189f15982997b0a61ade6cff02a41057389fad94b619\",\n          \"scope_sha256\": \"14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34\",\n          \"type\": \"QUORVANE_FINANCE_CALLER_DISPATCH_V1\"\n        },\n        \"signature\": \"4dd254f4957b0cce9c73d26ec095d77638e47ef663220ec999e4b7b3c0bfd550f145d122321771200aa11cae686dd6067da3bb34da488c17a776f38292597803\"\n      },\n      \"grant\": {\n        \"payload\": {\n          \"expires_at\": 1795265273,\n          \"grant_id\": \"fictional-payment-grant\",\n          \"not_before\": 1795265183,\n          \"scope_sha256\": \"14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34\",\n          \"type\": \"QUORVANE_FINANCE_OWNER_GRANT_V1\"\n        },\n        \"signature\": \"a6cac50ff1108c5b00b5604d92e6ac63c4d13647d0df2608dc095d487df0095d504eb8d9037b750049e89b104ab4aa89ae56cb2e0204aeff7a71972688dcbb0a\"\n      },\n      \"qualification\": {\n        \"payload\": {\n          \"expires_at\": 1795265273,\n          \"not_before\": 1795265183,\n          \"peer\": {\n            \"argv_sha256\": \"540de73e437657409191dd9208e19e0714bcd0b01205e172cdc9253e6384df24\",\n            \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n            \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n            \"gid\": 1000,\n            \"pid\": 51552,\n            \"source_sha256\": \"278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4\",\n            \"start_ticks\": 4704734,\n            \"uid\": 1000\n          },\n          \"scope_sha256\": \"1b0859d3b037b19aebbdadc87a7c47c1439e61b608ff5187e7cc94942bcebaaa\",\n          \"type\": \"QUORVANE_FINANCE_LIVE_QUALIFICATION_V1\"\n        },\n        \"supervisor_signature\": \"158a8cd72f36592f96ed5e8c92c7a3331004e4553e2dfe58ca3863615fa49ed0faf66685b73e38ba2ddb0f26e3d784da98e73b45194194dc4cbad122a66b8804\",\n        \"witness_signature\": \"946c3b19eadb385310174e2b330e4fa59608376e24bf508b30cf08aef2876de57a3c06283da9d344ef4d45a6e6479996a933dbaa12068d55f61a891e23da4a06\"\n      },\n      \"scope\": {\n        \"account\": \"fictional-checking\",\n        \"amount_minor\": 4500,\n        \"caller_pub\": \"4c8201961e0e3d5af9c00de3611cb9a4d2e7bec4f3f0ff336a33860f4e0f1675\",\n        \"challenge\": \"78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0\",\n        \"currency\": \"CAD\",\n        \"operation\": \"fin.payment.initiate\",\n        \"payee\": \"fictional-supplier\",\n        \"policy_epoch\": 1,\n        \"request_id\": \"5540e7af6970a6710d4e0c523dbb76ce\",\n        \"run_id\": \"6e944b2a4ad82bf62a3bf25df9cce9cc\",\n        \"target_pub\": \"de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda\",\n        \"tenant\": \"fictional-bank\"\n      }\n    },\n    \"receipt\": {\n      \"payload\": {\n        \"authorized_at\": 1795265184,\n        \"business_sha256\": \"b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0\",\n        \"caller_proof_sha256\": \"f72021af6c78f3e57b09f10559f1ac013abb7447ad1e3e044c227ce583fbab39\",\n        \"grant_sha256\": \"2e9a6adb27e8dcd2dd01a1244b4c2feacdc6ba73942cc8c7e7dc91a58d67f50a\",\n        \"idempotency_key\": \"38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e\",\n        \"outcome\": \"PENDING_EXTERNAL_SETTLEMENT\",\n        \"packet_sha256\": \"38de2cd0b561420ea21744eeb25081733518ec637cf0b9eea5b47c17a7cb57b3\",\n        \"qualification_sha256\": \"0c9b3fbcfc10a2b34b9b189f15982997b0a61ade6cff02a41057389fad94b619\",\n        \"request_id\": \"5540e7af6970a6710d4e0c523dbb76ce\",\n        \"scope_sha256\": \"14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34\",\n        \"target_pub\": \"de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda\",\n        \"type\": \"QUORVANE_FINANCE_TARGET_RECEIPT_V1\"\n      },\n      \"signature\": \"0df671e249fb8d7b38f4674cc83da4e3421c42dcf4ed338ca06fd74b120e0c6c78ed40eff1bfb1715babc0886f17fd54d7da5d6642fcc9e6255e88c96219a606\"\n    }\n  }\n}\n","tampered.json":"{\n  \"evidence\": {\n    \"packet\": {\n      \"caller_proof\": {\n        \"payload\": {\n          \"grant_sha256\": \"2e9a6adb27e8dcd2dd01a1244b4c2feacdc6ba73942cc8c7e7dc91a58d67f50a\",\n          \"qualification_sha256\": \"0c9b3fbcfc10a2b34b9b189f15982997b0a61ade6cff02a41057389fad94b619\",\n          \"scope_sha256\": \"14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34\",\n          \"type\": \"QUORVANE_FINANCE_CALLER_DISPATCH_V1\"\n        },\n        \"signature\": \"4dd254f4957b0cce9c73d26ec095d77638e47ef663220ec999e4b7b3c0bfd550f145d122321771200aa11cae686dd6067da3bb34da488c17a776f38292597803\"\n      },\n      \"grant\": {\n        \"payload\": {\n          \"expires_at\": 1795265273,\n          \"grant_id\": \"fictional-payment-grant\",\n          \"not_before\": 1795265183,\n          \"scope_sha256\": \"14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34\",\n          \"type\": \"QUORVANE_FINANCE_OWNER_GRANT_V1\"\n        },\n        \"signature\": \"a6cac50ff1108c5b00b5604d92e6ac63c4d13647d0df2608dc095d487df0095d504eb8d9037b750049e89b104ab4aa89ae56cb2e0204aeff7a71972688dcbb0a\"\n      },\n      \"qualification\": {\n        \"payload\": {\n          \"expires_at\": 1795265273,\n          \"not_before\": 1795265183,\n          \"peer\": {\n            \"argv_sha256\": \"540de73e437657409191dd9208e19e0714bcd0b01205e172cdc9253e6384df24\",\n            \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n            \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n            \"gid\": 1000,\n            \"pid\": 51552,\n            \"source_sha256\": \"278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4\",\n            \"start_ticks\": 4704734,\n            \"uid\": 1000\n          },\n          \"scope_sha256\": \"1b0859d3b037b19aebbdadc87a7c47c1439e61b608ff5187e7cc94942bcebaaa\",\n          \"type\": \"QUORVANE_FINANCE_LIVE_QUALIFICATION_V1\"\n        },\n        \"supervisor_signature\": \"158a8cd72f36592f96ed5e8c92c7a3331004e4553e2dfe58ca3863615fa49ed0faf66685b73e38ba2ddb0f26e3d784da98e73b45194194dc4cbad122a66b8804\",\n        \"witness_signature\": \"946c3b19eadb385310174e2b330e4fa59608376e24bf508b30cf08aef2876de57a3c06283da9d344ef4d45a6e6479996a933dbaa12068d55f61a891e23da4a06\"\n      },\n      \"scope\": {\n        \"account\": \"fictional-checking\",\n        \"amount_minor\": 4600,\n        \"caller_pub\": \"4c8201961e0e3d5af9c00de3611cb9a4d2e7bec4f3f0ff336a33860f4e0f1675\",\n        \"challenge\": \"78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0\",\n        \"currency\": \"CAD\",\n        \"operation\": \"fin.payment.initiate\",\n        \"payee\": \"fictional-supplier\",\n        \"policy_epoch\": 1,\n        \"request_id\": \"5540e7af6970a6710d4e0c523dbb76ce\",\n        \"run_id\": \"6e944b2a4ad82bf62a3bf25df9cce9cc\",\n        \"target_pub\": \"de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda\",\n        \"tenant\": \"fictional-bank\"\n      }\n    },\n    \"receipt\": {\n      \"payload\": {\n        \"authorized_at\": 1795265184,\n        \"business_sha256\": \"b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0\",\n        \"caller_proof_sha256\": \"f72021af6c78f3e57b09f10559f1ac013abb7447ad1e3e044c227ce583fbab39\",\n        \"grant_sha256\": \"2e9a6adb27e8dcd2dd01a1244b4c2feacdc6ba73942cc8c7e7dc91a58d67f50a\",\n        \"idempotency_key\": \"38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e\",\n        \"outcome\": \"PENDING_EXTERNAL_SETTLEMENT\",\n        \"packet_sha256\": \"38de2cd0b561420ea21744eeb25081733518ec637cf0b9eea5b47c17a7cb57b3\",\n        \"qualification_sha256\": \"0c9b3fbcfc10a2b34b9b189f15982997b0a61ade6cff02a41057389fad94b619\",\n        \"request_id\": \"5540e7af6970a6710d4e0c523dbb76ce\",\n        \"scope_sha256\": \"14346d34b467770a60b9499dcdd0126d1f11a9c0002dae4bc1d31dafb4aa7a34\",\n        \"target_pub\": \"de7ef7ef6e904b8fd5b4e33c680ea81609fd0b8aae1e7aef8a0bced8bd2eafda\",\n        \"type\": \"QUORVANE_FINANCE_TARGET_RECEIPT_V1\"\n      },\n      \"signature\": \"0df671e249fb8d7b38f4674cc83da4e3421c42dcf4ed338ca06fd74b120e0c6c78ed40eff1bfb1715babc0886f17fd54d7da5d6642fcc9e6255e88c96219a606\"\n    }\n  }\n}\n"},"commands":{"genuine":"python -m wolfalibi.finance_verify --expectations public_lab/vectors/finance/pins.json --evidence public_lab/vectors/finance/genuine.json --challenge 78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0","tampered":"python -m wolfalibi.finance_verify --expectations public_lab/vectors/finance/pins.json --evidence public_lab/vectors/finance/tampered.json --challenge 78dd285b1e1e43e9d0cb833bc619ef3aabdbe07c45cd37896df5ff6ce99cdfd0"},"results":{"genuine":{"assurance":"SIMULATED_POLICY_ONLY","authorized_at":1795265184,"business_sha256":"b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0","certification":"NOT_ISSUED","confinement":"BLOCKED","cross_uid_custody":"UNSUPPORTED","effect":"PENDING_EXTERNAL_SETTLEMENT","grant_id":"fictional-payment-grant","idempotency_key":"38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e","outcome":"VERIFIED","production":"BLOCKED","receipt_sha256":"464338b4acbe1b513eac2d07c3a09cd158ddd59b8cc301fa2f474978088d0b6d","request_id":"5540e7af6970a6710d4e0c523dbb76ce","run_id":"6e944b2a4ad82bf62a3bf25df9cce9cc","verified":"HISTORICAL_SYNTHETIC_PAYMENT_INTENT"},"tampered":{"assurance":"SIMULATED_POLICY_ONLY","certification":"NOT_ISSUED","confinement":"BLOCKED","cross_uid_custody":"UNSUPPORTED","outcome":"REJECTED","production":"BLOCKED","reason":"receipt differs from the exact payment scope"}}},"history":{"raw":{"pins.json":"{\n  \"anchor_sha256\": \"76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c\",\n  \"auditor_pub\": \"dd22e39988460947d80cb98b62e75767ead401eb9768fdfbf33835862ec43042\",\n  \"challenge\": \"e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff\",\n  \"finance\": {\n    \"owner_pub\": \"aebfee7609a9a1bfdb1c1cdc641d8666b95f22a78304b70a33285496a92c8235\",\n    \"peer\": {\n      \"argv_sha256\": \"19960d630fceb19ab2235f6601dac456171fa073f27146d6816c34619777ebc8\",\n      \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n      \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n      \"gid\": 1000,\n      \"pid\": 58189,\n      \"source_sha256\": \"278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4\",\n      \"start_ticks\": 4896871,\n      \"uid\": 1000\n    },\n    \"scope\": {\n      \"account\": \"fictional-checking\",\n      \"amount_minor\": 4500,\n      \"caller_pub\": \"2b2221c5d1270f0ba85f4c5d708d91cf001d62d55ca1c661b07d31207ab233a2\",\n      \"challenge\": \"acc913cbff5dfa2bda5b158044636a9065341b29e000584506281a6b41e5cbdd\",\n      \"currency\": \"CAD\",\n      \"operation\": \"fin.payment.initiate\",\n      \"payee\": \"fictional-supplier\",\n      \"policy_epoch\": 1,\n      \"request_id\": \"dbef04d23557d3747402d18859f50d01\",\n      \"run_id\": \"d6ef71c79b5c7318b6d2b815cdcf951e\",\n      \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n      \"tenant\": \"fictional-bank\"\n    },\n    \"supervisor_pub\": \"af420977b3a3491e23338784b29c2d794aa9d88d68ed056572a63344505d668b\",\n    \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n    \"witness_head\": \"2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5\",\n    \"witness_pub\": \"eb390678729a380ca87b8c8fb14412af7c8101cacd90b5af5b6ee8c47058cc92\"\n  },\n  \"history_pub\": \"70a0b4173aea2c00ecae690d43bfe6b97a201e3d37e4a4e4c2d56f0209a89091\"\n}\n","challenge.txt":"e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff\n","genuine.json":"{\n  \"evidence\": {\n    \"attestation\": {\n      \"payload\": {\n        \"anchor_sha256\": \"76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c\",\n        \"authorized_at\": 1795267107,\n        \"challenge\": \"e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff\",\n        \"disposition\": \"PENDING_EXTERNAL_SETTLEMENT\",\n        \"finance_expectations_sha256\": \"b4d41da2b5aa92ed0050b66b8b382d1348c529952d4adebf12c37f6b521ef541\",\n        \"inquiry_sha256\": \"b34da2ac4b773b0c2455297bd66a9506b87855910710558c9a90aa9553f14a69\",\n        \"original_receipt_sha256\": \"c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4\",\n        \"type\": \"QUORVANE_HISTORICAL_INTENT_DISCLOSURE_V1\"\n      },\n      \"signature\": \"989d41d5ea3a3ba745d5a35e72919ca7cd09f2ed790763e1065007cbb77e14b0d191e9eb3b309a303cf6dea1357886ff533929bb173f3dc73fbc769c13e92301\"\n    },\n    \"original\": {\n      \"packet\": {\n        \"caller_proof\": {\n          \"payload\": {\n            \"grant_sha256\": \"d00bc2aa6166d1245053728d0ec671fc26f8fcf199da127c7e9c8228c1ac9f65\",\n            \"qualification_sha256\": \"2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5\",\n            \"scope_sha256\": \"5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492\",\n            \"type\": \"QUORVANE_FINANCE_CALLER_DISPATCH_V1\"\n          },\n          \"signature\": \"ff9d1dae6a36fe2aa7d024a3a25c5148a702c78a6cf87e1d01643261bb70fa2d1662e1209128fd3d53b311eaa7fc8657bb2822e04ad1d3dd408cae15ef001a0e\"\n        },\n        \"grant\": {\n          \"payload\": {\n            \"expires_at\": 1795267107,\n            \"grant_id\": \"fictional-payment-grant\",\n            \"not_before\": 1795267104,\n            \"scope_sha256\": \"5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492\",\n            \"type\": \"QUORVANE_FINANCE_OWNER_GRANT_V1\"\n          },\n          \"signature\": \"3d3bf6f00c9b8f468b7c7c883083d8b0551634eda0659be9ec00c58c9a084ec91142ea0afc8349a234091a69709c793e929648da753664239bdb80360f2c1907\"\n        },\n        \"qualification\": {\n          \"payload\": {\n            \"expires_at\": 1795267194,\n            \"not_before\": 1795267104,\n            \"peer\": {\n              \"argv_sha256\": \"19960d630fceb19ab2235f6601dac456171fa073f27146d6816c34619777ebc8\",\n              \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n              \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n              \"gid\": 1000,\n              \"pid\": 58189,\n              \"source_sha256\": \"278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4\",\n              \"start_ticks\": 4896871,\n              \"uid\": 1000\n            },\n            \"scope_sha256\": \"51976e1774534e088b731f4e93291bb76e4e53c2f06f0614d58a8c53c72ccae4\",\n            \"type\": \"QUORVANE_FINANCE_LIVE_QUALIFICATION_V1\"\n          },\n          \"supervisor_signature\": \"eca951dd58f91bc2e0a79283d4c4893963dac0c95157900a2ce23bd20549757b9f4ba47db15af662ccd2e462b59be2f3a772a45bc7b20587541933909b2cca03\",\n          \"witness_signature\": \"9df4c1b22b3400947a258259748e9381abd0ea0bb6d0b10fe460a14187e0e05cafa9ecbd71c59f6044e39677d7b1c2ad79ac41e9e6ff93ee1804ebae42710e0a\"\n        },\n        \"scope\": {\n          \"account\": \"fictional-checking\",\n          \"amount_minor\": 4500,\n          \"caller_pub\": \"2b2221c5d1270f0ba85f4c5d708d91cf001d62d55ca1c661b07d31207ab233a2\",\n          \"challenge\": \"acc913cbff5dfa2bda5b158044636a9065341b29e000584506281a6b41e5cbdd\",\n          \"currency\": \"CAD\",\n          \"operation\": \"fin.payment.initiate\",\n          \"payee\": \"fictional-supplier\",\n          \"policy_epoch\": 1,\n          \"request_id\": \"dbef04d23557d3747402d18859f50d01\",\n          \"run_id\": \"d6ef71c79b5c7318b6d2b815cdcf951e\",\n          \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n          \"tenant\": \"fictional-bank\"\n        }\n      },\n      \"receipt\": {\n        \"payload\": {\n          \"authorized_at\": 1795267105,\n          \"business_sha256\": \"93641422e90ff229e2cf8df6928e04fcf3b1d87868f48ce7dea66385a70abe8b\",\n          \"caller_proof_sha256\": \"798da142e9005589565dbe6829645fabf60a0268a66dc33795098979242a72e6\",\n          \"grant_sha256\": \"d00bc2aa6166d1245053728d0ec671fc26f8fcf199da127c7e9c8228c1ac9f65\",\n          \"idempotency_key\": \"54dffdaa15a5cc1753f21310f89d9b2b98c8c11dfabf0b8529f7523b6a0ec820\",\n          \"outcome\": \"PENDING_EXTERNAL_SETTLEMENT\",\n          \"packet_sha256\": \"ed53661c2b71f72885d2e8d4423850b905639c6546f1314c5527b36400d79dc5\",\n          \"qualification_sha256\": \"2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5\",\n          \"request_id\": \"dbef04d23557d3747402d18859f50d01\",\n          \"scope_sha256\": \"5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492\",\n          \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n          \"type\": \"QUORVANE_FINANCE_TARGET_RECEIPT_V1\"\n        },\n        \"signature\": \"d3da4679a3b6ea58210c9e6fa242d0590f7fcb74686193bc557b21e756a5f203a983ed7738225286d5f0b17540646013d419c51a3dadfc1084caac11cfdef10e\"\n      }\n    },\n    \"request\": {\n      \"auditor_proof\": {\n        \"payload\": {\n          \"challenge\": \"e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff\",\n          \"grant_sha256\": \"4f28cccd2f11ecb7bfea13ef55a42d060bf673c52911fc5d625d942ea6b22b3b\",\n          \"scope_sha256\": \"febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617\",\n          \"type\": \"QUORVANE_HISTORY_AUDITOR_INQUIRY_V1\"\n        },\n        \"signature\": \"196921bac7fd547dbad06fbf0e6e9ccfcdc5483361bd58cebf3bcad927f047603237b95d9e2d22d3f681d88469c025cb7811c45c1c412316d90e99d7e6c17f0a\"\n      },\n      \"challenge\": \"e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff\",\n      \"grant\": {\n        \"payload\": {\n          \"auditor_pub\": \"dd22e39988460947d80cb98b62e75767ead401eb9768fdfbf33835862ec43042\",\n          \"expires_at\": 1795267167,\n          \"grant_id\": \"fictional-history-grant\",\n          \"not_before\": 1795267107,\n          \"scope_sha256\": \"febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617\",\n          \"type\": \"QUORVANE_HISTORY_OWNER_GRANT_V1\"\n        },\n        \"signature\": \"55be1bfad43c1834687e0e2274a568b55bd1285c6ae49d780a646443da5c1643ad9b64828438b942da4180fc8bd526aa7e5f0c3ac9776c43660b8e4e04959700\"\n      },\n      \"scope\": {\n        \"account\": \"fictional-checking\",\n        \"operation\": \"fin.payment.initiate\",\n        \"purpose\": \"fin.payment.history.inquire\",\n        \"request_id\": \"dbef04d23557d3747402d18859f50d01\",\n        \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n        \"tenant\": \"fictional-bank\"\n      }\n    }\n  }\n}\n","tampered.json":"{\n  \"evidence\": {\n    \"attestation\": {\n      \"payload\": {\n        \"anchor_sha256\": \"76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c\",\n        \"authorized_at\": 1795267107,\n        \"challenge\": \"e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff\",\n        \"disposition\": \"PENDING_EXTERNAL_SETTLEMENT\",\n        \"finance_expectations_sha256\": \"b4d41da2b5aa92ed0050b66b8b382d1348c529952d4adebf12c37f6b521ef541\",\n        \"inquiry_sha256\": \"b34da2ac4b773b0c2455297bd66a9506b87855910710558c9a90aa9553f14a69\",\n        \"original_receipt_sha256\": \"c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4\",\n        \"type\": \"QUORVANE_HISTORICAL_INTENT_DISCLOSURE_V1\"\n      },\n      \"signature\": \"989d41d5ea3a3ba745d5a35e72919ca7cd09f2ed790763e1065007cbb77e14b0d191e9eb3b309a303cf6dea1357886ff533929bb173f3dc73fbc769c13e92301\"\n    },\n    \"original\": {\n      \"packet\": {\n        \"caller_proof\": {\n          \"payload\": {\n            \"grant_sha256\": \"d00bc2aa6166d1245053728d0ec671fc26f8fcf199da127c7e9c8228c1ac9f65\",\n            \"qualification_sha256\": \"2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5\",\n            \"scope_sha256\": \"5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492\",\n            \"type\": \"QUORVANE_FINANCE_CALLER_DISPATCH_V1\"\n          },\n          \"signature\": \"ff9d1dae6a36fe2aa7d024a3a25c5148a702c78a6cf87e1d01643261bb70fa2d1662e1209128fd3d53b311eaa7fc8657bb2822e04ad1d3dd408cae15ef001a0e\"\n        },\n        \"grant\": {\n          \"payload\": {\n            \"expires_at\": 1795267107,\n            \"grant_id\": \"fictional-payment-grant\",\n            \"not_before\": 1795267104,\n            \"scope_sha256\": \"5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492\",\n            \"type\": \"QUORVANE_FINANCE_OWNER_GRANT_V1\"\n          },\n          \"signature\": \"3d3bf6f00c9b8f468b7c7c883083d8b0551634eda0659be9ec00c58c9a084ec91142ea0afc8349a234091a69709c793e929648da753664239bdb80360f2c1907\"\n        },\n        \"qualification\": {\n          \"payload\": {\n            \"expires_at\": 1795267194,\n            \"not_before\": 1795267104,\n            \"peer\": {\n              \"argv_sha256\": \"19960d630fceb19ab2235f6601dac456171fa073f27146d6816c34619777ebc8\",\n              \"boot_id\": \"0e7c7856-e9a9-47ee-9530-76b9d642969e\",\n              \"exe_sha256\": \"fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7\",\n              \"gid\": 1000,\n              \"pid\": 58189,\n              \"source_sha256\": \"278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4\",\n              \"start_ticks\": 4896871,\n              \"uid\": 1000\n            },\n            \"scope_sha256\": \"51976e1774534e088b731f4e93291bb76e4e53c2f06f0614d58a8c53c72ccae4\",\n            \"type\": \"QUORVANE_FINANCE_LIVE_QUALIFICATION_V1\"\n          },\n          \"supervisor_signature\": \"eca951dd58f91bc2e0a79283d4c4893963dac0c95157900a2ce23bd20549757b9f4ba47db15af662ccd2e462b59be2f3a772a45bc7b20587541933909b2cca03\",\n          \"witness_signature\": \"9df4c1b22b3400947a258259748e9381abd0ea0bb6d0b10fe460a14187e0e05cafa9ecbd71c59f6044e39677d7b1c2ad79ac41e9e6ff93ee1804ebae42710e0a\"\n        },\n        \"scope\": {\n          \"account\": \"fictional-checking\",\n          \"amount_minor\": 4500,\n          \"caller_pub\": \"2b2221c5d1270f0ba85f4c5d708d91cf001d62d55ca1c661b07d31207ab233a2\",\n          \"challenge\": \"acc913cbff5dfa2bda5b158044636a9065341b29e000584506281a6b41e5cbdd\",\n          \"currency\": \"CAD\",\n          \"operation\": \"fin.payment.initiate\",\n          \"payee\": \"fictional-supplier\",\n          \"policy_epoch\": 1,\n          \"request_id\": \"dbef04d23557d3747402d18859f50d01\",\n          \"run_id\": \"d6ef71c79b5c7318b6d2b815cdcf951e\",\n          \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n          \"tenant\": \"fictional-bank\"\n        }\n      },\n      \"receipt\": {\n        \"payload\": {\n          \"authorized_at\": 1795267105,\n          \"business_sha256\": \"93641422e90ff229e2cf8df6928e04fcf3b1d87868f48ce7dea66385a70abe8b\",\n          \"caller_proof_sha256\": \"798da142e9005589565dbe6829645fabf60a0268a66dc33795098979242a72e6\",\n          \"grant_sha256\": \"d00bc2aa6166d1245053728d0ec671fc26f8fcf199da127c7e9c8228c1ac9f65\",\n          \"idempotency_key\": \"54dffdaa15a5cc1753f21310f89d9b2b98c8c11dfabf0b8529f7523b6a0ec820\",\n          \"outcome\": \"PENDING_EXTERNAL_SETTLEMENT\",\n          \"packet_sha256\": \"ed53661c2b71f72885d2e8d4423850b905639c6546f1314c5527b36400d79dc5\",\n          \"qualification_sha256\": \"2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5\",\n          \"request_id\": \"dbef04d23557d3747402d18859f50d01\",\n          \"scope_sha256\": \"5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492\",\n          \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n          \"type\": \"QUORVANE_FINANCE_TARGET_RECEIPT_V1\"\n        },\n        \"signature\": \"d3da4679a3b6ea58210c9e6fa242d0590f7fcb74686193bc557b21e756a5f203a983ed7738225286d5f0b17540646013d419c51a3dadfc1084caac11cfdef10e\"\n      }\n    },\n    \"request\": {\n      \"auditor_proof\": {\n        \"payload\": {\n          \"challenge\": \"e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff\",\n          \"grant_sha256\": \"4f28cccd2f11ecb7bfea13ef55a42d060bf673c52911fc5d625d942ea6b22b3b\",\n          \"scope_sha256\": \"febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617\",\n          \"type\": \"QUORVANE_HISTORY_AUDITOR_INQUIRY_V1\"\n        },\n        \"signature\": \"196921bac7fd547dbad06fbf0e6e9ccfcdc5483361bd58cebf3bcad927f047603237b95d9e2d22d3f681d88469c025cb7811c45c1c412316d90e99d7e6c17f0a\"\n      },\n      \"challenge\": \"eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee\",\n      \"grant\": {\n        \"payload\": {\n          \"auditor_pub\": \"dd22e39988460947d80cb98b62e75767ead401eb9768fdfbf33835862ec43042\",\n          \"expires_at\": 1795267167,\n          \"grant_id\": \"fictional-history-grant\",\n          \"not_before\": 1795267107,\n          \"scope_sha256\": \"febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617\",\n          \"type\": \"QUORVANE_HISTORY_OWNER_GRANT_V1\"\n        },\n        \"signature\": \"55be1bfad43c1834687e0e2274a568b55bd1285c6ae49d780a646443da5c1643ad9b64828438b942da4180fc8bd526aa7e5f0c3ac9776c43660b8e4e04959700\"\n      },\n      \"scope\": {\n        \"account\": \"fictional-checking\",\n        \"operation\": \"fin.payment.initiate\",\n        \"purpose\": \"fin.payment.history.inquire\",\n        \"request_id\": \"dbef04d23557d3747402d18859f50d01\",\n        \"target_pub\": \"f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db\",\n        \"tenant\": \"fictional-bank\"\n      }\n    }\n  }\n}\n"},"commands":{"genuine":"python -m wolfalibi.history_verify --expectations public_lab/vectors/history/pins.json --evidence public_lab/vectors/history/genuine.json --challenge e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff","tampered":"python -m wolfalibi.history_verify --expectations public_lab/vectors/history/pins.json --evidence public_lab/vectors/history/tampered.json --challenge e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff"},"results":{"genuine":{"anchor_sha256":"76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c","assurance":"SIMULATED_POLICY_ONLY","authorized_at":1795267107,"certification":"NOT_ISSUED","confinement":"BLOCKED","cross_uid_custody":"UNSUPPORTED","effect":"PENDING_EXTERNAL_SETTLEMENT","grant_id":"fictional-history-grant","outcome":"VERIFIED","production":"BLOCKED","receipt_sha256":"c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4","request_id":"dbef04d23557d3747402d18859f50d01","settlement":"UNESTABLISHED","verified":"HISTORICAL_INTENT_DISCLOSURE"},"tampered":{"assurance":"SIMULATED_POLICY_ONLY","certification":"NOT_ISSUED","confinement":"BLOCKED","cross_uid_custody":"UNSUPPORTED","outcome":"REJECTED","production":"BLOCKED","reason":"history inquiry differs from the expected scope or challenge"}}}}}</script>
+  <script>
+/* A narrow browser check of the signed record and its content bindings.
+   The Python verifiers also check the original authorization chain. */
+(() => {
+  'use strict';
+  const encoder = new TextEncoder();
+
+  function requireMatch(condition, message) {
+    if (!condition) throw new Error(message);
+  }
+
+  // The published vectors contain printable ASCII, JSON containers and safe
+  // integers. Stay inside that domain when matching alibi.canon() byte-for-byte.
+  function canonical(value) {
+    if (value === null || typeof value === 'boolean' || Number.isSafeInteger(value)) return JSON.stringify(value);
+    if (typeof value === 'string' && /^[\x20-\x7e]*$/.test(value)) return JSON.stringify(value);
+    if (Array.isArray(value)) return '[' + value.map(canonical).join(',') + ']';
+    if (typeof value === 'object' && value !== null) {
+      return '{' + Object.keys(value).sort().map(key => canonical(key) + ':' + canonical(value[key])).join(',') + '}';
+    }
+    throw new Error('Value outside the published vector format.');
+  }
+
+  function bytes(hex, length) {
+    requireMatch(typeof hex === 'string' && hex.length === length * 2 && /^[0-9a-f]+$/.test(hex), 'Invalid key or signature encoding.');
+    return Uint8Array.from(hex.match(/../g), pair => parseInt(pair, 16));
+  }
+
+  async function digest(value) {
+    const data = await crypto.subtle.digest('SHA-256', encoder.encode(canonical(value)));
+    return Array.from(new Uint8Array(data), byte => byte.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function signature(record, publicKey, domain) {
+    const key = await crypto.subtle.importKey('raw', bytes(publicKey, 32), {name: 'Ed25519'}, false, ['verify']);
+    const signed = encoder.encode(domain + '\0' + canonical(record.payload));
+    requireMatch(await crypto.subtle.verify('Ed25519', key, bytes(record.signature, 64), signed), 'The signature does not match the pinned public key.');
+    return record.payload;
+  }
+
+  async function paymentOrAdmission(id, evidence, pins, challenge) {
+    const record = await signature(evidence.receipt, pins.target_pub, 'quorvane/' + id + '/target-receipt/v1');
+    requireMatch(record.type === (id === 'education' ? 'QUORVANE_EDUCATION_TARGET_RECEIPT_V1' : 'QUORVANE_FINANCE_TARGET_RECEIPT_V1'), 'Wrong receipt type.');
+    requireMatch(record.target_pub === pins.target_pub && challenge === pins.scope.challenge &&
+      record.request_id === pins.scope.request_id && canonical(pins.scope) === canonical(evidence.packet.scope), 'The recorded scope differs from the public expectations.');
+    requireMatch(record.scope_sha256 === await digest(pins.scope) && record.packet_sha256 === await digest(evidence.packet), 'The packet differs from the one signed by the target.');
+    if (id === 'education') {
+      requireMatch(record.response_sha256 === pins.response_sha256 && record.response_sha256 === await digest(evidence.response), 'The fictional response differs from its signed digest.');
+    } else {
+      requireMatch(record.outcome === 'PENDING_EXTERNAL_SETTLEMENT', 'The signed receipt has an unexpected disposition.');
+    }
+  }
+
+  window.quorvaneCheckRecord = async (id, envelopeText, pinsText, challengeText) => {
+    if (!globalThis.crypto?.subtle) return {outcome: 'UNSUPPORTED', detail: 'Web Crypto is unavailable. Use the local Python verifier.'};
+    try {
+      const evidence = JSON.parse(envelopeText).evidence;
+      const pins = JSON.parse(pinsText);
+      const challenge = challengeText.trim();
+      bytes(challenge, 32);
+      if (id === 'history') {
+        const record = await signature(evidence.attestation, pins.history_pub, 'quorvane/finance/history/disclosure/v1');
+        requireMatch(record.type === 'QUORVANE_HISTORICAL_INTENT_DISCLOSURE_V1' && record.disposition === 'PENDING_EXTERNAL_SETTLEMENT', 'Unexpected disclosure type or disposition.');
+        requireMatch(pins.challenge === challenge && record.challenge === challenge && evidence.request.challenge === challenge, 'The inquiry challenge differs from the pinned challenge.');
+        requireMatch(record.anchor_sha256 === pins.anchor_sha256 && record.finance_expectations_sha256 === await digest(pins.finance) &&
+          record.inquiry_sha256 === await digest(evidence.request) && record.original_receipt_sha256 === await digest(evidence.original.receipt), 'The archive or inquiry differs from the signed disclosure.');
+        await paymentOrAdmission('finance', evidence.original, pins.finance, pins.finance.scope.challenge);
+      } else {
+        requireMatch(id === 'education' || id === 'finance', 'Unknown experiment.');
+        await paymentOrAdmission(id, evidence, pins, challenge);
+      }
+      return {outcome: 'MATCH', detail: 'The signature and record bindings match the supplied public inputs.'};
+    } catch (error) {
+      if (error.name === 'NotSupportedError') return {outcome: 'UNSUPPORTED', detail: 'Ed25519 is unavailable here. Use the local Python verifier.'};
+      return {outcome: 'REJECTED', detail: error.message || 'The signed record check failed.'};
+    }
+  };
+})();
+
+(() => {
+  "use strict";
+
+  const dataNode = document.getElementById("lab-data");
+  const panels = {
+    overview: document.getElementById("panel-overview"),
+    assurance: document.getElementById("panel-assurance"),
+    review: document.getElementById("panel-review"),
+  };
+  const tabs = Array.from(document.querySelectorAll("[role='tab'][data-view]"));
+  const main = document.getElementById("main-content");
+  const announcer = create("p", { className: "sr-only", "aria-live": "polite", "aria-atomic": "true" });
+  document.body.append(announcer);
+
+  let data;
+  try {
+    data = JSON.parse(dataNode ? dataNode.textContent : "{}");
+  } catch (error) {
+    renderFatal("The embedded lab data could not be parsed.");
+    return;
+  }
+
+  const manifest = isPlainObject(data.manifest) ? data.manifest : {};
+  const cases = isPlainObject(data.cases) ? data.cases : {};
+  const experiments = Array.isArray(manifest.experiments) ? manifest.experiments.filter(isPlainObject) : [];
+  if (!experiments.length) {
+    renderFatal("This artifact does not contain any public experiment records.");
+    return;
+  }
+
+  const state = {
+    view: "overview",
+    experimentId: String(experiments[0].id || ""),
+    variant: "genuine",
+    artifact: "genuine.json",
+  };
+  let resizeFrame = 0;
+  let toastTimer = 0;
+
+  renderAssurance();
+  renderReview();
+  renderOverview();
+  bindNavigation();
+  window.addEventListener("resize", () => {
+    if (resizeFrame) return;
+    resizeFrame = window.requestAnimationFrame(() => {
+      resizeFrame = 0;
+      drawFingerprint();
+    });
+  }, { passive: true });
+
+  function isPlainObject(value) {
+    return value !== null && typeof value === "object" && !Array.isArray(value);
+  }
+
+  function create(tag, attributes, ...children) {
+    const node = document.createElement(tag);
+    if (attributes) {
+      Object.entries(attributes).forEach(([key, value]) => {
+        if (value === undefined || value === null || value === false) return;
+        if (key === "className") node.className = value;
+        else if (key === "text") node.textContent = String(value);
+        else if (key === "htmlFor") node.htmlFor = value;
+        else if (key === "dataset" && isPlainObject(value)) Object.entries(value).forEach(([name, item]) => { node.dataset[name] = String(item); });
+        else if (key.startsWith("on") && typeof value === "function") node.addEventListener(key.slice(2).toLowerCase(), value);
+        else node.setAttribute(key, value === true ? "" : String(value));
+      });
+    }
+    children.flat().forEach((child) => {
+      if (child === null || child === undefined || child === false) return;
+      node.append(child.nodeType ? child : document.createTextNode(String(child)));
+    });
+    return node;
+  }
+
+  function asText(value, fallback = "—") {
+    return typeof value === "string" && value.length ? value : fallback;
+  }
+
+  function currentExperiment() {
+    return experiments.find((item) => String(item.id) === state.experimentId) || experiments[0];
+  }
+
+  function currentCase() {
+    return isPlainObject(cases[currentExperiment().id]) ? cases[currentExperiment().id] : {};
+  }
+
+  function rawArtifact(name = state.artifact) {
+    const raw = currentCase().raw;
+    return isPlainObject(raw) && typeof raw[name] === "string" ? raw[name] : "";
+  }
+
+  function artifactHash(name = state.artifact, experiment = currentExperiment()) {
+    const files = isPlainObject(experiment.files) ? experiment.files : {};
+    return typeof files[name] === "string" ? files[name].toLowerCase() : "";
+  }
+
+  function selectedResult() {
+    const results = currentCase().results;
+    return isPlainObject(results) && isPlainObject(results[state.variant]) ? results[state.variant] : {};
+  }
+
+  function safeResultDetail(result) {
+    const items = [];
+    ["verified", "reason", "effect", "settlement", "certification", "production", "confinement"].forEach((key) => {
+      if (result[key] !== undefined && result[key] !== null) items.push(`${key}: ${String(result[key])}`);
+    });
+    return items.length ? items.join(" · ") : "The saved verifier output contains no additional summary fields.";
+  }
+
+  function outcomeClass(outcome) {
+    const value = String(outcome || "").toUpperCase();
+    if (value === "VERIFIED" || value === "MATCH" || value === "SETTLEMENT_VERIFIED") return "is-verified";
+    if (["REJECTED", "DENIED", "MISMATCH"].includes(value)) return "is-rejected";
+    return "is-neutral";
+  }
+
+  function shortHash(value) {
+    const raw = asText(value, "");
+    return raw.length > 22 ? `${raw.slice(0, 12)}…${raw.slice(-8)}` : raw || "not recorded";
+  }
+
+  function renderOverview() {
+    const experiment = currentExperiment();
+    const base = isPlainObject(manifest.base) ? manifest.base : {};
+    const hero = create("section", { className: "hero", "aria-labelledby": "hero-title" });
+    const heroCopy = create("div", { className: "hero-copy" },
+      create("p", { className: "eyebrow", text: "Public Lab 001" }),
+      create("h1", { id: "hero-title" }, "Evidence ", create("em", { text: "Explorer" })),
+      create("p", { className: "hero-lede", text: "Inspect the signatures behind a fictional student record, a pending payment and an auditor’s disclosure. Compare each with its altered copy to see what the verifier rejects." }),
+      create("div", { className: "hero-meta" },
+        metaPair("Experiments", String(experiments.length).padStart(2, "0")),
+        metaPair("Base commit", shortHash(base.commit)),
+        metaPair("Selected case", asText(experiment.category, experiment.id)),
+      ),
+    );
+    const canvas = create("canvas", { id: "fingerprint-canvas", className: "fingerprint-canvas", "aria-hidden": "true" });
+    const fingerprint = create("div", { className: "fingerprint" }, canvas,
+      create("div", { className: "fingerprint-caption" },
+        create("span", { text: "Record fingerprint · SHA-256" }),
+        create("code", { id: "hero-digest", text: artifactHash("genuine.json", experiment) || "digest unavailable" }),
+      ),
+    );
+    hero.append(heroCopy, fingerprint);
+
+    const experimentSection = create("section", { "aria-labelledby": "experiments-title" },
+      create("div", { className: "section-head" },
+        create("h2", { id: "experiments-title", text: "Choose an experiment" }),
+        create("p", { text: "Three signed synthetic cases with public evidence and altered comparison records." }),
+      ),
+    );
+    const rail = create("div", { className: "experiment-rail", "aria-label": "Public experiments" });
+    experiments.forEach((item, index) => rail.append(experimentCard(item, index)));
+    experimentSection.append(rail);
+
+    panels.overview.replaceChildren(hero, experimentSection, detailWorkbench(experiment));
+    window.requestAnimationFrame(drawFingerprint);
+  }
+
+  function metaPair(label, value) {
+    return create("span", null, create("b", { text: `${label}:` }), create("code", { text: value }));
+  }
+
+  function experimentCard(experiment, index) {
+    const selected = String(experiment.id) === state.experimentId;
+    const card = create("button", {
+      className: `experiment-card${selected ? " is-selected" : ""}`,
+      type: "button",
+      "aria-pressed": String(selected),
+      "data-experiment-id": String(experiment.id),
+      "data-action": "select-experiment",
+    },
+      create("span", { className: "experiment-card-index", text: reviewedGate(experiment.id, index) }),
+      create("span", { className: "experiment-card-title", text: asText(experiment.title, experiment.id) }),
+      create("p", { className: "experiment-card-desc", text: asText(experiment.description, "Public synthetic experiment record.") }),
+      create("span", { className: "experiment-card-meta", text: asText(experiment.operation, experiment.category) }),
+    );
+    card.addEventListener("click", () => selectExperiment(experiment.id, card));
+    return card;
+  }
+
+  function reviewedGate(id, index) {
+    const gates = { education: "Reviewed Gate 002", finance: "Reviewed Gate 003", history: "Reviewed Gate 004" };
+    return gates[String(id)] || `Reviewed case ${String(index + 1).padStart(2, "0")}`;
+  }
+
+  function selectExperiment(id, source) {
+    state.experimentId = String(id);
+    state.variant = "genuine";
+    state.artifact = "genuine.json";
+    renderOverview();
+    renderReview();
+    const next = panels.overview.querySelector(`[data-experiment-id="${cssEscape(state.experimentId)}"]`);
+    if (source && next) next.focus();
+    announce(`Selected ${asText(currentExperiment().title, currentExperiment().id)}.`);
+  }
+
+  function detailWorkbench(experiment) {
+    const source = isPlainObject(experiment.source) ? experiment.source : {};
+    const detail = create("section", { className: "experiment-detail", "aria-labelledby": "detail-title" });
+    const heading = create("div", { className: "detail-header" },
+      create("div", null,
+        create("p", { className: "detail-kicker", text: `${asText(experiment.category, "experiment")} / ${asText(experiment.operation, "operation")}` }),
+        create("h2", { id: "detail-title", className: "detail-title", text: asText(experiment.title, experiment.id) }),
+        create("p", { className: "detail-description", text: asText(experiment.description, "") }),
+      ),
+      create("aside", { className: "claim-block", "aria-label": "Recorded claim scope" },
+        create("span", { className: "micro-label", text: "Recorded claim" }),
+        create("p", { text: asText(experiment.claim, "No claim text was recorded.") }),
+        create("span", { className: "micro-label", text: "Scope" }),
+        create("p", { text: asText(experiment.scope, "No scope text was recorded.") }),
+      ),
+    );
+    const sourceStrip = create("div", { className: "source-strip", "aria-label": "Source references" },
+      sourceCell("Pull request", source.pr), sourceCell("Commit", source.commit), sourceCell("Tree", source.tree),
+    );
+    const workbench = create("div", { className: "detail-workbench" }, verificationColumn(experiment), evidenceColumn(experiment));
+    detail.append(heading, sourceStrip, workbench);
+    return detail;
+  }
+
+  function sourceCell(label, value) {
+    return create("div", { className: "source-cell" }, create("span", { className: "micro-label", text: label }), create("code", { text: asText(value, "not recorded") }));
+  }
+
+  function verificationColumn(experiment) {
+    const column = create("div", { className: "verification-column" },
+      create("div", { className: "subhead" }, create("h3", { text: "Verification station" }), create("p", { text: "Saved output and optional local checks" })),
+      variantControl(),
+      recordedVerdict(),
+      signedRecordCheck(experiment),
+      digestCheck(experiment),
+      commandPanel(),
+    );
+    return column;
+  }
+
+  function variantControl() {
+    const group = create("div", { className: "variant-control" }, create("span", { className: "micro-label", text: "Select a published record" }));
+    const buttons = create("div", { className: "variant-buttons", role: "group", "aria-label": "Published record variant" });
+    [
+      ["genuine", "Genuine record", "Saved successful path"],
+      ["tampered", "Tampered control", "Published altered input"],
+    ].forEach(([variant, label, note]) => {
+      const active = state.variant === variant;
+      const button = create("button", {
+        className: `variant-button${active ? " is-active" : ""}`,
+        type: "button",
+        "aria-pressed": String(active),
+        "data-variant": variant,
+        "data-action": "select-variant",
+      }, create("strong", { text: label }), create("small", { text: note }));
+      button.addEventListener("click", () => selectVariant(variant, button));
+      buttons.append(button);
+    });
+    group.append(buttons);
+    return group;
+  }
+
+  function selectVariant(variant, source) {
+    state.variant = variant;
+    state.artifact = `${variant}.json`;
+    renderOverview();
+    renderReview();
+    const next = panels.overview.querySelector(`[data-variant="${variant}"]`);
+    if (source && next) next.focus();
+    announce(`Showing the ${variant} published record.`);
+  }
+
+  function recordedVerdict() {
+    const result = selectedResult();
+    const outcome = asText(result.outcome, "NOT RECORDED");
+    return create("section", {
+      className: `verdict-panel ${outcomeClass(outcome)}`,
+      "data-region": "recorded-result",
+      "aria-live": "polite",
+      "aria-label": "Recorded canonical verifier result",
+    },
+      create("p", { className: "verdict-label", text: "Recorded canonical verifier result" }),
+      create("p", { className: "verdict-outcome" }, create("b", { text: outcome }), result.reason ? create("code", { text: String(result.reason) }) : null),
+      create("p", { className: "verdict-detail", text: safeResultDetail(result) }),
+    );
+  }
+
+  function signedRecordCheck(experiment) {
+    const check = create("section", { className: "check-card", "aria-labelledby": "signed-check-title" },
+      create("h4", { id: "signed-check-title", text: "Signed-record check" }),
+      create("p", { text: "Runs the bundled browser cryptography check over the selected record, public pins, and challenge. This is narrower than the saved canonical Python verifier result." }),
+    );
+    const result = create("p", { className: "integrity-result", "data-region": "signed-result", "aria-live": "polite", text: "Not run in this browser." });
+    const button = create("button", { className: "button", type: "button", "data-action": "check-signed-record", text: "Check signed record" });
+    button.addEventListener("click", async () => {
+      button.disabled = true;
+      result.className = "integrity-result";
+      result.textContent = "Checking the selected signed record locally…";
+      try {
+        if (typeof window.quorvaneCheckRecord !== "function") {
+          setLiveResult(result, { outcome: "UNSUPPORTED", detail: "The bundled WebCrypto verifier is unavailable in this browser build." });
+          return;
+        }
+        const output = await window.quorvaneCheckRecord(
+          String(experiment.id), rawArtifact(`${state.variant}.json`), rawArtifact("pins.json"), rawArtifact("challenge.txt"),
+        );
+        if (!isPlainObject(output)) throw new Error("The bundled checker returned an invalid result.");
+        setLiveResult(result, output);
+      } catch (error) {
+        setLiveResult(result, { outcome: "REJECTED", detail: error instanceof Error ? error.message : "Local signed-record check failed." });
+      } finally {
+        button.disabled = false;
+      }
+    });
+    check.append(create("div", { className: "check-actions" }, button), result);
+    return check;
+  }
+
+  function setLiveResult(node, output) {
+    const outcome = asText(output.outcome, "UNSUPPORTED");
+    const detail = asText(output.detail, "No local-check detail was returned.");
+    node.textContent = `${outcome} — ${detail}`;
+    node.className = `integrity-result ${outcome === "MATCH" ? "is-match" : outcome === "REJECTED" ? "is-mismatch" : ""}`;
+  }
+
+  function digestCheck(experiment) {
+    const check = create("section", { className: "check-card", "aria-labelledby": "digest-check-title" },
+      create("h4", { id: "digest-check-title", text: "Local file digest" }),
+      create("p", { text: "Compares UTF-8 bytes with the manifest SHA-256 for the selected artifact. A match does not verify signatures or the complete authority chain." }),
+    );
+    const result = create("p", { className: "integrity-result", "data-region": "digest-result", "aria-live": "polite", text: "Not checked." });
+    const packaged = create("button", { className: "button-quiet", type: "button", "data-action": "check-digest", text: "Check packaged bytes" });
+    packaged.addEventListener("click", async () => {
+      const expected = artifactHash();
+      if (!expected) return setDigestResult(result, "UNSUPPORTED", "No manifest digest is recorded for this artifact.");
+      try {
+        const digest = await sha256Hex(new TextEncoder().encode(rawArtifact()));
+        setDigestResult(result, digest === expected ? "MATCH" : "MISMATCH", digest === expected ? `Matches published SHA-256 ${shortHash(expected)}.` : `Does not match published SHA-256 ${shortHash(expected)}.`);
+      } catch (error) {
+        setDigestResult(result, "UNSUPPORTED", "WebCrypto SHA-256 is unavailable in this browser.");
+      }
+    });
+    const input = create("input", { type: "file", accept: ".json,.txt,application/json,text/plain", "aria-label": "Choose a local artifact to compare" });
+    input.addEventListener("change", async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const expected = artifactHash();
+      if (!expected) return setDigestResult(result, "UNSUPPORTED", "No manifest digest is recorded for this artifact.");
+      try {
+        const digest = await sha256Hex(await file.arrayBuffer());
+        setDigestResult(result, digest === expected ? "MATCH" : "MISMATCH", digest === expected ? `${file.name} matches the published digest.` : `${file.name} does not match the published digest.`);
+      } catch (error) {
+        setDigestResult(result, "UNSUPPORTED", "The selected file could not be checked locally.");
+      } finally {
+        input.value = "";
+      }
+    });
+    const label = create("label", { className: "file-label", text: "Compare a local file" }, input);
+    check.append(create("div", { className: "check-actions" }, packaged, label), result);
+    return check;
+  }
+
+  function setDigestResult(node, outcome, detail) {
+    node.textContent = `${outcome} — ${detail}`;
+    node.className = `integrity-result ${outcome === "MATCH" ? "is-match" : outcome === "MISMATCH" ? "is-mismatch" : ""}`;
+  }
+
+  function commandPanel() {
+    const command = asText(currentCase().commands && currentCase().commands[state.variant], "python scripts/public_lab.py verify");
+    const copy = create("button", { className: "button-quiet", type: "button", "data-action": "copy-command", "aria-label": "Copy verifier command", text: "Copy" });
+    copy.addEventListener("click", () => copyText(command, "Verifier command copied."));
+    return create("section", { className: "command-panel", "aria-label": "Published verifier command" },
+      create("h4", { text: "Run the complete verifier locally" }),
+      create("p", { text: "The recorded result above came from the canonical verifier. Run its exact published command outside the browser for the complete authority-chain check." }),
+      create("div", { className: "command-line", "data-region": "command" }, create("code", { text: command }), copy),
+    );
+  }
+
+  function evidenceColumn(experiment) {
+    const column = create("div", { className: "evidence-column" }, create("div", { className: "subhead" }, create("h3", { text: "Public evidence" }), create("p", { text: "Exact embedded bytes" })));
+    const artifacts = ["genuine.json", "tampered.json", "pins.json", "challenge.txt"].filter((name) => rawArtifact(name) || artifactHash(name, experiment));
+    if (!artifacts.includes(state.artifact)) state.artifact = artifacts[0] || "genuine.json";
+    const tabsNode = create("div", { className: "artifact-tabs", role: "tablist", "aria-label": "Evidence artifact" });
+    artifacts.forEach((artifact) => {
+      const active = artifact === state.artifact;
+      const button = create("button", {
+        className: `artifact-tab${active ? " is-active" : ""}`,
+        type: "button",
+        role: "tab",
+        "aria-selected": String(active),
+        "data-artifact": artifact,
+        "data-action": "select-artifact",
+        text: artifact,
+      });
+      button.addEventListener("click", () => {
+        state.artifact = artifact;
+        renderOverview();
+        const next = panels.overview.querySelector(`[data-artifact="${cssEscape(artifact)}"]`);
+        if (next) next.focus();
+      });
+      tabsNode.append(button);
+    });
+    const raw = rawArtifact();
+    const expected = artifactHash();
+    const copy = create("button", { className: "button-quiet", type: "button", "data-action": "copy-artifact", text: "Copy exact bytes" });
+    copy.addEventListener("click", () => copyText(raw, `${state.artifact} copied.`));
+    const download = create("button", { className: "button", type: "button", "data-action": "download-artifact", text: "Download artifact" });
+    download.addEventListener("click", () => downloadText(state.artifact, raw, state.artifact.endsWith(".json") ? "application/json;charset=utf-8" : "text/plain;charset=utf-8"));
+    const downloadPins = create("button", { className: "button-quiet", type: "button", "data-action": "download-public-keys", text: "Download public keys" });
+    downloadPins.addEventListener("click", () => downloadText("pins.json", rawArtifact("pins.json"), "application/json;charset=utf-8"));
+    const tools = create("div", { className: "artifact-tools" },
+      create("span", { className: "artifact-meta", text: expected ? `Manifest SHA-256: ${expected}` : "No manifest digest recorded for this artifact." }),
+      create("div", { className: "artifact-actions" }, copy, download, downloadPins),
+    );
+    const pre = create("pre", { className: "evidence-pre", tabindex: "0", "aria-label": `Exact content of ${state.artifact}`, text: raw || "Artifact text is unavailable." });
+    column.append(tabsNode, tools, pre);
+    return column;
+  }
+
+  function renderAssurance() {
+    const conditions = Array.isArray(manifest.conditions) ? manifest.conditions.filter(isPlainObject) : [];
+    const base = isPlainObject(manifest.base) ? manifest.base : {};
+    const section = create("div", null,
+      create("p", { className: "eyebrow", text: "Assurance boundary" }),
+      create("h1", { className: "assurance-title", text: "What this artifact does—and does not—establish" }),
+      create("p", { className: "assurance-intro", text: "Conditions are recorded from the qualified research runs. A signed or hashed record authenticates only its declared, bounded statement; it does not upgrade unsupported controls into a production claim." }),
+    );
+    const table = create("table", { className: "condition-table" });
+    const head = create("thead", null, create("tr", null, create("th", { text: "Condition" }), create("th", { text: "Recorded status" }), create("th", { text: "Evidence boundary" })));
+    const body = create("tbody");
+    conditions.forEach((condition) => {
+      const status = asText(condition.status, "NOT_ASSESSED");
+      body.append(create("tr", { "data-condition-id": asText(condition.id, "") },
+        create("td", { text: asText(condition.title, condition.id) }),
+        create("td", null, create("span", { className: `condition-status status-${status}`, text: status.replaceAll("_", " ") })),
+        create("td", { text: asText(condition.detail, "No explanatory detail was recorded.") }),
+      ));
+    });
+    if (!conditions.length) body.append(create("tr", null, create("td", { colspan: "3", text: "No assurance conditions were embedded in this artifact." })));
+    table.append(head, body);
+    section.append(create("div", { className: "assurance-matrix" }, table));
+    section.append(create("aside", { className: "assurance-notice" }, create("strong", { text: "Source boundary. " }), `Base commit ${shortHash(base.commit)} / tree ${shortHash(base.tree)} / PR ${asText(base.pr, "not recorded")}. Independent escrow, full confinement, and production certification remain governed by their explicit recorded status.`));
+    panels.assurance.replaceChildren(section);
+  }
+
+  function renderReview() {
+    const experiment = currentExperiment();
+    const reviewKey = `${String(experiment.id)}:${state.variant}`;
+    if (panels.review.dataset.reviewKey === reviewKey && panels.review.childElementCount) return;
+    const result = selectedResult();
+    const rawCommand = asText(currentCase().commands && currentCase().commands[state.variant], "python scripts/public_lab.py verify");
+    const expectedText = result.reason ? `Recorded ${asText(result.outcome, "outcome")} (${result.reason})` : `Recorded ${asText(result.outcome, "outcome")}`;
+    const artifactDigest = artifactHash(`${state.variant}.json`, experiment);
+    const layout = create("div", null,
+      create("p", { className: "eyebrow", text: "Human review / local handoff" }),
+      create("h1", { className: "review-title", text: "Record a browser finding" }),
+      create("p", { className: "review-intro", text: "This page cannot submit findings or contact a service. It creates one exact JSON file for manual review; do not include credentials, private material, or real-world records." }),
+    );
+    const aside = create("aside", { className: "review-aside" },
+      create("h3", { text: "Local-only workflow" }),
+      create("p", { text: "The form never stores or transmits your text automatically. Download the JSON, review it, then choose whether to submit it through the local review command." }),
+      create("ol", null,
+        create("li", { text: "Inspect the selected public artifact and recorded result." }),
+        create("li", { text: "Describe reproducible observations without sensitive data." }),
+        create("li", { text: "Download the local JSON and submit it manually if appropriate." }),
+      ),
+      create("code", { text: "python scripts/public_lab_finding.py submit finding.json --inbox review-inbox" }),
+    );
+    const form = create("form", { className: "finding-form", "data-form": "finding", autocomplete: "off", novalidate: "" },
+      create("h3", { text: "Finding manifest" }),
+      create("p", { text: "Required fields are exported exactly in the local finding schema. No credential fields are present." }),
+    );
+    const fields = create("div", { className: "finding-grid" });
+    fields.append(readoutField("Experiment", experiment.id), readoutField("Variant", state.variant), readoutField("Artifact SHA-256", artifactDigest), readoutField("Manifest SHA-256", asText(data.manifest_sha256, "missing")));
+    fields.append(inputField("Environment", "environment", "Local browser review — update with browser and OS", false),
+      inputField("Steps", "steps", rawCommand, true),
+      inputField("Expected", "expected", expectedText, true),
+      inputField("Observed", "observed", "", true, "Describe the observed result without sensitive data."));
+    const status = create("p", { className: "form-status", "aria-live": "polite", "data-region": "finding-status" });
+    const download = create("button", { className: "button button-rust", type: "submit", "data-action": "download-finding", text: "Download local finding JSON" });
+    form.append(fields, create("p", { className: "form-note", text: "No automatic persistence. The downloaded file contains only the declared public-artifact reference and the four review fields." }), download, status);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const formData = new FormData(form);
+      const values = ["environment", "steps", "expected", "observed"].reduce((memo, key) => ({ ...memo, [key]: String(formData.get(key) || "").trim() }), {});
+      const invalidField = Object.entries(values).find(([, value]) => !value || value.includes("\0") || new TextEncoder().encode(value).byteLength > 4096);
+      if (!data.manifest_sha256 || !artifactDigest || invalidField) {
+        status.className = "form-status is-error";
+        status.textContent = invalidField
+          ? `${invalidField[0]} must be nonempty, contain no NUL, and be at most 4096 UTF-8 bytes.`
+          : "A manifest digest and artifact digest are required before download.";
+        return;
+      }
+      const finding = {
+        schema: "quorvane.public-lab.finding.v1",
+        experiment: String(experiment.id),
+        variant: state.variant,
+        artifact_sha256: artifactDigest,
+        manifest_sha256: String(data.manifest_sha256),
+        environment: values.environment,
+        steps: values.steps,
+        expected: values.expected,
+        observed: values.observed,
+      };
+      downloadText("finding.json", `${JSON.stringify(finding, null, 2)}\n`, "application/json;charset=utf-8");
+      status.className = "form-status is-ok";
+      status.textContent = "Local finding JSON downloaded. It was not sent or stored by this page.";
+    });
+    layout.append(create("div", { className: "review-layout" }, aside, form));
+    panels.review.replaceChildren(layout);
+    panels.review.dataset.reviewKey = reviewKey;
+  }
+
+  function readoutField(label, value) {
+    return create("div", null, create("span", { className: "field-label", text: label }), create("div", { className: "field-readout", text: asText(value, "not recorded") }));
+  }
+
+  function inputField(label, name, value, multiline, placeholder = "") {
+    const field = create("div", { className: multiline ? "field-wide" : "" });
+    const id = `finding-${name}`;
+    const control = multiline
+      ? create("textarea", { id, name, required: "", rows: name === "observed" ? "5" : "4", placeholder, text: value })
+      : create("input", { id, name, type: "text", required: "", value, placeholder });
+    field.append(create("label", { className: "field-label", htmlFor: id, text: label }), control);
+    return field;
+  }
+
+  function bindNavigation() {
+    tabs.forEach((tab, index) => {
+      tab.addEventListener("click", () => showView(tab.dataset.view, true));
+      tab.addEventListener("keydown", (event) => {
+        const keys = ["ArrowLeft", "ArrowRight", "Home", "End"];
+        if (!keys.includes(event.key)) return;
+        event.preventDefault();
+        let next = index;
+        if (event.key === "ArrowLeft") next = (index - 1 + tabs.length) % tabs.length;
+        if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+        if (event.key === "Home") next = 0;
+        if (event.key === "End") next = tabs.length - 1;
+        tabs[next].focus();
+        showView(tabs[next].dataset.view, false);
+      });
+    });
+  }
+
+  function showView(view, moveFocus) {
+    if (!panels[view]) return;
+    state.view = view;
+    tabs.forEach((tab) => {
+      const active = tab.dataset.view === view;
+      tab.classList.toggle("is-active", active);
+      tab.setAttribute("aria-selected", String(active));
+      tab.tabIndex = active ? 0 : -1;
+    });
+    Object.entries(panels).forEach(([name, panel]) => {
+      const active = name === view;
+      panel.hidden = !active;
+      panel.classList.toggle("is-active", active);
+    });
+    if (view === "review") renderReview();
+    if (moveFocus) main.focus();
+  }
+
+  async function sha256Hex(bytes) {
+    if (!window.crypto || !window.crypto.subtle) throw new Error("WebCrypto unavailable");
+    const digest = await window.crypto.subtle.digest("SHA-256", bytes);
+    return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("");
+  }
+
+  function drawFingerprint() {
+    const canvas = document.getElementById("fingerprint-canvas");
+    if (!canvas) return;
+    const box = canvas.getBoundingClientRect();
+    if (!box.width || !box.height) return;
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(box.width * ratio);
+    canvas.height = Math.floor(box.height * ratio);
+    const context = canvas.getContext("2d");
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    const width = box.width;
+    const height = box.height;
+    const hash = artifactHash("genuine.json") || artifactHash() || "0".repeat(64);
+    const bytes = Array.from({ length: 32 }, (_, index) => Number.parseInt(hash.slice(index * 2, index * 2 + 2), 16) || 0);
+    const background = context.createLinearGradient(0, 0, width, height);
+    background.addColorStop(0, "#163d37");
+    background.addColorStop(.55, "#0b302c");
+    background.addColorStop(1, "#173d36");
+    context.fillStyle = background;
+    context.fillRect(0, 0, width, height);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    for (let grid = 1; grid < 7; grid += 1) {
+      context.strokeStyle = "rgba(198,234,209,.075)";
+      context.lineWidth = .75;
+      context.beginPath();
+      context.moveTo((width / 7) * grid, 0);
+      context.lineTo((width / 7) * grid, height);
+      context.moveTo(0, (height / 5) * (grid - 1));
+      context.lineTo(width, (height / 5) * (grid - 1));
+      context.stroke();
+    }
+    const centerX = width * (.43 + (bytes[0] / 255) * .16);
+    const centerY = height * (.44 + (bytes[1] / 255) * .12);
+    const tilt = ((bytes[2] / 255) - .5) * .42;
+    const phase = (bytes[3] / 255) * Math.PI * 2;
+    const contourCount = 29;
+    context.save();
+    context.translate(centerX, centerY);
+    context.rotate(tilt);
+    for (let layer = 0; layer < contourCount; layer += 1) {
+      const step = layer / (contourCount - 1);
+      const rx = width * (.53 - step * .43);
+      const ry = height * (.66 - step * .52);
+      const ridgePhase = phase + (bytes[(layer + 6) % bytes.length] / 255) * .42;
+      const skew = (bytes[(layer + 12) % bytes.length] / 255 - .5) * 18;
+      context.strokeStyle = layer % 6 === 0
+        ? "rgba(231,151,83,.92)"
+        : `rgba(184,232,204,${.38 + (layer % 5) * .075})`;
+      context.lineWidth = layer % 6 === 0 ? 1.42 : .94;
+      context.beginPath();
+      // A nested, tilted contour is distorted by several digest-derived waves;
+      // it reads as a single physical ridge rather than unrelated trace lines.
+      for (let degrees = 0; degrees <= 360; degrees += 2) {
+        const theta = (degrees / 180) * Math.PI;
+        const shoulder = Math.sin(theta * 2 + ridgePhase) * (7 + (bytes[(layer + 19) % bytes.length] / 255) * 8) * (1 - step * .45);
+        const grain = Math.sin(theta * (3 + (bytes[(layer + 23) % bytes.length] % 3)) - ridgePhase) * (3 + (bytes[(layer + 27) % bytes.length] / 255) * 4);
+        const radial = 1 + Math.sin(theta * 3 + ridgePhase) * (.035 + (bytes[(layer + 9) % bytes.length] / 255) * .03);
+        const asymmetric = Math.max(0, Math.sin(theta - .35)) * (1 - step) * (10 + (bytes[(layer + 15) % bytes.length] / 255) * 10);
+        const x = Math.cos(theta) * rx * radial + shoulder + skew * Math.sin(theta);
+        const y = Math.sin(theta) * ry * radial + grain - asymmetric;
+        if (degrees === 0) context.moveTo(x, y); else context.lineTo(x, y);
+      }
+      context.closePath();
+      context.stroke();
+    }
+    // A restrained internal bifurcation makes the contour nest visibly
+    // asymmetric while retaining a stable fingerprint/topographic silhouette.
+    for (let branch = 0; branch < 5; branch += 1) {
+      const offset = (branch - 2) * 8;
+      context.strokeStyle = branch === 2 ? "rgba(231,151,83,.82)" : "rgba(184,232,204,.42)";
+      context.lineWidth = branch === 2 ? 1.2 : .8;
+      context.beginPath();
+      for (let t = -1.05; t <= 1.05; t += .025) {
+        const x = t * width * .31 + Math.sin(t * 6 + phase) * (6 + branch);
+        const y = offset + Math.sin(t * Math.PI + phase) * height * .13 + t * t * height * .105;
+        if (t <= -1.04) context.moveTo(x, y); else context.lineTo(x, y);
+      }
+      context.stroke();
+    }
+    context.restore();
+  }
+
+  async function copyText(value, message) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) await navigator.clipboard.writeText(value);
+      else {
+        const area = create("textarea", { text: value, "aria-hidden": "true" });
+        area.style.cssText = "position:fixed;left:-9999px;top:0";
+        document.body.append(area);
+        area.select();
+        const copied = document.execCommand("copy");
+        area.remove();
+        if (!copied) throw new Error("Copy command was unavailable");
+      }
+      showToast(message);
+    } catch (error) {
+      showToast("Copy was unavailable. Select the displayed text instead.");
+    }
+  }
+
+  function downloadText(name, value, mime) {
+    const blob = new Blob([value], { type: mime });
+    const url = URL.createObjectURL(blob);
+    const anchor = create("a", { href: url, download: name });
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 500);
+    showToast(`${name} downloaded locally.`);
+  }
+
+  function showToast(message) {
+    let toast = document.querySelector(".toast");
+    if (!toast) {
+      toast = create("div", { className: "toast", role: "status", "aria-live": "polite" });
+      document.body.append(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("is-visible");
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove("is-visible"), 2600);
+  }
+
+  function announce(message) {
+    announcer.textContent = "";
+    window.setTimeout(() => { announcer.textContent = message; }, 20);
+  }
+
+  function cssEscape(value) {
+    if (window.CSS && typeof window.CSS.escape === "function") return window.CSS.escape(value);
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  }
+
+  function renderFatal(message) {
+    const target = panels.overview || document.body;
+    target.replaceChildren(create("section", { className: "assurance-notice" }, create("strong", { text: "Evidence explorer unavailable. " }), message));
+  }
+})();
+
+</script>
+</body>
+</html>
