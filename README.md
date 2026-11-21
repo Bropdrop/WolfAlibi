@@ -5,6 +5,10 @@ WolfAlibi is an experimental Python research project for cryptographically check
 > **Security research prototype — operational deployment is BLOCKED.**
 > A valid proof is not evidence that an AI, user, or host had no other path to the resource.
 
+## Quorvane Public Lab 001
+
+Explore three fictional, signed records in a standalone offline evidence explorer. Inspect an education admission, a pending financial intent and an auditor’s historical disclosure. Each includes its public trust inputs and a one-field tampered control. Open the HTML to review the evidence, or run `python scripts/public_lab.py verify` from the checkout to reproduce all six canonical outcomes. The preview supports local finding submission without accounts or uploads. [Getting started](public_lab/README.md) · [Review ZIP](public_lab/quorvane-public-lab-001.zip) · [Qualification manifest](public_lab/manifest.json)
+
 ## What is implemented
 
 - A signed, witnessed Merkle absence proof for broker-mediated reads, writes, directory listings, and denied attempts.

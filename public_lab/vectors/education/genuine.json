@@ -1,0 +1,76 @@
+{
+  "evidence": {
+    "packet": {
+      "caller_proof": {
+        "payload": {
+          "grant_sha256": "1f3a672fa77a2f3b9a5d8ea450d6befedb9a2cd0b7843ef481c066566a3e4633",
+          "qualification_sha256": "b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4",
+          "scope_sha256": "e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e",
+          "type": "QUORVANE_EDUCATION_CALLER_DISPATCH_V1"
+        },
+        "signature": "d0ca6687f3bbafcffdf892a2eb5e74e14c024b3c1ebe12eb45dea5fcb4e6011d33d2879a304b0b4b4c0938da351c1526fe5669fc13e471c1106f0465b409a40f"
+      },
+      "grant": {
+        "payload": {
+          "expires_at": 1795263187,
+          "grant_id": "fictional-support-grant",
+          "not_before": 1795263097,
+          "scope_sha256": "e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e",
+          "type": "QUORVANE_EDUCATION_OWNER_GRANT_V1"
+        },
+        "signature": "a0300d48c45bb2adffca81d0ecddf63e72d9eb91379467622c0a0345e4d2b1118681fb2b31c5ecc5e8dc4a1ca4b7bd3f468538d8e63b2f9b9f3f077df35b460b"
+      },
+      "qualification": {
+        "payload": {
+          "expires_at": 1795263187,
+          "not_before": 1795263097,
+          "peer": {
+            "argv_sha256": "0991325b3a3dd85231d0add50e99d1e8e132697c268dc52530bc00f7150ae2aa",
+            "boot_id": "0e7c7856-e9a9-47ee-9530-76b9d642969e",
+            "exe_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+            "gid": 1000,
+            "pid": 46351,
+            "source_sha256": "0e8868591f5406ccb7012d83b7e03e048f5865242adff76b1b3918fe1180ad4c",
+            "start_ticks": 4496147,
+            "uid": 1000
+          },
+          "scope_sha256": "e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e",
+          "type": "QUORVANE_EDUCATION_LIVE_QUALIFICATION_V1"
+        },
+        "supervisor_signature": "703cd8bbdb13ad4764e390abc1d2b83ea7ab6a6aab50c450ad378ac2124b79bd658fa4d665831e3c9dab9d88ae4f28ed20d7a0ccdef1bf32acdb5b084f24e00e",
+        "witness_signature": "4acb970c4ecb06aedf973d18fc9504e745e82e6c7e8bfe839dcdeadd96bddfd595f1b7c25332277fa3a422433ccf99184a80b06234bd0e1f01591b6c060c5009"
+      },
+      "scope": {
+        "caller_pub": "0f350e55fe71fb330f549619d2d823aba838d7b7346d1fabee29e57a1b8f0842",
+        "challenge": "f0be40b77a3aaed23ff6791e092d0b2616cebabce4d9c9e716cbb03459fb714e",
+        "operation": "edu.student_record.read",
+        "policy_version": "edu-gate-002.v1",
+        "purpose": "approved-support",
+        "request_id": "5293108a199c88b4b59425a5adf4e025",
+        "run_id": "5747a3e24bee69a94c10c963e4e56f21",
+        "student": "fictional-aster",
+        "target_pub": "ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359",
+        "tenant": "fictional-school"
+      }
+    },
+    "receipt": {
+      "payload": {
+        "authorized_at": 1795263098,
+        "caller_proof_sha256": "2ef5feb170e7e7cfea6bcd6c5bcce9ae34be5c8bb6ce6aab671d4b2b88a77239",
+        "grant_sha256": "1f3a672fa77a2f3b9a5d8ea450d6befedb9a2cd0b7843ef481c066566a3e4633",
+        "packet_sha256": "c51e601f189393f12bd63b3861430d91706c9c83de028c7c60834c75e7b3823c",
+        "qualification_sha256": "b1daa32058333a709716b9ab02e4180bffbc47442a6af525788c102bf3d0cee4",
+        "request_id": "5293108a199c88b4b59425a5adf4e025",
+        "response_sha256": "beea5b2f01512dac4d50967d0709204cc9c121bc7bb2cce34ffa721b1757a804",
+        "scope_sha256": "e1ab1530ef3ad7a63309f6b6fecb494bcd6cb0539823b46f49fc5ce3d9218e2e",
+        "target_pub": "ffd7dea9fb4f7900d8c1cf5f64eaf6f822466f296aca373973f5576532a9b359",
+        "type": "QUORVANE_EDUCATION_TARGET_RECEIPT_V1"
+      },
+      "signature": "94a626261f195e17e0ef1f801ea1628f138fb1c9ee2ac5cb49c7765626cb87e905d5be3a66b9799f8df4aa712dce38c4d1358aee4f2f33a276de3e75bc213b0f"
+    },
+    "response": {
+      "student_ref": "fictional-aster",
+      "support_level": "scheduled-check-in"
+    }
+  }
+}

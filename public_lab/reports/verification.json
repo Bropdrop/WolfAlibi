@@ -1,0 +1,116 @@
+{
+  "cases": [
+    {
+      "files": {
+        "challenge.txt": "afa5630e07f01bf06bdb9ec0493fee8255536b78f04fe8390ec03074d8e99498",
+        "genuine.json": "b395731f1ee8db2c9284ac88d5d22de0508f8a66f0868b1e98371de7772a9f6d",
+        "pins.json": "61679d24cc823c8b0450ecb65a17603ef8d0217d8d27f55c9b7f33487f08a9ee",
+        "tampered.json": "517d2ae7bf0d13d100f7a17d6bfb822f9b3acd635ecd9f53028d418c57efbcd0"
+      },
+      "genuine": {
+        "assurance": "SIMULATED_POLICY_ONLY",
+        "authorized_at": 1795263098,
+        "certification": "NOT_ISSUED",
+        "confinement": "BLOCKED",
+        "cross_uid_custody": "UNSUPPORTED",
+        "grant_id": "fictional-support-grant",
+        "outcome": "VERIFIED",
+        "production": "BLOCKED",
+        "receipt_sha256": "074a47a7c6969ac2bd180c201a49051bae3bb5fc7a2c9bfae6ba750108f50de7",
+        "request_id": "5293108a199c88b4b59425a5adf4e025",
+        "response_sha256": "beea5b2f01512dac4d50967d0709204cc9c121bc7bb2cce34ffa721b1757a804",
+        "run_id": "5747a3e24bee69a94c10c963e4e56f21",
+        "verified": "HISTORICAL_SYNTHETIC_ADMISSION"
+      },
+      "id": "education",
+      "integrity": "VERIFIED",
+      "outcome": "PASS",
+      "tampered": {
+        "assurance": "SIMULATED_POLICY_ONLY",
+        "certification": "NOT_ISSUED",
+        "confinement": "BLOCKED",
+        "cross_uid_custody": "UNSUPPORTED",
+        "outcome": "REJECTED",
+        "production": "BLOCKED",
+        "reason": "response differs from the expected fictional record"
+      }
+    },
+    {
+      "files": {
+        "challenge.txt": "09ae42d13fdbed91c793319eb85bc897e0c99c82fe6d0a2f8369a592b7d31a3e",
+        "genuine.json": "6a9787670bac32135e11ddc1489bd7c60ae25cac481248485cf8b79431a898df",
+        "pins.json": "0285995e486c19e806d01c1788a79e6a9a6d3eb0fa00ef1806f7387a6efd7305",
+        "tampered.json": "2d64fd1f127b8d8266a8d94ed09762ceaeddfb930681f470faa3d80d4d69e22c"
+      },
+      "genuine": {
+        "assurance": "SIMULATED_POLICY_ONLY",
+        "authorized_at": 1795265184,
+        "business_sha256": "b99b685923b36ebed38bbaaade7eab6bb5e266cb5b1ce2c4a9327eaf55ecbcf0",
+        "certification": "NOT_ISSUED",
+        "confinement": "BLOCKED",
+        "cross_uid_custody": "UNSUPPORTED",
+        "effect": "PENDING_EXTERNAL_SETTLEMENT",
+        "grant_id": "fictional-payment-grant",
+        "idempotency_key": "38da062311eee77fabb779433ff44c2bd3df1406badba9789c65ec879a73570e",
+        "outcome": "VERIFIED",
+        "production": "BLOCKED",
+        "receipt_sha256": "464338b4acbe1b513eac2d07c3a09cd158ddd59b8cc301fa2f474978088d0b6d",
+        "request_id": "5540e7af6970a6710d4e0c523dbb76ce",
+        "run_id": "6e944b2a4ad82bf62a3bf25df9cce9cc",
+        "verified": "HISTORICAL_SYNTHETIC_PAYMENT_INTENT"
+      },
+      "id": "finance",
+      "integrity": "VERIFIED",
+      "outcome": "PASS",
+      "tampered": {
+        "assurance": "SIMULATED_POLICY_ONLY",
+        "certification": "NOT_ISSUED",
+        "confinement": "BLOCKED",
+        "cross_uid_custody": "UNSUPPORTED",
+        "outcome": "REJECTED",
+        "production": "BLOCKED",
+        "reason": "receipt differs from the exact payment scope"
+      }
+    },
+    {
+      "files": {
+        "challenge.txt": "92a6c9405f3f2755e179b9e7936425d6e9a53b0f3874f5189cecd627a8425ad1",
+        "genuine.json": "2db01e42507f29137e559aebf8d02b46702c5854b05f19c4febb9989d33d3789",
+        "pins.json": "4ea815b30bcf9d47421935771068fd4642d24cf6d3df0826aca1ceb333397237",
+        "tampered.json": "3a0df1ab876e767c3620ed6711fa042a6175ac5b27a891d8476ad81beffcf736"
+      },
+      "genuine": {
+        "anchor_sha256": "76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c",
+        "assurance": "SIMULATED_POLICY_ONLY",
+        "authorized_at": 1795267107,
+        "certification": "NOT_ISSUED",
+        "confinement": "BLOCKED",
+        "cross_uid_custody": "UNSUPPORTED",
+        "effect": "PENDING_EXTERNAL_SETTLEMENT",
+        "grant_id": "fictional-history-grant",
+        "outcome": "VERIFIED",
+        "production": "BLOCKED",
+        "receipt_sha256": "c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4",
+        "request_id": "dbef04d23557d3747402d18859f50d01",
+        "settlement": "UNESTABLISHED",
+        "verified": "HISTORICAL_INTENT_DISCLOSURE"
+      },
+      "id": "history",
+      "integrity": "VERIFIED",
+      "outcome": "PASS",
+      "tampered": {
+        "assurance": "SIMULATED_POLICY_ONLY",
+        "certification": "NOT_ISSUED",
+        "confinement": "BLOCKED",
+        "cross_uid_custody": "UNSUPPORTED",
+        "outcome": "REJECTED",
+        "production": "BLOCKED",
+        "reason": "history inquiry differs from the expected scope or challenge"
+      }
+    }
+  ],
+  "manifest_sha256": "83c707ef06be9e9f2623f32605c48d4135841300dd694a9f1fe361b99f011fc8",
+  "outcome": "PASS",
+  "schema": "WOLFALIBI_PUBLIC_LAB_VERIFICATION_V1",
+  "selected_case": "all"
+}

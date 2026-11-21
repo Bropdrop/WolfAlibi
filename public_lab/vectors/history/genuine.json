@@ -1,0 +1,122 @@
+{
+  "evidence": {
+    "attestation": {
+      "payload": {
+        "anchor_sha256": "76ff49e2c29c57000ccf3eb6097e2ee45f03ba1be7e8009ab137a4251bb7136c",
+        "authorized_at": 1795267107,
+        "challenge": "e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff",
+        "disposition": "PENDING_EXTERNAL_SETTLEMENT",
+        "finance_expectations_sha256": "b4d41da2b5aa92ed0050b66b8b382d1348c529952d4adebf12c37f6b521ef541",
+        "inquiry_sha256": "b34da2ac4b773b0c2455297bd66a9506b87855910710558c9a90aa9553f14a69",
+        "original_receipt_sha256": "c6c38e0a3bff5b1da9a32745c3687605c141856e0dba35771bf14bd5954c64e4",
+        "type": "QUORVANE_HISTORICAL_INTENT_DISCLOSURE_V1"
+      },
+      "signature": "989d41d5ea3a3ba745d5a35e72919ca7cd09f2ed790763e1065007cbb77e14b0d191e9eb3b309a303cf6dea1357886ff533929bb173f3dc73fbc769c13e92301"
+    },
+    "original": {
+      "packet": {
+        "caller_proof": {
+          "payload": {
+            "grant_sha256": "d00bc2aa6166d1245053728d0ec671fc26f8fcf199da127c7e9c8228c1ac9f65",
+            "qualification_sha256": "2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5",
+            "scope_sha256": "5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492",
+            "type": "QUORVANE_FINANCE_CALLER_DISPATCH_V1"
+          },
+          "signature": "ff9d1dae6a36fe2aa7d024a3a25c5148a702c78a6cf87e1d01643261bb70fa2d1662e1209128fd3d53b311eaa7fc8657bb2822e04ad1d3dd408cae15ef001a0e"
+        },
+        "grant": {
+          "payload": {
+            "expires_at": 1795267107,
+            "grant_id": "fictional-payment-grant",
+            "not_before": 1795267104,
+            "scope_sha256": "5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492",
+            "type": "QUORVANE_FINANCE_OWNER_GRANT_V1"
+          },
+          "signature": "3d3bf6f00c9b8f468b7c7c883083d8b0551634eda0659be9ec00c58c9a084ec91142ea0afc8349a234091a69709c793e929648da753664239bdb80360f2c1907"
+        },
+        "qualification": {
+          "payload": {
+            "expires_at": 1795267194,
+            "not_before": 1795267104,
+            "peer": {
+              "argv_sha256": "19960d630fceb19ab2235f6601dac456171fa073f27146d6816c34619777ebc8",
+              "boot_id": "0e7c7856-e9a9-47ee-9530-76b9d642969e",
+              "exe_sha256": "fa67443527ed9647f760d807e2a38f26340757123e643c4639cf273ed15d5ea7",
+              "gid": 1000,
+              "pid": 58189,
+              "source_sha256": "278e8d6940ecc277682a0f28634b59bffe67bb8e290f8613bbfada003a6828d4",
+              "start_ticks": 4896871,
+              "uid": 1000
+            },
+            "scope_sha256": "51976e1774534e088b731f4e93291bb76e4e53c2f06f0614d58a8c53c72ccae4",
+            "type": "QUORVANE_FINANCE_LIVE_QUALIFICATION_V1"
+          },
+          "supervisor_signature": "eca951dd58f91bc2e0a79283d4c4893963dac0c95157900a2ce23bd20549757b9f4ba47db15af662ccd2e462b59be2f3a772a45bc7b20587541933909b2cca03",
+          "witness_signature": "9df4c1b22b3400947a258259748e9381abd0ea0bb6d0b10fe460a14187e0e05cafa9ecbd71c59f6044e39677d7b1c2ad79ac41e9e6ff93ee1804ebae42710e0a"
+        },
+        "scope": {
+          "account": "fictional-checking",
+          "amount_minor": 4500,
+          "caller_pub": "2b2221c5d1270f0ba85f4c5d708d91cf001d62d55ca1c661b07d31207ab233a2",
+          "challenge": "acc913cbff5dfa2bda5b158044636a9065341b29e000584506281a6b41e5cbdd",
+          "currency": "CAD",
+          "operation": "fin.payment.initiate",
+          "payee": "fictional-supplier",
+          "policy_epoch": 1,
+          "request_id": "dbef04d23557d3747402d18859f50d01",
+          "run_id": "d6ef71c79b5c7318b6d2b815cdcf951e",
+          "target_pub": "f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db",
+          "tenant": "fictional-bank"
+        }
+      },
+      "receipt": {
+        "payload": {
+          "authorized_at": 1795267105,
+          "business_sha256": "93641422e90ff229e2cf8df6928e04fcf3b1d87868f48ce7dea66385a70abe8b",
+          "caller_proof_sha256": "798da142e9005589565dbe6829645fabf60a0268a66dc33795098979242a72e6",
+          "grant_sha256": "d00bc2aa6166d1245053728d0ec671fc26f8fcf199da127c7e9c8228c1ac9f65",
+          "idempotency_key": "54dffdaa15a5cc1753f21310f89d9b2b98c8c11dfabf0b8529f7523b6a0ec820",
+          "outcome": "PENDING_EXTERNAL_SETTLEMENT",
+          "packet_sha256": "ed53661c2b71f72885d2e8d4423850b905639c6546f1314c5527b36400d79dc5",
+          "qualification_sha256": "2b2a34f1563658b668fad5113ca795dc252c6afaa6d0afc2f89aea75719606c5",
+          "request_id": "dbef04d23557d3747402d18859f50d01",
+          "scope_sha256": "5341dae7bc9bd0920c3be512dc43b342626e857b8d53ac8dc456d08bab2cc492",
+          "target_pub": "f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db",
+          "type": "QUORVANE_FINANCE_TARGET_RECEIPT_V1"
+        },
+        "signature": "d3da4679a3b6ea58210c9e6fa242d0590f7fcb74686193bc557b21e756a5f203a983ed7738225286d5f0b17540646013d419c51a3dadfc1084caac11cfdef10e"
+      }
+    },
+    "request": {
+      "auditor_proof": {
+        "payload": {
+          "challenge": "e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff",
+          "grant_sha256": "4f28cccd2f11ecb7bfea13ef55a42d060bf673c52911fc5d625d942ea6b22b3b",
+          "scope_sha256": "febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617",
+          "type": "QUORVANE_HISTORY_AUDITOR_INQUIRY_V1"
+        },
+        "signature": "196921bac7fd547dbad06fbf0e6e9ccfcdc5483361bd58cebf3bcad927f047603237b95d9e2d22d3f681d88469c025cb7811c45c1c412316d90e99d7e6c17f0a"
+      },
+      "challenge": "e01e9a4d3667f6a9711ddf62865070def6f15183a677b68bff8903b41a1ad3ff",
+      "grant": {
+        "payload": {
+          "auditor_pub": "dd22e39988460947d80cb98b62e75767ead401eb9768fdfbf33835862ec43042",
+          "expires_at": 1795267167,
+          "grant_id": "fictional-history-grant",
+          "not_before": 1795267107,
+          "scope_sha256": "febeeab0ce9aa02ed78461ee2566509524be4ce7846c7ace6aa53a4700961617",
+          "type": "QUORVANE_HISTORY_OWNER_GRANT_V1"
+        },
+        "signature": "55be1bfad43c1834687e0e2274a568b55bd1285c6ae49d780a646443da5c1643ad9b64828438b942da4180fc8bd526aa7e5f0c3ac9776c43660b8e4e04959700"
+      },
+      "scope": {
+        "account": "fictional-checking",
+        "operation": "fin.payment.initiate",
+        "purpose": "fin.payment.history.inquire",
+        "request_id": "dbef04d23557d3747402d18859f50d01",
+        "target_pub": "f52f2fbae9063b13f1268b0d326964692aabefb599a2c4206e6feda14c94c8db",
+        "tenant": "fictional-bank"
+      }
+    }
+  }
+}
