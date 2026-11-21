@@ -29,6 +29,8 @@ For the separate Solitary experiment, run `wolfalibi byoa doctor` to check Linux
 
 [Alibi Clearance V1](docs/ALIBI_CLEARANCE_V1.md) combines a fresh Solitary trial and a separately signed resource-owner grant to gate one offline synthetic read. The gateway produces a local signed decision report.
 
+[Stage 5 Solitary integration](docs/STAGE5_BYOA_SOLITARY.md) runs the fixed Stage 4 Python callback inside the measured cell and records its observation separately from the broker and owner decisions.
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.

@@ -30,6 +30,11 @@ CONTROL_RESULTS = {
     "protected_write_denied": True,
     "exec_denied": True,
 }
+AGENT_CONTROL_RESULTS = {
+    **CONTROL_RESULTS,
+    "address_space_cap_enforced": True,
+    "descriptor_cap_enforced": True,
+}
 _ALLOW_SYSCALLS = (
     "brk", "close", "exit", "exit_group", "fstat", "mmap", "mremap", "munmap",
     "newfstatat", "openat", "read", "rt_sigprocmask", "rt_sigreturn", "write",
@@ -73,12 +78,16 @@ def launch(endpoint: socket.socket, root: Path, key: str, run_id: str,
            challenge: bytes, canary_fd: int, *, mode: str = "normal",
            expected_profile: dict | None = None) -> subprocess.Popen:
     """Start the fixed worker with the inherited broker endpoint on FD 0."""
-    from .stage3_worker import _LAUNCH_ENV
-
     if mode != "normal":
         raise ValueError("Solitary only supports the normal fixed worker")
     source = Path(__file__).read_bytes()
-    profile = _profile(source)
+    return _launch_profile(source, _profile(source), endpoint, root, key, run_id, challenge,
+                           canary_fd, mode=mode, expected_profile=expected_profile)
+
+
+def _launch_profile(source, profile, endpoint, root, key, run_id, challenge, canary_fd, *,
+                    mode, expected_profile):
+    from .stage3_worker import _LAUNCH_ENV
     if expected_profile is not None and _canonical(expected_profile) != _canonical(profile):
         raise ValueError("Solitary launch profile changed after measurement")
     root = Path(root).resolve(strict=True)
@@ -159,8 +168,8 @@ def _canonical(packet: dict) -> bytes:
     return json.dumps(packet, sort_keys=True, separators=(",", ":")).encode()
 
 
-def _send(channel: socket.socket, packet: dict) -> None:
-    payload = _canonical(packet)
+def _send(channel: socket.socket, packet: dict, *, prefix=b"") -> None:
+    payload = prefix + _canonical(packet)
     if channel.send(payload) != len(payload):
         raise OSError("short sequenced-packet send")
 
@@ -239,12 +248,60 @@ def _exec_denied() -> bool:
     return False
 
 
-def _worker_main() -> int:
+def _address_space_cap_enforced(mmap) -> bool:
+    flags = mmap.MAP_PRIVATE | mmap.MAP_ANONYMOUS
+    with mmap.mmap(-1, mmap.PAGESIZE, flags=flags) as scratch:
+        scratch[0] = 97
+        if scratch[0] != 97:
+            return False
+    try:
+        large = mmap.mmap(-1, LIMITS["RLIMIT_AS"][0] + mmap.PAGESIZE, flags=flags)
+    except OSError as exc:
+        return exc.errno == errno.ENOMEM
+    large.close()
+    return False
+
+
+def _descriptor_cap_enforced() -> bool:
+    descriptors = []
+    cap = LIMITS["RLIMIT_NOFILE"][0]
+    try:
+        for _ in range(cap):
+            try:
+                descriptors.append(os.open("positive.txt", os.O_RDONLY))
+            except OSError as exc:
+                # FD 0 is the broker socket; FDs 1 and 2 are null sinks.
+                return exc.errno == errno.EMFILE and len(descriptors) == cap - 3
+        return False
+    finally:
+        for descriptor in descriptors:
+            os.close(descriptor)
+
+
+def _broker_read(channel, request):
+    _send(channel, request)
+    payload, ancillary, flags, _ = channel.recvmsg(_MAX_PACKET)
+    if not payload or ancillary or flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC):
+        return None
+    response = json.loads(payload)
+    if (type(response) is not dict or response.keys() != {"type", "data"}
+            or response["type"] != "data" or _canonical(response) != payload):
+        return None
+    return bytes.fromhex(response["data"])
+
+
+def _worker_main(*, probe_factory=None, observation_prefix=b"") -> int:
     path, key, run_id, challenge, canary_fd, mode = sys.argv[1:]
     if mode != "normal" or os.getpid() != 1 or os.getuid() != 1000 or os.getgid() != 1000:
         return 2
     with socket.socket(fileno=0) as channel:
         _install_limits()
+        probe = None
+        if probe_factory is not None:
+            # Load the fixed adapter and mmap wrapper before installing the
+            # narrow filter. The callback itself runs under the filter.
+            import mmap
+            probe = probe_factory()
         # Initialize the digest provider before narrowing the syscall surface.
         hashlib.sha256(b"")
         _install_seccomp()
@@ -257,20 +314,23 @@ def _worker_main() -> int:
             "protected_write_denied": _direct_denied(path, os.O_WRONLY | os.O_NOFOLLOW),
             "exec_denied": _exec_denied(),
         }
-        _send(channel, {
+        read = _broker_read
+        if probe is not None:
+            controls.update(address_space_cap_enforced=_address_space_cap_enforced(mmap),
+                            descriptor_cap_enforced=_descriptor_cap_enforced())
+            read = probe.wrap(read, surface="filesystem", operation="read")
+        data = read(channel, {
             "type": "read", "seq": 1, "key": key, "run_id": run_id,
             "challenge": challenge, "direct_denied": _direct_denied(path),
             "canary_closed": _canary_closed(int(canary_fd)), "controls": controls,
         })
-        payload, ancillary, flags, _ = channel.recvmsg(_MAX_PACKET)
-        if not payload or ancillary or flags & (socket.MSG_TRUNC | socket.MSG_CTRUNC):
+        if data is None:
             return 3
-        response = json.loads(payload)
-        if (type(response) is not dict or response.keys() != {"type", "data"}
-                or response["type"] != "data" or _canonical(response) != payload):
-            return 3
-        data = bytes.fromhex(response["data"])
         _send(channel, {"type": "done", "data_sha256": hashlib.sha256(data).hexdigest()})
+        if probe is not None:
+            probe.close()
+            _send(channel, {"type": "agent-observation", "summary": probe.summary()},
+                  prefix=observation_prefix)
     return 0
 
 

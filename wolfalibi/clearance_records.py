@@ -3,6 +3,7 @@
 import re
 
 from alibi import H, canon, verify_sig
+from .agent_solitary_worker import AGENT_PROFILE
 from .solitary_evidence import SOLITARY_POLICY_VERSION, _policy
 from .stage3 import FIXTURE_BYTES, FIXTURE_KEY
 from .stage3_evidence import _hex
@@ -124,7 +125,8 @@ def make_scope(contract, *, agent_pub, gateway_pub, expected_witness_state_diges
     contract = _document(contract, "run contract", max_bytes=49_152)
     _policy(contract)
     return {
-        **_TARGET, **identity_pins(contract["profile"]), "profile": PROFILE,
+        **_TARGET, **identity_pins(contract["profile"]),
+        "profile": AGENT_PROFILE if "agent_adapter" in contract["profile"] else PROFILE,
         "run_id": contract["run_id"], "challenge": contract["challenge"], "key": contract["key"],
         "fixture_sha256": contract["fixture_sha256"], "contract_sha256": H(canon(contract)).hex(),
         "agent_pub": _key(agent_pub, "agent key"), "gateway_pub": _key(gateway_pub, "gateway key"),
@@ -136,7 +138,7 @@ def _scope(value):
     scope = _document(value, "grant scope")
     _fields(scope, _SCOPE_FIELDS, "grant scope")
     if (any(scope[key] != value for key, value in _TARGET.items())
-            or scope["profile"] != PROFILE or scope["key"] != FIXTURE_KEY
+            or scope["profile"] not in (PROFILE, AGENT_PROFILE) or scope["key"] != FIXTURE_KEY
             or scope["fixture_sha256"] != _FIXTURE_SHA256):
         raise ValueError("scope does not match the fixed synthetic read")
     rid = scope["run_id"]

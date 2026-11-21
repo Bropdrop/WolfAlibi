@@ -8,8 +8,10 @@ import secrets
 import stat
 
 from alibi import DurableWitness, Signer
+from .agent_solitary import run_agent_solitary
+from .agent_solitary_worker import AGENT_PROFILE, agent_worker_profile
 from .clearance import ClearanceError, ClearanceGateway
-from .clearance_records import grant, identity_pins, sign_request
+from .clearance_records import PROFILE, grant, identity_pins, sign_request
 from .clearance_report import REPORT_TYPE, verify_report
 from .solitary import run_solitary
 from .solitary_cli import _read, _write_new
@@ -33,6 +35,10 @@ def _demo(args):
     gateway_key, owner, agent, broker, supervisor = (Signer() for _ in range(5))
     credential = secrets.token_bytes(32)
     reads = 0
+    trial_runner, profile_reader = (
+        (run_agent_solitary, agent_worker_profile) if args.profile == AGENT_PROFILE
+        else (run_solitary, worker_profile)
+    )
 
     def service(secret):
         nonlocal reads
@@ -49,10 +55,10 @@ def _demo(args):
         with ClearanceGateway(
             db, signer=gateway_key, **keys, expected_witness_state_digest=genesis,
             observe_witness_head=lambda: witness.state_digest,
-            observe_identity=lambda _agent_pub: identity_pins(worker_profile()),
+            observe_identity=lambda _agent_pub: identity_pins(profile_reader()),
             upstream=service, upstream_credential=credential,
         ) as gateway:
-            prepared = gateway.prepare("clearance-synthetic-demo", agent_pub=agent.pub)
+            prepared = gateway.prepare("clearance-synthetic-demo", agent_pub=agent.pub, profile=args.profile)
             if prepared["outcome"] != "ISSUED":
                 return prepared
             contract = prepared["contract"]
@@ -67,7 +73,7 @@ def _demo(args):
                 issued_at = prepared["decision"]["payload"]["checked_at"]
                 approved = grant(owner, scope=prepared["scope"], not_before=issued_at,
                                  expires_at=contract["expires_at"], grant_id="synthetic-owner-read")
-            trial = run_solitary(
+            trial = trial_runner(
                 state, contract=contract, signer=broker, witness=witness, supervisor=supervisor,
                 expected_witness_state_digest=genesis,
             )
@@ -109,6 +115,7 @@ def add_clearance_parser(commands):
     sub = clearance.add_subparsers(dest="clearance_command", required=True)
     demo = sub.add_parser("demo", help="qualify and optionally authorize one synthetic read")
     demo.add_argument("--state-dir", required=True)
+    demo.add_argument("--profile", choices=[PROFILE, AGENT_PROFILE], default=PROFILE)
     demo.add_argument("--consent", action="store_true", help="consent to the fixed local Solitary execution")
     demo.add_argument("--approve-synthetic-read", action="store_true", help="sign the synthetic owner's grant")
     verify = sub.add_parser("verify", help="verify a positive report against external expectations")

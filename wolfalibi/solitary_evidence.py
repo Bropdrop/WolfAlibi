@@ -10,7 +10,7 @@ import json
 
 from alibi import H, canon, verify_sig
 from .solitary_worker import (
-    CONTROL_RESULTS, LIMITS, POLICY_VERSION as SOLITARY_POLICY_VERSION,
+    AGENT_CONTROL_RESULTS, CONTROL_RESULTS, LIMITS, POLICY_VERSION as SOLITARY_POLICY_VERSION,
     _ALLOW_FD0_SYSCALLS, _ALLOW_SYSCALLS,
 )
 from .stage3 import FIXTURE_BYTES, FIXTURE_KEY
@@ -21,9 +21,7 @@ from .stage35_measure import MeasurementBlocked, verify_measurement_record
 SOLITARY_TYPE = "WOLFALIBI_SOLITARY_EVIDENCE_V1"
 _DOMAIN = b"wolfalibi/solitary/supervisor/v1"
 _FIXTURE_SHA256 = H(FIXTURE_BYTES).hex()
-_CONTROL_FIELDS = frozenset(CONTROL_RESULTS)
 _LIMIT_FIELDS = frozenset(LIMITS)
-_EXPECTED_CONTROLS = canon(CONTROL_RESULTS)
 _EXPECTED_LIMITS = canon(LIMITS)
 _SECCOMP_RULES = {
     "default_errno": EPERM, "allow": list(_ALLOW_SYSCALLS),
@@ -75,16 +73,25 @@ def _policy(contract):
     _fields(limits, _LIMIT_FIELDS, "pinned resource limits")
     if canon(limits) != _EXPECTED_LIMITS:
         raise ValueError("declared resource limits differ from the Solitary policy")
+    expected_controls = CONTROL_RESULTS
+    if "agent_adapter" in contract["profile"]:
+        adapter = contract["profile"]["agent_adapter"]
+        _fields(adapter, {"name", "version", "probe_sha256", "protocol"}, "fixed agent adapter")
+        _hex(adapter["probe_sha256"], 32, "adapter source digest")
+        if (adapter["name"], adapter["version"], adapter["protocol"]) != (
+                "python-callbacks", "1", "observation-v1"):
+            raise ValueError("unsupported Solitary agent adapter")
+        expected_controls = AGENT_CONTROL_RESULTS
     controls = solitary["control_results"]
-    _fields(controls, _CONTROL_FIELDS, "pinned worker controls")
-    if canon(controls) != _EXPECTED_CONTROLS:
+    _fields(controls, expected_controls.keys(), "pinned worker controls")
+    if canon(controls) != canon(expected_controls):
         raise ValueError("declared worker controls differ from the Solitary policy")
     return solitary
 
 
 def _check_observations(payload, contract, policy):
     controls = payload["worker_self_report"]
-    _fields(controls, _CONTROL_FIELDS, "worker self-report")
+    _fields(controls, policy["control_results"].keys(), "worker self-report")
     if canon(controls) != canon(policy["control_results"]):
         raise ValueError("worker self-report differs from the pinned control expectations")
     limits = payload["observed_limits"]
