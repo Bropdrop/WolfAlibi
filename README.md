@@ -9,12 +9,13 @@ WolfAlibi is an experimental Python research project for cryptographically check
 
 - A signed, witnessed Merkle absence proof for broker-mediated reads, writes, directory listings, and denied attempts.
 - Stage 1 reliability hardening: completed-operation epoch barriers, a single-writer journal lease, framed/fsynced WAL recovery, short-write handling, and Linux root-fd/`openat2` path resolution.
-- `DurableWitness`, which persists checkpoint heads and receipt digests before signatures leave the process.
-- `NEGATIVE_ACCESS_RECEIPT_V1`: a run-bound, challenge-bound, policy-bound **`BROKER_ONLY`** receipt with an offline verifier that requires caller-supplied reference values.
-- An optional Bubblewrap Linux process-launch demonstration that always reports `BLOCKED` assurance in v0.1.
+- `DurableWitness`, which persists checkpoint heads and receipt digests before signatures leave the process, plus v2 signed state anchors for externally retained rollback detection.
+- `NEGATIVE_ACCESS_RECEIPT_V1` compatibility and opt-in `NEGATIVE_ACCESS_RECEIPT_V2` bindings for resource identity, execution-boundary metadata, and witness-state continuity; both remain **`BROKER_ONLY`**.
+- An optional Bubblewrap Linux process-launch demonstration with a machine-readable policy manifest and synthetic exclusion probe; it always reports `BLOCKED` assurance.
+- Conservative hard-link alias refusal before bytes are released or an existing file is truncated.
 - Proposal-only adapter interfaces for future APIs, tools, and databases; no such adapter is active.
 
-Read [the architecture](docs/ARCHITECTURE.md), [threat model](docs/security/THREAT_MODEL.md), and [engineering report](docs/ENGINEERING_REPORT.md) before using the code.
+Read [the architecture](docs/ARCHITECTURE.md), [threat model](docs/security/THREAT_MODEL.md), [Stage 2 foundations](docs/STAGE2_FOUNDATIONS.md), and [engineering report](docs/ENGINEERING_REPORT.md) before using the code.
 
 ## What it cannot prove
 
@@ -30,6 +31,7 @@ python3 -m unittest -v test_wolftrap_alibi.py
 python3 -m unittest -v test_stage1_hardening.py
 python3 -m unittest -v test_receipts.py
 python3 -m unittest -v test_extensions.py
+python3 -m unittest -v test_stage2_adversarial.py
 python3 mutation_test.py
 python3 alibi.py demo
 python3 alibi.py bench 1000000
@@ -48,9 +50,14 @@ python3 wolfalibi_cli.py demo-receipt \
   --state-dir /tmp/witness-state
 
 python3 wolfalibi_cli.py isolation-status
+
+# Synthetic directories/files only; this is not a host-security test.
+python3 wolfalibi_cli.py confinement-probe \
+  --workdir /tmp/wolfalibi-work \
+  --synthetic-marker /tmp/wolfalibi-protected/synthetic-marker.txt
 ```
 
-For `verify`, supply expected keys, challenge, policy, scope, run ID, code digest, and epochs independently. The verifier intentionally has no mode that trusts those values merely because they appear in a receipt.
+For `verify`, supply expected keys, challenge, policy, scope, run ID, code digest, and epochs independently. Receipt v2 also requires expected resource identity, execution boundary, and a pre-run witness-state digest retained independently. The synthetic CLI output is only a reproducible roundtrip aid; it is not an independent anchor workflow.
 
 ## Project status
 

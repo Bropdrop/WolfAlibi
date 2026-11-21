@@ -78,6 +78,16 @@ class CliContracts(unittest.TestCase):
                 "--code-digest", expected["code_digest"], "--epoch-from", str(expected["epochs"][0]),
                 "--epoch-to", str(expected["epochs"][1]),
             ])
+            if "resource_identity" in expected:
+                resource_identity = os.path.join(temp, "resource-identity.json")
+                execution_boundary = os.path.join(temp, "execution-boundary.json")
+                pathlib.Path(resource_identity).write_text(json.dumps(expected["resource_identity"]))
+                pathlib.Path(execution_boundary).write_text(json.dumps(expected["execution_boundary"]))
+                command.extend([
+                    "--resource-identity", resource_identity,
+                    "--execution-boundary", execution_boundary,
+                    "--expected-witness-state-digest", expected["expected_witness_state_digest"],
+                ])
             verified = subprocess.run(command, cwd=HERE, capture_output=True, text=True, check=False)
             self.assertEqual(verified.returncode, 0, verified.stderr)
             self.assertEqual(json.loads(verified.stdout)["outcome"], "VERIFIED")
