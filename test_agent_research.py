@@ -165,6 +165,14 @@ class AgentResearchExportTests(unittest.TestCase):
             export_research(summary, self.output, consent=True, outcome="PASS")
         self.assertEqual(self.output.read_bytes(), before)
 
+    def test_coarse_terminal_outcomes_needed_by_the_local_runner_are_preserved(self):
+        summary = self._summary()
+        for outcome in ("TIMEOUT", "INTERRUPTED", "EXPECTATION_FAILED"):
+            with self.subTest(outcome=outcome):
+                output = self.directory / f"{outcome}.json"
+                export_research(summary, output, consent=True, outcome=outcome)
+                self.assertEqual(json.loads(output.read_text())["outcome"], outcome)
+
     def test_unknown_top_level_fields_do_not_change_normalized_report(self):
         summary = self._summary()
         clean = self.directory / "clean.json"
