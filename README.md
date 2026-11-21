@@ -37,6 +37,8 @@ For the separate Solitary experiment, run `wolfalibi byoa doctor` to check Linux
 
 VOIDCELL Experiment 003 provides a two-account synthetic trial, a bounded Unix socket test, and exact-tree local evidence. Cross-UID custody requires observations from independently provisioned gateway and target accounts. [Qualification guide](docs/VOIDCELL_EXPERIMENT_003.md)
 
+Quorvane Gate 002 runs one fictional school-record read against a local target process and independently verifies its signed admission against pre-dispatch expectations. [Education demo and qualification commands](docs/QUORVANE_EDUCATION_GATE_002.md)
+
 ## Local test matrix
 
 Python 3.9+ and `cryptography` are required. Linux `openat2(2)` and POSIX `fcntl` are required for the hardened broker; the optional launcher also needs Bubblewrap (`bwrap`). No dependency is auto-installed.
