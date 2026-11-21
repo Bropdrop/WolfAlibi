@@ -80,6 +80,7 @@ The runner does not export the manifest itself; however, the digest can identify
 - The wrapper cannot guarantee the underlying tool's side effects or actual external delivery.
 - A synchronous callback returning a coroutine or arbitrary awaitable is not yet treated as an async instrumented operation by the SDK; declare it `async def` where possible.
 - No timeouts, child process scope, provider authentication management, network blocking, automatic consent verification, or independent trust anchor is supplied by this basic runner.
+- Agent-owned code may print its own prompts, secrets, outputs or logs directly to the terminal; the observer does not suppress them. Use only synthetic data and do not share raw console logs without inspection.
 - No Web UI or hosting. No automatic telemetry upload. The exit status of an agent test is not a production security verdict.
 
 ## Qualification
