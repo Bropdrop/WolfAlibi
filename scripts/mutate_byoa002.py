@@ -46,6 +46,18 @@ CASES = {
 }
 
 
+CUSTODY_CASES = {
+    "002.1-M1": ("byoa002_custody", "test_byoa002_custody.CustodyTests.test_detached_expectation",
+                 '"present_authority": "NOT_ISSUED"', '"present_authority": "UNKNOWN"',
+                 "The historical result must state that no present authority was issued."),
+    "002.1-M2": ("byoa002_target", "test_byoa002_custody.CustodyTests.test_commit_recovery_and_restoration",
+                 'return _blocked("current custody reference unavailable or inconsistent: " + str(exc))',
+                 'return _blocked("unspecified error")',
+                 "Restoration must report the custody disagreement explicitly."),
+}
+ALL_CASES = {**CASES, **CUSTODY_CASES}
+
+
 class TestRecord(unittest.TestResult):
     def __init__(self):
         super().__init__()
@@ -57,7 +69,7 @@ class TestRecord(unittest.TestResult):
 
 
 def oracle(case_id, overlay):
-    name, test_id, _, _, _ = CASES[case_id]
+    name, test_id, _, _, _ = ALL_CASES[case_id]
     sys.path.insert(0, str(ROOT))
     import wolfalibi
     if overlay is not None:
@@ -102,7 +114,7 @@ def caught(original, altered, before, after, test_id):
 
 
 def exercise(case_id):
-    name, test_id, old, new, purpose = CASES[case_id]
+    name, test_id, old, new, purpose = ALL_CASES[case_id]
     path = ROOT / "wolfalibi" / (name + ".py")
     source = path.read_text(encoding="utf-8")
     if source.count(old) != 1:
@@ -118,14 +130,15 @@ def exercise(case_id):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--oracle", choices=CASES, help=argparse.SUPPRESS)
+    parser.add_argument("--oracle", choices=ALL_CASES, help=argparse.SUPPRESS)
     parser.add_argument("--mutated", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--custody", action="store_true")
     args = parser.parse_args()
     if args.oracle:
         with TemporaryDirectory(prefix="qv-mutation-") as work:
             directory = None
             if args.mutated:
-                name, _, old, new, _ = CASES[args.oracle]
+                name, _, old, new, _ = ALL_CASES[args.oracle]
                 source = (ROOT / "wolfalibi" / (name + ".py")).read_text(encoding="utf-8")
                 if source.count(old) != 1:
                     raise ValueError("fixed mutation site missing")
@@ -137,13 +150,16 @@ def main():
         parser.error("--mutated requires a fixed oracle")
     report = {"schema": "quorvane.byoa002.mutation-results.v1", "outcome": "BLOCKED", "cases": [],
               "detected": 0, "command": [sys.executable, "-I", "scripts/mutate_byoa002.py"]}
-    for case in CASES:
+    cases = CUSTODY_CASES if args.custody else CASES
+    if args.custody:
+        report["command"].append("--custody")
+    for case in cases:
         try:
             report["cases"].append(exercise(case))
         except (KeyError, ValueError, OSError, subprocess.SubprocessError) as exc:
             report["cases"].append({"id": case, "detected": False, "reason": str(exc)})
     report["detected"] = sum(item["detected"] for item in report["cases"])
-    if report["detected"] == len(CASES):
+    if report["detected"] == len(cases):
         report["outcome"] = "PASS"
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["outcome"] == "PASS" else 2

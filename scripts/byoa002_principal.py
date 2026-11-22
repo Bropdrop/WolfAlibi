@@ -109,12 +109,18 @@ def command(a):
         _write_new(a.output, q)
         return {"outcome": "GRANTED"}
     signer = _open_key(keys, "target")
+    journal = None
+    if getattr(a, "custody_journal", None):
+        from wolfalibi.byoa002_custody import Journal
+        journal = Journal(a.custody_journal, signer, enrollment)
+        if a.cmd == "init-target":
+            journal.initialize()
     if a.cmd == "init-target":
-        initialize_target(_private_dir(a.state, create=True), signer, enrollment)
+        initialize_target(_private_dir(a.state, create=True), signer, enrollment, journal=journal)
         return {"outcome": "INITIALIZED"}
     witness = WitnessConnection(a.witness_socket, enrollment, signer)
     with Target(a.state, signer, enrollment, check_pending=witness.check_pending, retain=witness.retain,
-                reconcile_head=witness.reconcile) as target:
+                reconcile_head=witness.reconcile, journal=journal) as target:
         if a.cmd == "revoke":
             return target.revoke(read(a.grant), read(a.expected), read(a.challenge))
         if enrollment["gateway"]["uid"] == os.geteuid() and not a.single_account_control:
@@ -153,6 +159,8 @@ def main():
             p.add_argument("--expect-head", required=True, help="latest separately retained public head")
         if name in {"grant", "approve"}:
             p.add_argument("--consent", required=True, action="store_true")
+        if name in {"init-target", "serve-target", "revoke"}:
+            p.add_argument("--custody-journal")
         if name == "serve-target":
             p.add_argument("--single-account-control", action="store_true")
         if name == "request":

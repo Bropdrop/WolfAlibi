@@ -7,6 +7,7 @@ handoff to transport. Historical lookup never returns the protected response.
 from contextlib import ExitStack
 import json
 import os
+import sqlite3
 from threading import RLock
 
 from alibi import H, canon
@@ -177,7 +178,7 @@ class _Ledger(_DurableTarget):
     _effect_outcome = "FICTIONAL_READ_COMMITTED"
     _count_field = "commitment_count"
 
-    def __init__(self, state_dir, signer, enrollment, *, create=False):
+    def __init__(self, state_dir, signer, enrollment, *, create=False, journal=None):
         validate_enrollment(enrollment)
         if enrollment["owner_uid"] != os.geteuid():
             raise ValueError("target service requires the enrolled owner UID")
@@ -195,6 +196,10 @@ class _Ledger(_DurableTarget):
         self._state, self._lineage = _private_directory(root / "ledger")
         self._anchor_dir, self._anchor_lineage = _private_directory(root / "checkpoint")
         pins = canon({"profile": "quorvane.byoa002.release.v1", "enrollment": enrollment})
+        self.journal = journal
+        if journal is not None:
+            pins = canon({"profile": "quorvane.byoa002.1", "enrollment": enrollment,
+                          "journal_path": str(journal.path)})
         try:
             self._anchor = self._resources.enter_context(
                 LedgerAnchor(self._anchor_dir, signer=signer, authority_policy=pins))
@@ -213,6 +218,22 @@ class _Ledger(_DurableTarget):
                 _private_directory(self._anchor_dir)[1] != self._anchor_lineage or
                 _file_id(self._state / LEDGER_FILE) != self._ledger_id):
             raise ValueError("target ledger or retained checkpoint moved")
+
+    def custody_state(self):
+        effects = [[op, _digest(json.loads(receipt))] for op, receipt in self._db.execute(
+            "SELECT operation_id,receipt FROM effects ORDER BY operation_id")]
+        revoked = [key for key, in self._db.execute("SELECT grant_id FROM revoked ORDER BY grant_id")]
+        return _digest({"effects": effects, "revoked": revoked})
+
+    def check_reference(self):
+        if self.journal:
+            state = self.custody_state()
+            self.journal.compare(state)
+            return state
+
+    def publish(self, previous, action, subject):
+        if self.journal:
+            self.journal.compare(previous, transition=(self.custody_state(), action, subject))
 
     def row(self, operation_id):
         return self._db.execute("SELECT dispatch_digest,receipt FROM effects WHERE operation_id=?",
@@ -241,9 +262,9 @@ class _Ledger(_DurableTarget):
             raise ValueError("owner grant revoked at resource target")
 
 
-def initialize_target(state_dir, target_signer, enrollment):
+def initialize_target(state_dir, target_signer, enrollment, *, journal=None):
     """Owner provisioning is create-only. Subsequent opens authenticate the complete enrollment."""
-    with _Ledger(state_dir, target_signer, enrollment, create=True) as ledger:
+    with _Ledger(state_dir, target_signer, enrollment, create=True, journal=journal) as ledger:
         return ledger.status()
 
 
@@ -262,9 +283,9 @@ def _live(live):
 
 class Target:
     """The local owner process holds the receipt key. Only dispatch can hand off a body."""
-    def __init__(self, state_dir, target_signer, enrollment, *, check_pending, retain, reconcile_head):
+    def __init__(self, state_dir, target_signer, enrollment, *, check_pending, retain, reconcile_head, journal=None):
         self._enrollment = json.loads(canon(enrollment))
-        self._ledger = _Ledger(state_dir, target_signer, self._enrollment)
+        self._ledger = _Ledger(state_dir, target_signer, self._enrollment, journal=journal)
         self._pending = check_pending
         self._retain = retain
         self._reconcile_head = reconcile_head
@@ -282,7 +303,9 @@ class Target:
         """Privileged owner-side action. This method is absent from the gateway RPC surface."""
         _check_grant(expected, self._enrollment, challenge, grant)
         def record(_):
+            previous = self._ledger.check_reference()
             self._ledger._db.execute("INSERT OR IGNORE INTO revoked VALUES (?, ?)", (_digest(grant), canon(grant)))
+            self._ledger.publish(previous, "revoke", _digest(grant))
             return {"outcome": "REVOKED", "grant_sha256": _digest(grant)}
         return self._ledger._invoke(record)
 
@@ -307,6 +330,10 @@ class Target:
         ledger = self._ledger
 
         def commit(now):
+            try:
+                previous = ledger.check_reference()
+            except (ValueError, TypeError, KeyError, OSError, sqlite3.Error) as exc:
+                return _blocked("current custody reference unavailable or inconsistent: " + str(exc))
             try:
                 if ledger.row(operation) is not None:
                     raise ValueError("operation already committed; use historical reconciliation")
@@ -340,6 +367,7 @@ class Target:
             # Retain the actual signed operator dispatch for exact historical reconstruction.
             ledger._db.execute("INSERT INTO decisions (dispatch_digest,receipt) VALUES (?,?)",
                                (request_hash, canon(packet["request"])))
+            ledger.publish(previous, "consume", _digest(challenge))
             return {"outcome": "COMMITTED", "receipt": receipt}
 
         result = ledger._invoke(commit)
@@ -354,6 +382,7 @@ class Target:
             return _blocked("target committed; verifier retention unconfirmed: " + str(exc))
 
         def handoff(now):
+            ledger.check_reference()
             try:
                 ledger.check_authority(*refs, grant, now)
                 if ledger.row(operation) != (request_hash, canon(receipt)):
