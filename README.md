@@ -29,6 +29,10 @@ Read [the architecture](docs/ARCHITECTURE.md), [threat model](docs/security/THRE
 
 WolfAlibi does not confine a real agent to the broker, attest code execution, establish every direct filesystem/network/API route is closed, create an external witness transparency log, or authorize a downstream effect. It must not be used for real secrets, compliance, financial, regulatory, or safety decisions.
 
+## Quorvane BYOA qualification
+
+Run one reviewed local Python decision package under the measured Solitary profile. The target requires independent role pins and an owner-signed grant for the synthetic read. A separate offline command checks the signed historical report using public inputs retained before launch. [Operator guide and CLI example](docs/QUORVANE_BYOA_001.md) · [Trust boundary](docs/QUORVANE_BYOA_BOUNDARY.md)
+
 ## Agent Lab
 
 Test an authorized agent with `wolfalibi agent test --manifest agent.json`. The runner requires consent before importing agent code and writes a local report of explicitly observed tool callbacks. [Setup, pinned adapters and synthetic examples](docs/AGENT_LAB_RUNNER.md)

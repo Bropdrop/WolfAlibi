@@ -1,0 +1,26 @@
+{
+  "schema": "quorvane.byoa.manifest.v1",
+  "profile": "solitary-python-agent-v1",
+  "package": "review_agent",
+  "entrypoint": "review_agent.agent:run",
+  "files": {
+    "__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "agent.py": "62d76aaaa04f69212408737c87ebb0ed31fc6d19ec3ac37cc16860595434173a"
+  },
+  "policy": "QUORVANE_LOCAL_READ_V1",
+  "tools": [
+    {
+      "alias": "read_fixture",
+      "operation": "read",
+      "resource": "protected.txt",
+      "surface": "filesystem"
+    }
+  ],
+  "dependencies": [
+    {
+      "name": "wolfalibi.agent_probe",
+      "version": "python-callbacks-v1",
+      "sha256": "bef77f05f980ac078e68c0bbfd5eed9cf3da9230001e4a3b1b3204ecbef95a06"
+    }
+  ]
+}

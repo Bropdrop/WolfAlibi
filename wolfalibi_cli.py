@@ -195,6 +195,11 @@ def parser() -> argparse.ArgumentParser:
     test.set_defaults(handler=lambda args: run_cli(args, child=True))
     from wolfalibi.solitary_cli import add_byoa_parser
     add_byoa_parser(sub)
+    # The published offline archive pins the legacy parser source byte-for-byte.
+    # Register new verbs on its existing argparse subcommand action.
+    from wolfalibi.byoa_qualification_cli import add_commands
+    commands = next(action for action in sub.choices["byoa"]._actions if action.dest == "byoa_command")
+    add_commands(commands)
     return result
 
 
