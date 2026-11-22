@@ -1,0 +1,31 @@
+test_retention_lost_before_handoff (test_byoa002_closure.ClosureTests.test_retention_lost_before_handoff) ... ERROR
+
+======================================================================
+ERROR: test_retention_lost_before_handoff (test_byoa002_closure.ClosureTests.test_retention_lost_before_handoff)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/WolfAlibi/test_byoa002_closure.py", line 179, in test_retention_lost_before_handoff
+    self.assertEqual((self.count(), len(self.history()), self.verifier.head()["generation"]), (1, 2, 0))
+                                                         ^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/WolfAlibi/wolfalibi/byoa002_verifier.py", line 271, in head
+    with self._open() as db:
+         ^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/workspace/WolfAlibi/wolfalibi/byoa002_verifier.py", line 224, in _open
+    with self._connection() as db:
+         ^^^^^^^^^^^^^^^^^^
+  File "/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/contextlib.py", line 137, in __enter__
+    return next(self.gen)
+           ^^^^^^^^^^^^^^
+  File "/workspace/WolfAlibi/wolfalibi/byoa002_verifier.py", line 255, in _connection
+    self._observe_head(db)
+  File "/workspace/WolfAlibi/wolfalibi/byoa002_verifier.py", line 263, in _observe_head
+    raise ValueError("verifier history conflicts with the last observed head")
+ValueError: verifier history conflicts with the last observed head
+
+----------------------------------------------------------------------
+Ran 1 test in 0.290s
+
+FAILED (errors=1)

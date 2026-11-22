@@ -55,6 +55,10 @@ class Journal:
         if signer.pub.hex() != enrollment["target_pub"]:
             raise ValueError("checkpoint signer differs from enrolled target")
 
+    def genesis_head(self):
+        record = self.record(0, "0" * 64, EMPTY, EMPTY, "genesis", self.enrollment)
+        return inspect_history([record], self.enrollment, self.signer.pub)
+
     def initialize(self):
         self.path.touch(mode=0o600, exist_ok=False)
         with closing(self.connect()) as db, db:
@@ -75,11 +79,11 @@ class Journal:
             db.execute("BEGIN IMMEDIATE")
             records = [json.loads(raw) for raw, in db.execute("SELECT record FROM history ORDER BY seq")]
             head = inspect_history(records, self.enrollment, self.signer.pub)
-            if head["state"] != before:
+            if canon(head) != canon(before):
                 raise ValueError("current custody reference disagrees with target")
             if transition:
                 after, action, subject = transition
-                record = self.record(len(records), head["digest"], before, after, action, subject)
-                inspect_history([*records, record], self.enrollment, self.signer.pub)
+                record = self.record(len(records), head["digest"], head["state"], after, action, subject)
+                head = inspect_history([*records, record], self.enrollment, self.signer.pub)
                 db.execute("INSERT INTO history VALUES (?, ?)", (len(records), canon(record)))
             return head

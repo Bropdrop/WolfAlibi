@@ -55,7 +55,16 @@ CUSTODY_CASES = {
                  'return _blocked("unspecified error")',
                  "Restoration must report the custody disagreement explicitly."),
 }
-ALL_CASES = {**CASES, **CUSTODY_CASES}
+CLOSURE_CASES = {
+    "002.2-M1": ("byoa002_target", "test_byoa002_closure.ClosureTests.test_publication_records_consumption",
+                 'ledger.publish(previous, "consume", _digest(challenge))',
+                 'ledger.publish(previous, "consume", _digest(grant))',
+                 "The signed journal must irrevocably identify the consumed challenge after a lost acknowledgment."),
+    "002.2-M2": ("byoa002_target", "test_byoa002_closure.ClosureTests.test_committed_target_retains_published_head",
+                 'SET receipt=? WHERE id=0", (canon(head),)', 'SET receipt=? WHERE id=0", (canon(previous),)',
+                 "The committed owner transaction must retain the published successor of a revocation."),
+}
+ALL_CASES = {**CASES, **CUSTODY_CASES, **CLOSURE_CASES}
 
 
 class TestRecord(unittest.TestResult):
@@ -132,7 +141,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--oracle", choices=ALL_CASES, help=argparse.SUPPRESS)
     parser.add_argument("--mutated", action="store_true", help=argparse.SUPPRESS)
-    parser.add_argument("--custody", action="store_true")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--custody", action="store_true")
+    group.add_argument("--closure", action="store_true")
     args = parser.parse_args()
     if args.oracle:
         with TemporaryDirectory(prefix="qv-mutation-") as work:
@@ -153,6 +164,9 @@ def main():
     cases = CUSTODY_CASES if args.custody else CASES
     if args.custody:
         report["command"].append("--custody")
+    if args.closure:
+        cases = CLOSURE_CASES
+        report["command"].append("--closure")
     for case in cases:
         try:
             report["cases"].append(exercise(case))

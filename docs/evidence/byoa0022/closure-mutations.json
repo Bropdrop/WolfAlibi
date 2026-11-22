@@ -1,0 +1,87 @@
+{
+  "cases": [
+    {
+      "control": {
+        "assertions": [],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 0,
+        "loader_errors": [],
+        "module_sha256": "4892853e6e5fe81e2c85fbe8094b580012eb6496205fb6addbd603c759b79472",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "detected": true,
+      "id": "002.2-M1",
+      "mutant": {
+        "assertions": [
+          {
+            "message": "Tuples differ: ('consume', 'd41f809164b804a1ccf9fe5ebfd50a630cfbb8060e06553101ad8040badd46a0') != ('consume', '2c6e16066c80538c605128e34046e39e1afecbdca4b9571fac193c07e76faf4b')\n\nFirst differing element 1:\n'd41f809164b804a1ccf9fe5ebfd50a630cfbb8060e06553101ad8040badd46a0'\n'2c6e16066c80538c605128e34046e39e1afecbdca4b9571fac193c07e76faf4b'\n\n- ('consume', 'd41f809164b804a1ccf9fe5ebfd50a630cfbb8060e06553101ad8040badd46a0')\n+ ('consume', '2c6e16066c80538c605128e34046e39e1afecbdca4b9571fac193c07e76faf4b')",
+            "test": "test_byoa002_closure.ClosureTests.test_publication_records_consumption",
+            "type": "AssertionError"
+          }
+        ],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 1,
+        "loader_errors": [],
+        "module_sha256": "581e0afca487df66afbd1cb75cc2c085057a7d8236246227f9ddbb46e0dc30de",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "mutant_sha256": "581e0afca487df66afbd1cb75cc2c085057a7d8236246227f9ddbb46e0dc30de",
+      "original_sha256": "4892853e6e5fe81e2c85fbe8094b580012eb6496205fb6addbd603c759b79472",
+      "purpose": "The signed journal must irrevocably identify the consumed challenge after a lost acknowledgment.",
+      "source": "wolfalibi/byoa002_target.py",
+      "test": "test_byoa002_closure.ClosureTests.test_publication_records_consumption"
+    },
+    {
+      "control": {
+        "assertions": [],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 0,
+        "loader_errors": [],
+        "module_sha256": "4892853e6e5fe81e2c85fbe8094b580012eb6496205fb6addbd603c759b79472",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "detected": true,
+      "id": "002.2-M2",
+      "mutant": {
+        "assertions": [
+          {
+            "message": "'0953175c51f5fe497b24b0ef51193ec71588b0021c53e863ca189652de471ff2' != '3cdb641a000218573b96767a8bd6e78a83de3d9833fe350419b4de1f21255cca'\n- 0953175c51f5fe497b24b0ef51193ec71588b0021c53e863ca189652de471ff2\n+ 3cdb641a000218573b96767a8bd6e78a83de3d9833fe350419b4de1f21255cca\n",
+            "test": "test_byoa002_closure.ClosureTests.test_committed_target_retains_published_head",
+            "type": "AssertionError"
+          }
+        ],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 1,
+        "loader_errors": [],
+        "module_sha256": "27c6890a56e67c932620474b7bfdab46e5ca7369df3b3b547489930625912d2d",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "mutant_sha256": "27c6890a56e67c932620474b7bfdab46e5ca7369df3b3b547489930625912d2d",
+      "original_sha256": "4892853e6e5fe81e2c85fbe8094b580012eb6496205fb6addbd603c759b79472",
+      "purpose": "The committed owner transaction must retain the published successor of a revocation.",
+      "source": "wolfalibi/byoa002_target.py",
+      "test": "test_byoa002_closure.ClosureTests.test_committed_target_retains_published_head"
+    }
+  ],
+  "command": [
+    "/tmp/q22-env/bin/python",
+    "-I",
+    "scripts/mutate_byoa002.py",
+    "--closure"
+  ],
+  "detected": 2,
+  "outcome": "PASS",
+  "schema": "quorvane.byoa002.mutation-results.v1"
+}

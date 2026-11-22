@@ -1,0 +1,43 @@
+{
+  "parent_commit": "9d117ab3e61e09d2f46eb2862a4f356ab018ed78",
+  "parent_tree": "14115b060ad3ff0f22923702d33f48c94a0a826b",
+  "tested_commit": "81ff04f22c0b9c826b8bbd44eeddd93918791442",
+  "tested_tree": "6cd3d36dbcc94178ed85180cf070dc24c3a948d1",
+  "scope": "Selected local tests. Full 605-test and 14-mutation suites unexecuted. Known duplicate-disclosure reproducer preserved.",
+  "parent_selected_tests": 35,
+  "reviewed_selected_tests": 109,
+  "skips": 0,
+  "failures": 0,
+  "timeouts": 0,
+  "inherited_mutations_detected_of_requested": [
+    3,
+    14
+  ],
+  "parent_focused_detections": 2,
+  "closure_security_detections": 2,
+  "original_wording_mutants_credited_as_security": 0,
+  "historical_result": {
+    "outcome": "PASS",
+    "historical_head": {
+      "generation": 1,
+      "digest": "9ae55f899645908f0ccc332f3cb43ce5956d3cb3cabac707e64a95f8deeaed00",
+      "state": "0c076424e36856e16d1a0f7ec455add2f51e76920cae8e0c36e71bb03141cbbd"
+    },
+    "present_authority": "NOT_ISSUED"
+  },
+  "historical_pins": "Producer sample, single administration",
+  "gates": {
+    "A": "BLOCKED",
+    "B": "CONDITIONAL",
+    "C": "CONDITIONAL",
+    "D": "CONDITIONAL",
+    "E": "UNSUPPORTED",
+    "F": "UNSUPPORTED",
+    "G": "BLOCKED"
+  },
+  "earlier_failed_runs": [
+    "development-error.txt",
+    "development-integration.txt"
+  ],
+  "final_head_evidence": "Final clean-head rerun transcript in draft PR body"
+}

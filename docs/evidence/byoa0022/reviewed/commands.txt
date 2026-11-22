@@ -1,0 +1,27 @@
++ git rev-parse HEAD 'HEAD^{tree}'
+81ff04f22c0b9c826b8bbd44eeddd93918791442
+6cd3d36dbcc94178ed85180cf070dc24c3a948d1
++ git status --short --untracked-files=no
++ uname -srm
+Linux 6.18.57 x86_64
++ id
+uid=1000(agent) gid=1000(agent) groups=1000(agent)
++ /tmp/q22-env/bin/python -V
+Python 3.12.14
++ /tmp/q22-env/bin/python -m pip freeze
++ status=0
++ timeout 300 /tmp/q22-env/bin/python -m unittest -v test_byoa002_custody test_byoa002_closure test_byoa002_package test_byoa002_exchange test_byoa002_qualification test_byoa002_transport test_financial_package test_financial_receipt_check test_history_records test_history_verify test_sector_profiles test_clearance_report test_education_verifier
++ grep -Eq 'skipped=|expected failures=|unexpected successes=' /tmp/q22-reviewed/tests.txt
++ timeout 180 /tmp/q22-env/bin/python -c 'import json; from scripts.mutate_byoa002 import exercise; cases=[exercise(i) for i in ("002-M2","002-M3","002-M4")]; print(json.dumps(cases,indent=2)); raise SystemExit(int(not all(c["detected"] for c in cases)))'
++ for suite in custody closure
++ timeout 180 /tmp/q22-env/bin/python -I scripts/mutate_byoa002.py --custody
++ for suite in custody closure
++ timeout 180 /tmp/q22-env/bin/python -I scripts/mutate_byoa002.py --closure
++ /tmp/q22-env/bin/python -I scripts/verify_byoa0021.py --history docs/evidence/byoa0021/sample/history.json --expect docs/evidence/byoa0021/sample/expect.json
++ tail -5 /tmp/q22-reviewed/tests.txt
+
+----------------------------------------------------------------------
+Ran 109 tests in 13.069s
+
+OK
++ exit 0
