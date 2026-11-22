@@ -206,6 +206,13 @@ class _Ledger(_DurableTarget):
             self._open_ledger(pins, create)
             self._files_unchanged()
             if create:
+                if journal:
+                    genesis = journal.genesis_head()
+                    journal.compare(genesis)
+                    with self._transaction():
+                        # Reserve row zero in the anchor-covered log. Dispatch digests are hex,
+                        # so this metadata record cannot join a real effect or historical request.
+                        self._db.execute("INSERT INTO decisions VALUES (0, 'custody-head', ?)", (canon(genesis),))
                 self._anchor.initialize(self)
             else:
                 self._anchor.verify(self)
@@ -228,12 +235,19 @@ class _Ledger(_DurableTarget):
     def check_reference(self):
         if self.journal:
             state = self.custody_state()
-            self.journal.compare(state)
-            return state
+            rows = self._db.execute("SELECT receipt FROM decisions WHERE id=0 AND dispatch_digest='custody-head'").fetchall()
+            if len(rows) != 1:
+                raise ValueError("missing unique target custody head")
+            head = json.loads(rows[0][0])
+            if head["state"] != state:
+                raise ValueError("committed custody head disagrees with target")
+            self.journal.compare(head)
+            return head
 
     def publish(self, previous, action, subject):
         if self.journal:
-            self.journal.compare(previous, transition=(self.custody_state(), action, subject))
+            head = self.journal.compare(previous, transition=(self.custody_state(), action, subject))
+            self._db.execute("UPDATE decisions SET receipt=? WHERE id=0", (canon(head),))
 
     def row(self, operation_id):
         return self._db.execute("SELECT dispatch_digest,receipt FROM effects WHERE operation_id=?",
@@ -382,7 +396,14 @@ class Target:
             return _blocked("target committed; verifier retention unconfirmed: " + str(exc))
 
         def handoff(now):
-            ledger.check_reference()
+            if ledger.journal:
+                try:
+                    retained = self._reconcile_head(expected, challenge, receipt)
+                    if canon(retained) != canon(ack):
+                        raise ValueError("retained acknowledgment changed")
+                    ledger.check_reference()
+                except (KeyError, ValueError, TypeError, OSError, RuntimeError, sqlite3.Error) as exc:
+                    return _blocked("current retention unavailable at handoff: " + str(exc))
             try:
                 ledger.check_authority(*refs, grant, now)
                 if ledger.row(operation) != (request_hash, canon(receipt)):
