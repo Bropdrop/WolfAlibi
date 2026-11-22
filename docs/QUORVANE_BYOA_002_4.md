@@ -1,0 +1,13 @@
+# BYOA 002.4 execution audit
+
+The inventory records callbacks when individual tests actually start. Compare those IDs against discovery, explicit exclusions, failures, skips, errors and the process exit code. The two additional discovered tests exercise mutation accounting. The original unanchored duplicate-disclosure fixture remains in the target test module. Its historical observations remain adverse evidence. This run excludes that fixture and cannot issue EXPECTED_COUNTEREXAMPLE_REPRODUCED.
+
+The legacy mutation harness now requires a passing original run, a unique edit site, changed source hash, a completed test count and the designated assertion failure. An error, timeout or arbitrary nonzero exit earns zero detections. The Merkle reference-vector run applies original M3 to the disposable implementation and runs only the published-vector assertion. Original M1, M2 and M4 through M8 and BYOA 002-M1, M5 and M6 remain unexecuted. The report keeps every missing case visible.
+
+Only the following observed mutations address security state directly in this run: the Merkle commitment vector, enrolled signing-role requirement, durable challenge identity and signed revocation successor. Changes to a diagnostic, a duplicate response status, or an evidence label receive no credit for demonstrating a second protected operation or present authority.
+
+For guarded recovery, the observation harness runs the existing test bodies with their assertions. Before fixture teardown it reads owner effects, the anchored target head, revoked grants, signed journal history and the verifier's view. The response log records action, outcome and body presence for replies observed by the parent test process. Child termination has no response observation. The parent test checks the exit code and surviving stores. A missing verifier head or absent reply cannot establish a successful enforcement decision on its own.
+
+Run from a clean checkout with the pinned environment using `PYTHON=/absolute/path/to/venv/bin/python scripts/qualify_byoa0024.sh /new/output/directory`. The final transcript belongs to the revision in revision.txt. It includes raw streams and per-command exit codes. The actual original-tree inventory is retained separately in the evidence package.
+
+A current signed checkpoint outside the restored stores remains necessary. Quiesce a divergent enrollment, preserve all signed records and use historical inquiry only. Retire the enrollment if a unique outcome cannot be authenticated. The local reviewer and witnesses share one administrator. Production and unrestricted-agent confinement remain BLOCKED. Certification remains NOT_ISSUED. [Recovery boundaries](QUORVANE_BYOA_002_2.md)

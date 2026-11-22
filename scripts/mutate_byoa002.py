@@ -9,6 +9,7 @@ import subprocess
 import sys
 from tempfile import TemporaryDirectory
 import unittest
+import traceback
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -67,13 +68,27 @@ CLOSURE_CASES = {
 ALL_CASES = {**CASES, **CUSTODY_CASES, **CLOSURE_CASES}
 
 
+# Match the assertion in the regression itself, independently of exception wording.
+ASSERTION_LINES = {
+    "002-M2": 'self.assertEqual(checked["settlement"], "UNESTABLISHED")',
+    "002-M3": 'self.assertEqual(result["outcome"], "RELEASED", result)',
+    "002-M4": 'self.assertEqual(second["outcome"], "DENIED")',
+    "002.1-M1": 'self.assertEqual(verify_history(records, **args)["present_authority"], "NOT_ISSUED")',
+    "002.1-M2": 'self.assertIn("disagrees with target", denied["reason"])',
+    "002.2-M1": 'self.assertEqual((record["payload"]["action"], record["payload"]["subject"]),',
+    "002.2-M2": 'self.assertEqual(head["digest"], target_digest(self.history()[-1]))',
+}
+
+
 class TestRecord(unittest.TestResult):
     def __init__(self):
         super().__init__()
         self.assertions = []
 
     def addFailure(self, test, err):
-        self.assertions.append({"test": test.id(), "type": err[0].__name__, "message": str(err[1])[:1500]})
+        sites = [frame.line for frame in traceback.extract_tb(err[2])
+                 if frame.name == test._testMethodName and Path(frame.filename).stem == type(test).__module__]
+        self.assertions.append({"source_lines": sites, "test": test.id(), "type": err[0].__name__, "message": str(err[1])[:1500]})
         super().addFailure(test, err)
 
 
@@ -132,9 +147,11 @@ def exercise(case_id):
     baseline = run_oracle(case_id)
     after = sha256(source.replace(old, new).encode("utf-8"))
     mutant = run_oracle(case_id, mutated=True)
-    return {"id": case_id, "purpose": purpose, "test": test_id, "source": str(path.relative_to(ROOT)),
+    expected = ASSERTION_LINES.get(case_id)
+    matched = any(expected in item["source_lines"] for item in mutant["assertions"])
+    return {"expected_assertion": expected, "id": case_id, "purpose": purpose, "test": test_id, "source": str(path.relative_to(ROOT)),
             "original_sha256": before, "mutant_sha256": after, "control": baseline, "mutant": mutant,
-            "detected": before != after and caught(baseline, mutant, before, after, test_id)}
+            "detected": (expected is None or matched) and before != after and caught(baseline, mutant, before, after, test_id)}
 
 
 def main():
