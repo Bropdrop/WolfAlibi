@@ -84,7 +84,7 @@ def ledger_rows(path):
         return [json.loads(row[0]) for row in db.execute("SELECT receipt FROM effects ORDER BY rowid")]
 
 
-def run_fixture(output, revision, *, operator_state=None, lose_reply=False):
+def run_fixture(output, revision, *, operator_state=None, lose_reply=False, custody=False):
     """One disposable trial using the revision supplied by the calling harness."""
     from scripts.byoa002_roundtrip import roundtrip
     output = Path(output)
@@ -115,6 +115,9 @@ def run_fixture(output, revision, *, operator_state=None, lose_reply=False):
         _write_new(en, enrollment)
         v = ["--enrollment", en, "--keys", verifier, "--state", root / "vstate"]
         target = ["--enrollment", en, "--keys", owner, "--state", root / "tstate"]
+        journal = root / "custody.sqlite"
+        if custody:
+            target.extend(["--custody-journal", journal])
         _command(ROLE, "init-verifier", *v)
         _command(ROLE, "init-target", *target)
         prior = root / "before.json"
@@ -143,6 +146,21 @@ def run_fixture(output, revision, *, operator_state=None, lose_reply=False):
         packet = roles.read(root / "packet.json")
         recovered = roundtrip(stack, root, gateway, socket_path, v, target, en, signed_inputs,
                               packet, enrollment, peer, lose_reply)
+        if custody:
+            from wolfalibi.byoa002_custody import verify_history
+            ledger = root / "tstate" / "ledger" / "ledger.sqlite"
+            with closing(sqlite3.connect(ledger.as_uri() + "?mode=ro", uri=True)) as db:
+                head, = db.execute("SELECT receipt FROM decisions WHERE id=0 AND dispatch_digest='custody-head'").fetchall()
+            with closing(sqlite3.connect(journal.as_uri() + "?mode=ro", uri=True)) as db:
+                history = [json.loads(row[0]) for row in db.execute("SELECT record FROM history ORDER BY seq")]
+            committed_head = json.loads(head[0])
+            verified = verify_history(history, enrollment=digest(enrollment),
+                                      public_key=bytes.fromhex(enrollment["target_pub"]), expected_head=committed_head)
+            require(committed_head["generation"] == 1 and history[-1]["payload"]["action"] == "consume"
+                    and history[-1]["payload"]["subject"] == digest(packet["challenge"]),
+                    "custody history must record the single authorized challenge")
+            _write_new(output / "custody.json", {"history": history, "target_head": committed_head,
+                                                  "historical_verification": verified})
         historical = recovered["controls"]["reconciled"]
         package = make_package(challenge=packet["challenge"], grant=packet["grant"], request=packet["request"],
                                report=packet["report"], receipt=historical["receipt"], ack=historical["ack"])
@@ -167,6 +185,7 @@ def main():
     p.add_argument("--expect-commit", required=True)
     p.add_argument("--expect-tree", required=True)
     p.add_argument("--output", required=True, type=Path)
+    p.add_argument("--custody", action="store_true", help="exercise the signed custody journal during both trials")
     p.add_argument("--operator-state", type=Path, help="new private operator directory for signing the local report")
     p = cmds.add_parser("verify")
     p.add_argument("--package", required=True)
@@ -190,8 +209,8 @@ def main():
             if preflight()["outcome"] != "READY":
                 result = {"outcome": "UNSUPPORTED", "reason": "measured Linux profile unavailable"}
             else:
-                normal = run_fixture(args.output, revision, operator_state=args.operator_state)
-                lost = run_fixture(args.output / "lost-reply", revision, lose_reply=True)
+                normal = run_fixture(args.output, revision, operator_state=args.operator_state, custody=args.custody)
+                lost = run_fixture(args.output / "lost-reply", revision, lose_reply=True, custody=args.custody)
                 require(source_revision() == revision, "source checkout changed during trial")
                 result = {"outcome": "COMPLETED", "revision": revision, "accepted": normal["effect_count"],
                           "lost_reply": lost["effect_count"], "production": "BLOCKED", "certification": "NOT_ISSUED"}

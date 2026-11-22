@@ -1,0 +1,5 @@
+python -m venv /tmp/q23-venv
+/tmp/q23-venv/bin/pip install -q 'cryptography==50.0.0' 'mcp==2.3.0' 'langchain==1.5.2' 'langchain-core==1.8.4' 'openai-agents==0.25.0' >/tmp/q23-art/install.log 2>&1
+cd /tmp/byoa002-parent
+/tmp/q23-venv/bin/python -m pip check
+timeout 1200 /tmp/q23-venv/bin/python /workspace/WolfAlibi/scripts/byoa0023_discovery.py /tmp/q23-art/base-inventory.json >/tmp/q23-art/base.stdout 2>/tmp/q23-art/base.stderr
