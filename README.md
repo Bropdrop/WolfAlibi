@@ -5,6 +5,10 @@ WolfAlibi is an experimental Python research project for cryptographically check
 > **Security research prototype — operational deployment is BLOCKED.**
 > A valid proof is not evidence that an AI, user, or host had no other path to the resource.
 
+## Quorvane BYOA 002
+
+Run a reviewed Python agent against a fictional fixture, then check how a separate owner process authorizes a gateway to perform one synthetic read. The offline verifier checks the original signed receipt against separately supplied public pins. The local demonstration exercises recovery after a lost reply under one administrator. [Operator guide](docs/QUORVANE_BYOA_002.md) · [Trust boundaries and open gates](docs/QUORVANE_BYOA_002_BOUNDARY.md) · [Test oracles](docs/QUORVANE_BYOA_002_CONTROLS.md)
+
 ## Quorvane Public Lab 002 · Financial Security Challenge
 
 Review the bindings on a fictional payment intent, reproduce its historical verification, and inspect what a disposable Linux target records after duplicate delivery. The offline matrix includes positive controls, fixed altered evidence and the public inputs needed to check both. [Start a review](public_lab/financial/README.md) · [Offline review ZIP](public_lab/quorvane-public-lab-002.zip) · [Review scope](public_lab/REVIEW_SCOPE.md)
