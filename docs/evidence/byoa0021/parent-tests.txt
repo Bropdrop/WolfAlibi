@@ -1,0 +1,35 @@
+test_missing_evidence_keeps_settlement_and_authority_unestablished (test_byoa002_package.PackageInputTests.test_missing_evidence_keeps_settlement_and_authority_unestablished) ... ok
+test_packaging_detaches_records_and_does_not_issue_a_decision (test_byoa002_package.PackageInputTests.test_packaging_detaches_records_and_does_not_issue_a_decision) ... ok
+setUpClass (test_byoa002_package.PortablePackageTests) ... ERROR
+test_crash_skip_or_wrong_module_never_counts (test_byoa002_qualification.MutationAccountingTests.test_crash_skip_or_wrong_module_never_counts) ... ok
+test_positive_reference_and_only_the_designated_assertion_count (test_byoa002_qualification.MutationAccountingTests.test_positive_reference_and_only_the_designated_assertion_count) ... ok
+test_unchanged_or_preexisting_failures_are_not_mutation_detections (test_byoa002_qualification.MutationAccountingTests.test_unchanged_or_preexisting_failures_are_not_mutation_detections) ... ok
+test_pinned_query_and_reply_bind_the_request (test_byoa002_exchange.ExchangeTests.test_pinned_query_and_reply_bind_the_request) ... ok
+test_replayed_signed_witness_reply_cannot_approve_new_query (test_byoa002_exchange.ExchangeTests.test_replayed_signed_witness_reply_cannot_approve_new_query) ... ok
+test_unavailable_store_cannot_supply_positive_response (test_byoa002_exchange.ExchangeTests.test_unavailable_store_cannot_supply_positive_response) ... ok
+test_wrong_target_or_enrollment_never_reaches_store (test_byoa002_exchange.ExchangeTests.test_wrong_target_or_enrollment_never_reaches_store) ... ok
+test_positive_commits_one_retained_target_record (test_byoa002_target.TargetAuthorityTests.test_positive_commits_one_retained_target_record) ... ok
+test_process_death_before_sql_commit_rolls_back_decision (test_byoa002_target.TargetAuthorityTests.test_process_death_before_sql_commit_rolls_back_decision) ... ok
+test_process_death_after_sql_commit_before_anchor_is_fail_stop (test_byoa002_target.TargetAuthorityTests.test_process_death_after_sql_commit_before_anchor_is_fail_stop) ... ok
+
+======================================================================
+ERROR: setUpClass (test_byoa002_package.PortablePackageTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/byoa002-parent/test_byoa002_package.py", line 43, in setUpClass
+    run_fixture(output, cls.revision, operator_state=operator)
+  File "/tmp/byoa002-parent/scripts/byoa002_demo.py", line 137, in run_fixture
+    completed = legacy("qualify", "--manifest", MANIFEST, "--trial", trial, "--review", review,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/byoa002-parent/scripts/byoa002_demo.py", line 105, in legacy
+    return _command(ROOT / "wolfalibi_cli.py", "byoa", *args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/byoa002-parent/scripts/byoa002_demo.py", line 42, in _command
+    raise ValueError(f"{script.name} {args[0]} exited {p.returncode}: {(p.stdout or p.stderr)[-1200:]}")
+ValueError: wolfalibi_cli.py byoa exited 2: {"agent_started": false, "diagnostic": {"authorization": "CHECK_ORIGINAL_GRANT_AND_TARGET_ADMISSION", "certification": "NOT_ISSUED", "confinement": "BLOCKED", "effect": "UNKNOWN_FROM_THIS_DIAGNOSTIC", "execution": "NOT_VERIFIED", "observation": "NOT_VERIFIED", "production": "BLOCKED", "schema": "quorvane.byoa.incomplete.v1", "settlement": "UNESTABLISHED", "signature": "UNSIGNED"}, "outcome": "UNSUPPORTED", "reason": "pinned LangChain runner unavailable"}
+
+
+----------------------------------------------------------------------
+Ran 12 tests in 2.505s
+
+FAILED (errors=1)

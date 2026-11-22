@@ -1,0 +1,9 @@
+{
+  "enrollment": "c4eb8f731e2aaa943eca5ccc93e6ce0a33bc189457bd7ec1485a713fab6c1563",
+  "head": {
+    "digest": "9ae55f899645908f0ccc332f3cb43ce5956d3cb3cabac707e64a95f8deeaed00",
+    "generation": 1,
+    "state": "0c076424e36856e16d1a0f7ec455add2f51e76920cae8e0c36e71bb03141cbbd"
+  },
+  "public_key": "032c0b01179f175044468604930c548f30d179244235d11388299b3436033f78"
+}

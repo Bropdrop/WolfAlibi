@@ -1,0 +1,113 @@
+[
+  {
+    "id": "002-M2",
+    "purpose": "A historical verifier supplies no settlement evidence.",
+    "test": "test_byoa002_package.PackageInputTests.test_missing_evidence_keeps_settlement_and_authority_unestablished",
+    "source": "wolfalibi/byoa002_package.py",
+    "original_sha256": "4cdd804a001b39e8b79b066adea9493c0b1f9ad3f53c219accef7a361f8767af",
+    "mutant_sha256": "e7493117acd42a426c50f2bef11e1c7f18dd389a44b6a92a34082d91ae7abb6d",
+    "control": {
+      "tests": 1,
+      "assertions": [],
+      "failures": 0,
+      "errors": [],
+      "skips": [],
+      "expected_failures": 0,
+      "unexpected_successes": 0,
+      "loader_errors": [],
+      "module_sha256": "4cdd804a001b39e8b79b066adea9493c0b1f9ad3f53c219accef7a361f8767af"
+    },
+    "mutant": {
+      "tests": 1,
+      "assertions": [
+        {
+          "test": "test_byoa002_package.PackageInputTests.test_missing_evidence_keeps_settlement_and_authority_unestablished",
+          "type": "AssertionError",
+          "message": "'PENDING' != 'UNESTABLISHED'\n- PENDING\n+ UNESTABLISHED\n"
+        }
+      ],
+      "failures": 1,
+      "errors": [],
+      "skips": [],
+      "expected_failures": 0,
+      "unexpected_successes": 0,
+      "loader_errors": [],
+      "module_sha256": "e7493117acd42a426c50f2bef11e1c7f18dd389a44b6a92a34082d91ae7abb6d"
+    },
+    "detected": true
+  },
+  {
+    "id": "002-M3",
+    "purpose": "Live target admission requires the enrolled operator key in its designated role.",
+    "test": "test_byoa002_target.TargetAuthorityTests.test_positive_commits_one_retained_target_record",
+    "source": "wolfalibi/byoa002_target.py",
+    "original_sha256": "1dbff602c7203502d718ed9b1e05894de97aaf9e9013bf14d7a25a30c340a77e",
+    "mutant_sha256": "56b71dc8a1c8d3c7049d2cbbcb6ca7b72040a341df0bf949a3f901dde212f4e8",
+    "control": {
+      "tests": 1,
+      "assertions": [],
+      "failures": 0,
+      "errors": [],
+      "skips": [],
+      "expected_failures": 0,
+      "unexpected_successes": 0,
+      "loader_errors": [],
+      "module_sha256": "1dbff602c7203502d718ed9b1e05894de97aaf9e9013bf14d7a25a30c340a77e"
+    },
+    "mutant": {
+      "tests": 1,
+      "assertions": [
+        {
+          "test": "test_byoa002_target.TargetAuthorityTests.test_positive_commits_one_retained_target_record",
+          "type": "AssertionError",
+          "message": "'DENIED' != 'RELEASED'\n- DENIED\n+ RELEASED\n : {'outcome': 'DENIED', 'reason': 'invalid clearance record signature'}"
+        }
+      ],
+      "failures": 1,
+      "errors": [],
+      "skips": [],
+      "expected_failures": 0,
+      "unexpected_successes": 0,
+      "loader_errors": [],
+      "module_sha256": "56b71dc8a1c8d3c7049d2cbbcb6ca7b72040a341df0bf949a3f901dde212f4e8"
+    },
+    "detected": true
+  },
+  {
+    "id": "002-M4",
+    "purpose": "Submitting an already committed operation must give an explicit dispatch denial.",
+    "test": "test_byoa002_target.TargetAuthorityTests.test_duplicate_dispatch_withholds_record",
+    "source": "wolfalibi/byoa002_target.py",
+    "original_sha256": "1dbff602c7203502d718ed9b1e05894de97aaf9e9013bf14d7a25a30c340a77e",
+    "mutant_sha256": "6c933931a31baf0b54c342b45a6c672f088c0c42d160b90499a130f3930b6d61",
+    "control": {
+      "tests": 1,
+      "assertions": [],
+      "failures": 0,
+      "errors": [],
+      "skips": [],
+      "expected_failures": 0,
+      "unexpected_successes": 0,
+      "loader_errors": [],
+      "module_sha256": "1dbff602c7203502d718ed9b1e05894de97aaf9e9013bf14d7a25a30c340a77e"
+    },
+    "mutant": {
+      "tests": 1,
+      "assertions": [
+        {
+          "test": "test_byoa002_target.TargetAuthorityTests.test_duplicate_dispatch_withholds_record",
+          "type": "AssertionError",
+          "message": "'ALREADY_COMMITTED' != 'DENIED'\n- ALREADY_COMMITTED\n+ DENIED\n"
+        }
+      ],
+      "failures": 1,
+      "errors": [],
+      "skips": [],
+      "expected_failures": 0,
+      "unexpected_successes": 0,
+      "loader_errors": [],
+      "module_sha256": "6c933931a31baf0b54c342b45a6c672f088c0c42d160b90499a130f3930b6d61"
+    },
+    "detected": true
+  }
+]
