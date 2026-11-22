@@ -1,0 +1,87 @@
+{
+  "cases": [
+    {
+      "control": {
+        "assertions": [],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 0,
+        "loader_errors": [],
+        "module_sha256": "7e6711ec26a45de888fdc7581f78fa13d7f261d5008a236b5a9969bc3088a5a7",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "detected": true,
+      "id": "002.1-M1",
+      "mutant": {
+        "assertions": [
+          {
+            "message": "'UNKNOWN' != 'NOT_ISSUED'\n- UNKNOWN\n+ NOT_ISSUED\n",
+            "test": "test_byoa002_custody.CustodyTests.test_detached_expectation",
+            "type": "AssertionError"
+          }
+        ],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 1,
+        "loader_errors": [],
+        "module_sha256": "d3586c24a7f28efcda7a2256e0a44a39ab0240cb6a071ca07ccfc623f9b77b5b",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "mutant_sha256": "d3586c24a7f28efcda7a2256e0a44a39ab0240cb6a071ca07ccfc623f9b77b5b",
+      "original_sha256": "7e6711ec26a45de888fdc7581f78fa13d7f261d5008a236b5a9969bc3088a5a7",
+      "purpose": "The historical result must state that no present authority was issued.",
+      "source": "wolfalibi/byoa002_custody.py",
+      "test": "test_byoa002_custody.CustodyTests.test_detached_expectation"
+    },
+    {
+      "control": {
+        "assertions": [],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 0,
+        "loader_errors": [],
+        "module_sha256": "b30c6eff2dd5d4d76d2f04ae930b8a522fd448e4ae3b599fcaba1cc383d12fd1",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "detected": true,
+      "id": "002.1-M2",
+      "mutant": {
+        "assertions": [
+          {
+            "message": "'disagrees with target' not found in 'unspecified error'",
+            "test": "test_byoa002_custody.CustodyTests.test_commit_recovery_and_restoration",
+            "type": "AssertionError"
+          }
+        ],
+        "errors": [],
+        "expected_failures": 0,
+        "failures": 1,
+        "loader_errors": [],
+        "module_sha256": "ee89b7ff4b9891f98593d8cd07e404aadc06b88a9456a94aa72c515471977c32",
+        "skips": [],
+        "tests": 1,
+        "unexpected_successes": 0
+      },
+      "mutant_sha256": "ee89b7ff4b9891f98593d8cd07e404aadc06b88a9456a94aa72c515471977c32",
+      "original_sha256": "b30c6eff2dd5d4d76d2f04ae930b8a522fd448e4ae3b599fcaba1cc383d12fd1",
+      "purpose": "Restoration must report the custody disagreement explicitly.",
+      "source": "wolfalibi/byoa002_target.py",
+      "test": "test_byoa002_custody.CustodyTests.test_commit_recovery_and_restoration"
+    }
+  ],
+  "command": [
+    "/tmp/q22-env/bin/python",
+    "-I",
+    "scripts/mutate_byoa002.py",
+    "--custody"
+  ],
+  "detected": 2,
+  "outcome": "PASS",
+  "schema": "quorvane.byoa002.mutation-results.v1"
+}
