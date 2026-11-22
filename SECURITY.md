@@ -14,3 +14,5 @@
 ## Release state
 
 No production release is authorized. The only valid current verdict is **BLOCKED** for operational security deployment. Passing synthetic unit tests alone cannot change that verdict.
+
+The BYOA 002 procedure distinguishes a signed target commitment, observed receipt delivery and independent control of the signing keys. Its rollback controls require an external reference that survives restoration of the local stores. [BYOA 002 threat model](docs/QUORVANE_BYOA_002_BOUNDARY.md)
