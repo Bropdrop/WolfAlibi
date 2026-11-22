@@ -15,7 +15,13 @@ class CustodyTests(unittest.TestCase):
     dispatch = baseline.TargetAuthorityTests.dispatch
     recover = baseline.TargetAuthorityTests.recover
     count = baseline.TargetAuthorityTests.count
-    open = baseline.TargetAuthorityTests.open
+    test_lost_reply_restart = baseline.TargetAuthorityTests.test_lost_reply_restart_recovers_only_original_receipt
+    test_unavailable_pending = baseline.TargetAuthorityTests.test_missing_witness_before_dispatch_refuses_commit
+    test_revocation_during_retention = baseline.TargetAuthorityTests.test_revocation_while_verifier_retains_withholds_body
+    test_commit_before_retention = baseline.TargetAuthorityTests.test_target_commit_before_retention_withholds_body
+
+    def open(self, **callbacks):
+        return baseline.TargetAuthorityTests.open(self, journal=self.journal, **callbacks)
 
     def setUp(self):
         baseline.TargetAuthorityTests.setUp(self)
@@ -32,10 +38,10 @@ class CustodyTests(unittest.TestCase):
         shutil.copytree(self.snapshot, self.state)
 
     def test_commit_recovery_and_restoration(self):
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             released = self.dispatch(service)
         self.assertEqual(released["outcome"], "RELEASED", released)
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             reply = self.recover(service)
         self.assertEqual(reply["receipt"], released["receipt"])
         self.assertEqual(reply["ack"], released["ack"])
@@ -46,24 +52,24 @@ class CustodyTests(unittest.TestCase):
         shutil.rmtree(self.verifier_state)
         shutil.copytree(self.template, self.verifier_state)
         self.verifier = baseline.VerifierPrincipal(self.verifier_state, self.verifier_key, self.enrollment)
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             denied = self.dispatch(service)
         self.assertEqual(denied["outcome"], "BLOCKED")
         self.assertIn("disagrees with target", denied["reason"])
         self.assertEqual(self.count(), 0)
 
     def test_revoked_history(self):
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             self.assertEqual(service.revoke(self.grant, self.expected, self.q)["outcome"], "REVOKED")
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             self.assertEqual(self.dispatch(service)["outcome"], "DENIED")
         self.restore()
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             self.assertEqual(self.dispatch(service)["outcome"], "BLOCKED")
         self.assertEqual(self.count(), 0)
 
     def test_detached_expectation(self):
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             self.assertEqual(self.dispatch(service)["outcome"], "RELEASED")
         with closing(self.journal.connect()) as db:
             records = [json.loads(raw) for raw, in db.execute("SELECT record FROM history ORDER BY seq")]
@@ -77,7 +83,7 @@ class CustodyTests(unittest.TestCase):
 
     def test_unavailable_reference(self):
         self.journal.path.unlink()
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             self.assertEqual(self.dispatch(service)["outcome"], "BLOCKED")
         self.assertEqual(self.count(), 0)
 
@@ -90,10 +96,10 @@ class CustodyTests(unittest.TestCase):
                 raise OSError("interruption after durable publication")
             return result
 
-        with self.open(journal=self.journal) as service, patch.object(self.journal, "compare", interrupt):
+        with self.open() as service, patch.object(self.journal, "compare", interrupt):
             self.assertEqual(self.dispatch(service)["outcome"], "BLOCKED")
         self.assertEqual(self.count(), 0)
-        with self.open(journal=self.journal) as service:
+        with self.open() as service:
             result = self.dispatch(service)
         self.assertIn("disagrees with target", result["reason"])
         self.assertEqual(self.count(), 0)

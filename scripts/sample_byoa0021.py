@@ -15,11 +15,11 @@ def collect(directory):
     case = CustodyTests("test_detached_expectation")
     try:
         case.setUp()
-        with case.open(journal=case.journal) as service:
+        with case.open() as service:
             result = case.dispatch(service)
         if result["outcome"] != "RELEASED":
             raise ValueError(result)
-        with case.open(journal=case.journal) as service:
+        with case.open() as service:
             inquiry = case.recover(service)
         if (inquiry != {"outcome": "RECONCILED", "receipt": result["receipt"], "ack": result["ack"]}
                 or case.count() != 1 or result["ack"]["payload"]["head"] != case.verifier.head()):
