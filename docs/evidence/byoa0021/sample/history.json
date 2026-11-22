@@ -1,0 +1,28 @@
+[
+  {
+    "payload": {
+      "action": "genesis",
+      "after": "afa3884ce48db37d1ae8e9e30271deb17459686fc9be610aa05e2ddd81cf5517",
+      "before": "afa3884ce48db37d1ae8e9e30271deb17459686fc9be610aa05e2ddd81cf5517",
+      "enrollment": "c4eb8f731e2aaa943eca5ccc93e6ce0a33bc189457bd7ec1485a713fab6c1563",
+      "generation": 0,
+      "previous": "0000000000000000000000000000000000000000000000000000000000000000",
+      "subject": "c4eb8f731e2aaa943eca5ccc93e6ce0a33bc189457bd7ec1485a713fab6c1563",
+      "version": 1
+    },
+    "signature": "956e0123908cc6b5f77a6b493a81847f1a564384803f8a3e1475c88265d0ba33265dd9e4986895d8f849f038d85b4d3c6e0e2d26dd671634b64b724d7660710f"
+  },
+  {
+    "payload": {
+      "action": "consume",
+      "after": "0c076424e36856e16d1a0f7ec455add2f51e76920cae8e0c36e71bb03141cbbd",
+      "before": "afa3884ce48db37d1ae8e9e30271deb17459686fc9be610aa05e2ddd81cf5517",
+      "enrollment": "c4eb8f731e2aaa943eca5ccc93e6ce0a33bc189457bd7ec1485a713fab6c1563",
+      "generation": 1,
+      "previous": "7a22739efea2ff8f7244027cce6ec81ef97563bdfb38e863cbb8996d9f9a76c0",
+      "subject": "3e789780a885730a5e434b9331a9c7f1d40b689ce713ab9387bf81b7e2aba4d0",
+      "version": 1
+    },
+    "signature": "cfd3f9bb225907ce0188cedf576d7e863551f04dc0669098f3ff25061a931b3271fa8dc105f4ca4996ea473722ace8af63f1db2784db8d030be1b1de15c4270d"
+  }
+]

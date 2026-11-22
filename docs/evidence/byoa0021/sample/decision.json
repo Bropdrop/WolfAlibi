@@ -1,0 +1,155 @@
+{
+  "dispatch": {
+    "ack": {
+      "payload": {
+        "challenge_sha256": "3e789780a885730a5e434b9331a9c7f1d40b689ce713ab9387bf81b7e2aba4d0",
+        "head": {
+          "digest": "837a6dcc0db261aa2db7360cc2e58056f0d368cda4a15f6462dbcd6ec14118a9",
+          "generation": 1
+        },
+        "previous": {
+          "digest": "45f76c95c682433dad5f3d537b9f9fd44f8c341423012bebfa1a2e6097553538",
+          "generation": 0
+        },
+        "receipt_sha256": "837a6dcc0db261aa2db7360cc2e58056f0d368cda4a15f6462dbcd6ec14118a9",
+        "retained_at": 1795320334,
+        "type": "QUORVANE_BYOA002_RETENTION_V1"
+      },
+      "signature": "ce07d321583a8fec02a99e6cd029ba72d6f79ac4ca1b52fbedbf9a5560486c1bf4f21d9c5a9cb87059c18d458e8e036b5818b1a743951d7ed92f040d653a1907"
+    },
+    "outcome": "RELEASED",
+    "receipt": {
+      "payload": {
+        "challenge_sha256": "3e789780a885730a5e434b9331a9c7f1d40b689ce713ab9387bf81b7e2aba4d0",
+        "committed_at": 1795320334,
+        "decision": "FICTIONAL_READ_COMMITTED",
+        "enrollment_sha256": "c4eb8f731e2aaa943eca5ccc93e6ce0a33bc189457bd7ec1485a713fab6c1563",
+        "expectations_sha256": "36b4acf3834822b510f2e6521238bb84951e10f6c7b6a31b5d1e2a8c248c098a",
+        "gateway": {
+          "argv_sha256": "1212121212121212121212121212121212121212121212121212121212121212",
+          "boot_id": "9e73cfa2-a017-4ab1-8846-9df860af0202",
+          "exe_sha256": "1010101010101010101010101010101010101010101010101010101010101010",
+          "gid": 1000,
+          "pid": 480,
+          "source_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "start_ticks": 81231,
+          "uid": 1000
+        },
+        "grant_sha256": "3c2c06ee50ac836dd74e4d89632a70f6ab63e6d98f3c9c441749e1e41ca17ee8",
+        "operation": "read",
+        "operation_id": "3bd111680fadcbfc5d83707c35fd3608",
+        "policy_epoch": 1,
+        "previous": {
+          "digest": "45f76c95c682433dad5f3d537b9f9fd44f8c341423012bebfa1a2e6097553538",
+          "generation": 0
+        },
+        "report_sha256": "d3467605d6cb94c77f9ee33b4279320224b6b3448a4f4542c2ab20fc8ad92690",
+        "request_sha256": "80b5ae6221f2a6b162cac1592fab84e948a2a477b1c36ed3ab4bd1b20f372be9",
+        "resource": "fictional-record-002",
+        "response_sha256": "84ee98fc579e4f7ac0f3558f9422b7df29a5f0fb8090629739dd399c1079f8d0",
+        "target_id": "synthetic-records-002",
+        "type": "QUORVANE_BYOA002_TARGET_COMMITMENT_V1"
+      },
+      "signature": "d19d7a4686a8540e0bd5498f9c6b1aeb2842645137fd125d6cc5f4d16713bc7bfb7f0a3486000edafb71198cac6d5e7c116aa0c760352d49001ac7471850d201"
+    },
+    "record": {
+      "record": "fictional-record-002",
+      "review_status": "available"
+    }
+  },
+  "enrollment": {
+    "gateway": {
+      "argv_sha256": "1212121212121212121212121212121212121212121212121212121212121212",
+      "boot_id": "9e73cfa2-a017-4ab1-8846-9df860af0202",
+      "exe_sha256": "1010101010101010101010101010101010101010101010101010101010101010",
+      "gid": 1000,
+      "pid": 480,
+      "source_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "start_ticks": 81231,
+      "uid": 1000
+    },
+    "manifest_sha256": "6b95f02510ae038b2e74e943d82197047bbee6d2e0b091f4d36609975fcb166c",
+    "operation": "read",
+    "operator_pub": "914e2ff7b8f282d0e18d2861466bc8d5a8d97030afc7fea731f7ef3c072f2db3",
+    "owner_pub": "72ef481c2adc011c098fc6770c39f1aebd4d1d32f07fedef746f1254523291c3",
+    "owner_uid": 1000,
+    "policy_epoch": 1,
+    "profile_sha256": "51e6f69c8c3cc0ee99136495dd9f731313b5ce5743ddc6ef00ff386d3c45f81f",
+    "resource": "fictional-record-002",
+    "revision": {
+      "commit": "1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f1f",
+      "tree": "2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e2e"
+    },
+    "schema": "quorvane.byoa002.enrollment.v1",
+    "target_id": "synthetic-records-002",
+    "target_pub": "032c0b01179f175044468604930c548f30d179244235d11388299b3436033f78",
+    "trial_pins": {
+      "broker_pub": "3206838abca1388fe6fa48f69a8dc1a9cc053b4f945f25ca31a0ed63ad936493",
+      "owner_pub": "1bae8a1246cc1c71c8f750d7abfa06b0fd78fb3ef58e7e11f28261e572eaa34c",
+      "supervisor_pub": "ed50dead8817687d1100fb9813f21b4cab49403623258be3c28eef92b9110f2a",
+      "target_pub": "7d201a6d84a8b5d4ad5720ceab054a301a1b66c1f7c15ca03e529bcf3ff9a6d8",
+      "witness_pub": "6b8f0efebdf7eb8cd283b95c2c2aab36d0f5b983a465953fdf6b11c04e16ec34"
+    },
+    "trial_witness_sha256": "37df83d915c1bc29572619afd7e4704b1b156ce1088b1ec0fb33602cb09281aa",
+    "verifier_pub": "531c465d9c8bcef81124567af87e1d0e617e36cd62155dead3e5e4f00c8eafaf"
+  },
+  "inquiry": {
+    "ack": {
+      "payload": {
+        "challenge_sha256": "3e789780a885730a5e434b9331a9c7f1d40b689ce713ab9387bf81b7e2aba4d0",
+        "head": {
+          "digest": "837a6dcc0db261aa2db7360cc2e58056f0d368cda4a15f6462dbcd6ec14118a9",
+          "generation": 1
+        },
+        "previous": {
+          "digest": "45f76c95c682433dad5f3d537b9f9fd44f8c341423012bebfa1a2e6097553538",
+          "generation": 0
+        },
+        "receipt_sha256": "837a6dcc0db261aa2db7360cc2e58056f0d368cda4a15f6462dbcd6ec14118a9",
+        "retained_at": 1795320334,
+        "type": "QUORVANE_BYOA002_RETENTION_V1"
+      },
+      "signature": "ce07d321583a8fec02a99e6cd029ba72d6f79ac4ca1b52fbedbf9a5560486c1bf4f21d9c5a9cb87059c18d458e8e036b5818b1a743951d7ed92f040d653a1907"
+    },
+    "outcome": "RECONCILED",
+    "receipt": {
+      "payload": {
+        "challenge_sha256": "3e789780a885730a5e434b9331a9c7f1d40b689ce713ab9387bf81b7e2aba4d0",
+        "committed_at": 1795320334,
+        "decision": "FICTIONAL_READ_COMMITTED",
+        "enrollment_sha256": "c4eb8f731e2aaa943eca5ccc93e6ce0a33bc189457bd7ec1485a713fab6c1563",
+        "expectations_sha256": "36b4acf3834822b510f2e6521238bb84951e10f6c7b6a31b5d1e2a8c248c098a",
+        "gateway": {
+          "argv_sha256": "1212121212121212121212121212121212121212121212121212121212121212",
+          "boot_id": "9e73cfa2-a017-4ab1-8846-9df860af0202",
+          "exe_sha256": "1010101010101010101010101010101010101010101010101010101010101010",
+          "gid": 1000,
+          "pid": 480,
+          "source_sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+          "start_ticks": 81231,
+          "uid": 1000
+        },
+        "grant_sha256": "3c2c06ee50ac836dd74e4d89632a70f6ab63e6d98f3c9c441749e1e41ca17ee8",
+        "operation": "read",
+        "operation_id": "3bd111680fadcbfc5d83707c35fd3608",
+        "policy_epoch": 1,
+        "previous": {
+          "digest": "45f76c95c682433dad5f3d537b9f9fd44f8c341423012bebfa1a2e6097553538",
+          "generation": 0
+        },
+        "report_sha256": "d3467605d6cb94c77f9ee33b4279320224b6b3448a4f4542c2ab20fc8ad92690",
+        "request_sha256": "80b5ae6221f2a6b162cac1592fab84e948a2a477b1c36ed3ab4bd1b20f372be9",
+        "resource": "fictional-record-002",
+        "response_sha256": "84ee98fc579e4f7ac0f3558f9422b7df29a5f0fb8090629739dd399c1079f8d0",
+        "target_id": "synthetic-records-002",
+        "type": "QUORVANE_BYOA002_TARGET_COMMITMENT_V1"
+      },
+      "signature": "d19d7a4686a8540e0bd5498f9c6b1aeb2842645137fd125d6cc5f4d16713bc7bfb7f0a3486000edafb71198cac6d5e7c116aa0c760352d49001ac7471850d201"
+    }
+  },
+  "target_rows": 1,
+  "verifier_head": {
+    "digest": "837a6dcc0db261aa2db7360cc2e58056f0d368cda4a15f6462dbcd6ec14118a9",
+    "generation": 1
+  }
+}

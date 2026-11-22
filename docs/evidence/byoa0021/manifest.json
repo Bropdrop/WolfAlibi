@@ -1,0 +1,62 @@
+{
+  "schema": "quorvane.byoa002.1.local-qualification.v1",
+  "parent": {
+    "commit": "85a410878e3b5756fad204b8ba207806c267e9ea",
+    "tree": "89c7a9dc3d87c44e4d86fc9c5c9c3110db3fabe4"
+  },
+  "tested": {
+    "commit": "ab963c72e1472b051422779b873ee1059ce17570",
+    "tree": "3d354e93fb38689bdb267397f7a3ce3baebe4107"
+  },
+  "environment": {
+    "kernel": "6.18.57",
+    "python": "3.12.14",
+    "owner_uid": 1000,
+    "gateway_uid": 1000,
+    "administrators": 1,
+    "peer_measurements": "synthetic decision fixture"
+  },
+  "parent_tests": {
+    "selected_passed": 24,
+    "full_605": "UNVERIFIED",
+    "first_setup_errors": 1
+  },
+  "parent_mutations": {
+    "selected_detected": 3,
+    "full_14": "UNVERIFIED"
+  },
+  "source_tests": {
+    "passed": 30,
+    "custody_cases": 9,
+    "seconds": 8.25
+  },
+  "focused_mutations": 2,
+  "gates": {
+    "A": "UNSUPPORTED",
+    "B": "UNSUPPORTED",
+    "C": "CONDITIONAL",
+    "D": "CONDITIONAL",
+    "E": "CONDITIONAL",
+    "F": "BLOCKED"
+  },
+  "assumptions": [
+    "Current signed journal remains available and outside the restored stores.",
+    "Trusted target signer, verifier, kernel, SQLite durability and clock.",
+    "Example public expectations share local administration."
+  ],
+  "production": "BLOCKED",
+  "arbitrary_agent_confinement": "BLOCKED",
+  "certification": "NOT_ISSUED",
+  "evidence_sha256": {
+    "environment.txt": "01abd70077c9b26f8e76b6df96d52d76f96c9cba1439385c1fbcadba468fe50e",
+    "focused-mutations.json": "89402f237fbd61658615fcc09f404f0c345f3c233cfeae314e89b50ed43aa75e",
+    "offline-result.json": "c331e3155a30a30e55960a7bd9ea7ab21653b1f09a114f2196fff95fe6690674",
+    "parent-mutations.json": "9296a3d3bf1df1bb45f997d350dc49ea31ca3c93067bd07db3bdf451b0f62d2a",
+    "parent-retry.txt": "9588772659859a02d2661e8b6813b673dd851ae19e5f760b881370992e8cc4c0",
+    "parent-tests.txt": "f1039cf6e41b2bb3f5c33f235bf8f8da7d1d8bb7c136c586fb84f4906df0803a",
+    "qualified-tests.txt": "33531cc7dbc8d0254a0089d2c7c41343f3cf3edbdc63d2e588556a0de89e9fa5",
+    "sample/decision.json": "1c4bfc32d762564756265b2fe9c98d1d0e06fff0c507abae8d7cd275229e8896",
+    "sample/expect.json": "d627bcea6b4752ca27cb9b02174ac0b739b462264c5c26c6114799171d427078",
+    "sample/history.json": "581b50973008156acd3e536ff6e0a596656aee02b595a3fa11383036c0b97e59"
+  }
+}
