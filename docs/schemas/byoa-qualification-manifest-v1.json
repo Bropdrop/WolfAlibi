@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Quorvane operator-owned Python qualification manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "dependencies",
+    "entrypoint",
+    "files",
+    "package",
+    "policy",
+    "profile",
+    "schema",
+    "tools"
+  ],
+  "properties": {
+    "schema": {
+      "const": "quorvane.byoa.manifest.v1"
+    },
+    "profile": {
+      "const": "solitary-python-agent-v1"
+    },
+    "package": {
+      "type": "string",
+      "pattern": "^[a-z][a-z_0-9]{0,39}$"
+    },
+    "entrypoint": {
+      "type": "string",
+      "pattern": "^[a-z][a-z_0-9]{0,39}\\.agent:run$"
+    },
+    "files": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "__init__.py",
+        "agent.py"
+      ],
+      "properties": {
+        "__init__.py": {
+          "const": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "agent.py": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    },
+    "policy": {
+      "const": "QUORVANE_LOCAL_READ_V1"
+    },
+    "tools": {
+      "const": [
+        {
+          "alias": "read_fixture",
+          "operation": "read",
+          "resource": "protected.txt",
+          "surface": "filesystem"
+        }
+      ]
+    },
+    "dependencies": {
+      "const": [
+        {
+          "name": "wolfalibi.agent_probe",
+          "version": "python-callbacks-v1",
+          "sha256": "bef77f05f980ac078e68c0bbfd5eed9cf3da9230001e4a3b1b3204ecbef95a06"
+        }
+      ]
+    }
+  },
+  "$comment": "The Python loader also requires entrypoint to name the declared package, excludes Python keywords, rejects duplicate keys, and checks the files against the manifest digests and the language profile."
+}
