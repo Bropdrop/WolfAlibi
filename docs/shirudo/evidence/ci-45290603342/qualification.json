@@ -1,0 +1,199 @@
+{
+  "current_authorization": false,
+  "draft_pr": 47,
+  "earlier_attempts": [
+    {
+      "finding": "sudo reset the child memlock limit; fixed by applying prlimit after the privilege transition.",
+      "gate_a": "QUALIFIED",
+      "gate_b": "NOT_RUN_PREFLIGHT_BLOCKED",
+      "run_id": 45288487436
+    },
+    {
+      "finding": "Build OpenSSL remained on PATH after its required library path was cleared. The final run reproduced the missing OPENSSL version symbols, then provisioned successfully with the distribution executable.",
+      "gate_a": "QUALIFIED",
+      "gate_b": "NOT_RUN_VM_PROVISIONING_FAILED",
+      "run_id": 45288726301
+    }
+  ],
+  "executed_adapter_commit": "6b611753d5e8ad36c6cea7ae0a22b3de95157050",
+  "files": {
+    "lab-artifact-review.json": {
+      "bytes": 2645,
+      "copied_without_changes": true,
+      "sha256": "70e23f07be47ec58a4b30c314cfcd19cb6da065c53978e7fd298a8db0a00ed3d"
+    },
+    "lab-baseline.json": {
+      "bytes": 1615,
+      "copied_without_changes": true,
+      "sha256": "167393848c3cd58d2305edd3c41f1edcce79e2844d83c95c0ae3c3760840735d"
+    },
+    "lab-positive-receipt.json": {
+      "bytes": 6117,
+      "copied_without_changes": true,
+      "sha256": "1bff9b63b50626eca74cdf7d16149226cf462a609c256fa0407d93ea9341ba45"
+    },
+    "lab-public-key.json": {
+      "bytes": 131,
+      "copied_without_changes": true,
+      "sha256": "5796e56ac2d68b1455c406257d6e4d33d07fcea8b17c86f67b46f4b9c43a75c3"
+    },
+    "lab-public-records.zip": {
+      "bytes": 113016,
+      "copied_without_changes": true,
+      "sha256": "32da5d8567489a5fcba3ac766c85447fc9c322d52f9c38c2118240f34b59915f"
+    },
+    "lab-summary.json": {
+      "bytes": 3077,
+      "copied_without_changes": true,
+      "sha256": "a3201c650dfbd89adee4be7582f92e727484a6e13826e2b0670e63bcbd258c9a"
+    },
+    "offline-artifact-review.json": {
+      "bytes": 7016,
+      "copied_without_changes": true,
+      "sha256": "b3b478b9cc17c508a4da7da33ee6b73ff4f1a570ee8cf76bea7200f5ce43f151"
+    },
+    "offline-public-records.zip": {
+      "bytes": 81502,
+      "copied_without_changes": true,
+      "sha256": "184ac42cb56cdef05a5e4deecbcc7d60517017446abffc1023065228836dd476"
+    },
+    "preflight.json": {
+      "bytes": 372,
+      "copied_without_changes": true,
+      "sha256": "5a93485843f5ef27958f72429276bc3ba7c49b3a9ea58e0e004ccf324a7294ef"
+    },
+    "review_lab_artifact.py": {
+      "bytes": 23970,
+      "copied_without_changes": true,
+      "sha256": "680fb2d4add10ea71b397628b9548098c0e3f23d20a928d87aaa01a352f967aa"
+    },
+    "upstream-license.txt": {
+      "bytes": 1306,
+      "copied_without_changes": true,
+      "sha256": "b867b6a7c42630db3b2ee8fe2105b18751dbc554e53f37a0095f98bdbbf7f1aa"
+    }
+  },
+  "gate_a": {
+    "all_expected_outcomes_observed": true,
+    "artifact_file": "offline-public-records.zip",
+    "artifact_files": 42,
+    "artifact_id": 14874575631,
+    "artifact_sha256": "184ac42cb56cdef05a5e4deecbcc7d60517017446abffc1023065228836dd476",
+    "case_count": 8,
+    "fresh_target_claim": false,
+    "job_id": 138098049122,
+    "raw_and_adapter_reports_match": true,
+    "referenced_files_checked": 30,
+    "report_sha256": "5b2fa13f40539cb2619f602152d01b1a1bbfb694dddcd1533e0cc6fb9357e057",
+    "result": "QUALIFIED",
+    "scope": "HISTORICAL_FIXTURE_COMPATIBILITY"
+  },
+  "gate_b": {
+    "all_expected_outcomes_observed": true,
+    "artifact_file": "lab-public-records.zip",
+    "artifact_files": 72,
+    "artifact_id": 14875245953,
+    "artifact_sha256": "32da5d8567489a5fcba3ac766c85447fc9c322d52f9c38c2118240f34b59915f",
+    "case_count": 10,
+    "fresh_collections": 8,
+    "job_id": 138098305284,
+    "positive_challenge_id": "94a49f585c675a047d6f47ef29c202ea",
+    "positive_evidence_sha256": "62f1c4048e57f252e2dda2302b092a7194fb0d4f402b4313d24dd60238cccace",
+    "positive_outcome": "EVIDENCE_ACCEPTED",
+    "positive_policy_sha256": "ed421536a97af043d52b5e70b543a91ae72f9b1668d2b2eb45d91b1fd71129a9",
+    "private_adapter_state_removed": true,
+    "result": "PASS",
+    "scope": "LAB_VTPM",
+    "signed_challenges": 9,
+    "signed_receipts": 9,
+    "upstream_positive_checks": 32,
+    "vm_stop_step": "success"
+  },
+  "hardware_qualification": false,
+  "host": {
+    "architecture": "x86_64",
+    "kvm_api": 12,
+    "preflight": "PASS",
+    "runner_label": "ubuntu-24.04"
+  },
+  "kernel": {
+    "configured_public_release": "test-kernel-45212180772",
+    "configured_x86_64_archive_sha256": "f3e660ce7b1e0cea8d3d1c19d8f3a75097c8aa9cf1dbc10b7ad81abfa2134a9b",
+    "observed_boot_version": "7.4-shirudo-ci-20261123",
+    "pin_basis": "Pinned upstream kernel-artifact.sh; successful CI setup and boot, not an independent measured-boot claim"
+  },
+  "limitations": [
+    "LAB_VTPM: the builder, hypervisor, vTPM state and operator are trusted.",
+    "The direct kernel/initrd boot does not establish measured UKI or Secure Boot.",
+    "Builder records supply AK/EK association; credential activation is not performed.",
+    "The adapter records an enrollment digest; it does not validate the original enrollment.",
+    "The target build ID is retained as metadata, not a cryptographically enforced build pin.",
+    "Evidence and receipts describe a historical observation, never current authorization."
+  ],
+  "measured_uki_qualification": false,
+  "post_download_review": {
+    "adapter_imports": false,
+    "ed25519_signatures_verified": 18,
+    "fresh_nonces_distinct": 8,
+    "lab_manifest_hashes_verified": 69,
+    "limits": [
+      "Ed25519 signatures were independently verified against the retained CI public key; that key has no separate external identity anchor.",
+      "TPM verification results are signed records of the genuine pinned verifier's CI execution; this review does not execute the TPM verifier again.",
+      "Replay denial is an unsigned CI control result checked for artifact consistency; the private journal is intentionally absent.",
+      "Revocation and private-state cleanup are recorded CI assertions; the deleted private state cannot be reexamined after download.",
+      "Expiry/revocation assessments intentionally have no signed evidence digest because they stop before reading the evidence file."
+    ],
+    "reproduce_after_extracting_lab_zip": "python review_lab_artifact.py extracted/evidence/lab --expected-target wolfalibi-45290603342-1",
+    "result": "PASS",
+    "reviewer_file": "review_lab_artifact.py",
+    "reviewer_sha256": "680fb2d4add10ea71b397628b9548098c0e3f23d20a928d87aaa01a352f967aa",
+    "tpm_verifier_reexecuted": false
+  },
+  "production_status": "BLOCKED",
+  "record_is_signed": false,
+  "repository": "Bropdrop/WolfAlibi",
+  "result": "PASS",
+  "run": {
+    "completed_run_updated_at_utc": "2026-11-23T23:50:26Z",
+    "conclusion": "success",
+    "id": 45290603342,
+    "started_at_utc": "2026-11-23T23:38:45Z",
+    "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45290603342"
+  },
+  "schema": "wolfalibi.shirudo.integration-qualification.v1",
+  "scope": "GENUINE_UPSTREAM_AND_FRESH_LAB_VTPM_INTEGRATION",
+  "synthetic_ci": {
+    "conclusion": "success",
+    "demo": "PASS",
+    "jobs": [
+      138098079062,
+      138098079451
+    ],
+    "python_versions": [
+      "3.11",
+      "3.12"
+    ],
+    "run_id": 45290613075,
+    "scope": "SYNTHETIC_ADAPTER_QUALIFICATION_ONLY",
+    "test_methods_per_version": 102,
+    "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45290613075"
+  },
+  "target": {
+    "assurance": "LAB_VTPM",
+    "baseline_before_all_challenges": true,
+    "binding_pcr_origin": "TRUSTED_PRECHALLENGE_PROVISIONING_BASELINE",
+    "build_id_cryptographically_enforced": false,
+    "build_id_metadata": "6838a72ff965682f8d0169008a64c92c9591f6bed90f4eb00f17f8d701df711b",
+    "builder_record_sha256": "4f3f3cb34590f45369245d5c282f356ef44eef410e382b46a782e4f8da915acc",
+    "chain_and_config_origin": "SELECTED_HOST_BUILD_INPUTS",
+    "id": "wolfalibi-45290603342-1"
+  },
+  "upstream_source_commit": "fb97c1ec5908c8bdbd46760c29e57677977fce74",
+  "verifier": {
+    "elf_sha256": "be8b79cdd7efb8e635b7965bf34fa691e5e4a378957f3829530a529097abe9d2",
+    "official_archive_sha256": "e830f2384383adccba7c423e8afe81d1fd0b3d6e27e66ce2aed49eae632e989c",
+    "reproducible_build_proof": false,
+    "runtime_version_id": "7e222b2b27b2408615a4f5b20cb31215e185ee5d6f0ae0bee2910f7479f58c2d",
+    "source_association": "UPSTREAM_GITHUB_WORKFLOW_METADATA"
+  }
+}

@@ -1,0 +1,193 @@
+{
+  "binary": {
+    "bytes": 19216536,
+    "elf": true,
+    "sha256": "be8b79cdd7efb8e635b7965bf34fa691e5e4a378957f3829530a529097abe9d2"
+  },
+  "binary_ready": true,
+  "candidate_adapter_accepted": true,
+  "candidate_validity": "ACCEPTED",
+  "enrollment_performed": false,
+  "environment": {
+    "memlock_soft_hard": [
+      -1,
+      -1
+    ]
+  },
+  "exit_code": 0,
+  "fresh_target_claim": false,
+  "hardware_tpm_claim": false,
+  "interface_compatible": true,
+  "known_negative_policy_note": "This old corpus has no configuration block; zero-root/PCR14 is an explicit rejection sentinel, not an approved target configuration",
+  "known_negative_rejected": true,
+  "negative_controls_passed": true,
+  "negative_controls_validated_against_passing_baseline": true,
+  "official_build_reference": {
+    "archive_sha256": "e830f2384383adccba7c423e8afe81d1fd0b3d6e27e66ce2aed49eae632e989c",
+    "artifact": 14865910776,
+    "elf_sha256": "be8b79cdd7efb8e635b7965bf34fa691e5e4a378957f3829530a529097abe9d2",
+    "qualification": "CI source association; not an independently reproduced build",
+    "run": 45269604356,
+    "url": "https://github.com/shirudo-dev/shirudo/actions/runs/45269604356/artifacts/14865910776"
+  },
+  "policy_basis": "Hash-pinned historical corpus; SYNTHETIC test-vector policy, genuine separately pinned ELF",
+  "receipt_created": false,
+  "recorded_at": "2026-11-23T23:24:20.141342+00:00",
+  "result": "QUALIFIED",
+  "schema": "wolfalibi.shirudo.gate-a.v1",
+  "scope": "HISTORICAL_FIXTURE_COMPATIBILITY",
+  "version_id": "7e222b2b27b2408615a4f5b20cb31215e185ee5d6f0ae0bee2910f7479f58c2d",
+  "cases": [
+    {
+      "name": "known-negative",
+      "status": "REJECTED",
+      "raw_exit": 1,
+      "raw_verdict": "fail",
+      "raw_checks": 47,
+      "adapter_accepted": false,
+      "adapter_error": null,
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": null,
+      "required_failure_observed": null,
+      "failures": [
+        "config: configuration evidence is missing",
+        "register: public area is bound to PCRs 9 and 11 as recorded",
+        "eventlog: event 1 (upatch_load foo) digest does not derive from its fields"
+      ]
+    },
+    {
+      "name": "candidate-config-history",
+      "status": "ACCEPTED",
+      "raw_exit": 0,
+      "raw_verdict": "ok",
+      "raw_checks": 61,
+      "adapter_accepted": true,
+      "adapter_error": null,
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": null,
+      "required_failure_observed": null,
+      "failures": []
+    },
+    {
+      "name": "quote-signature-bitflip",
+      "status": "REJECTED",
+      "raw_exit": 1,
+      "raw_verdict": "fail",
+      "raw_checks": 61,
+      "adapter_accepted": false,
+      "adapter_error": null,
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": "quote: ECDSA signature by the attestation key",
+      "required_failure_observed": true,
+      "failures": [
+        "quote: ECDSA signature by the attestation key"
+      ]
+    },
+    {
+      "name": "register-value-bitflip",
+      "status": "REJECTED",
+      "raw_exit": 1,
+      "raw_verdict": "fail",
+      "raw_checks": 61,
+      "adapter_accepted": false,
+      "adapter_error": null,
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": "register: certified contents match the listed value",
+      "required_failure_observed": true,
+      "failures": [
+        "register: certified contents match the listed value",
+        "eventlog: 16 records replay to the certified value",
+        "state: register equals the expected value"
+      ]
+    },
+    {
+      "name": "config-history-bitflip",
+      "status": "REJECTED",
+      "raw_exit": 1,
+      "raw_verdict": "fail",
+      "raw_checks": 61,
+      "adapter_accepted": false,
+      "adapter_error": null,
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": "config: config history does not match the quoted PCR",
+      "required_failure_observed": true,
+      "failures": [
+        "config: config history does not match the quoted PCR"
+      ]
+    },
+    {
+      "name": "quoted-pcr-bitflip",
+      "status": "REJECTED",
+      "raw_exit": 1,
+      "raw_verdict": "fail",
+      "raw_checks": 61,
+      "adapter_accepted": false,
+      "adapter_error": null,
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": "quote: PCR digest matches the listed values",
+      "required_failure_observed": true,
+      "failures": [
+        "quote: PCR digest matches the listed values",
+        "anchor: PCR 9 is not in the quote",
+        "PCR 0 matches the expected value",
+        "PCR 1 matches the expected value",
+        "PCR 2 matches the expected value",
+        "PCR 3 matches the expected value",
+        "PCR 4 matches the expected value",
+        "PCR 5 matches the expected value",
+        "PCR 6 matches the expected value",
+        "PCR 7 matches the expected value",
+        "PCR 9 matches the expected value",
+        "PCR 11 matches the expected value",
+        "PCR 12 matches the expected value",
+        "PCR 13 matches the expected value",
+        "PCR 14 matches the expected value",
+        "PCR 15 matches the expected value"
+      ]
+    },
+    {
+      "name": "wrong-expected-nonce",
+      "status": "REJECTED",
+      "raw_exit": 1,
+      "raw_verdict": "fail",
+      "raw_checks": 61,
+      "adapter_accepted": false,
+      "adapter_error": null,
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": "nonce matches the request",
+      "required_failure_observed": true,
+      "failures": [
+        "nonce matches the request"
+      ]
+    },
+    {
+      "name": "truncated-json",
+      "status": "PARSE_REJECTED",
+      "raw_exit": 2,
+      "raw_verdict": null,
+      "raw_checks": 0,
+      "adapter_accepted": null,
+      "adapter_error": {
+        "code": "INVALID_JSON",
+        "message": "Input is not one strict UTF-8 JSON document"
+      },
+      "interface_compatible": true,
+      "expected_outcome_observed": true,
+      "required_failure_assertion": null,
+      "required_failure_observed": null,
+      "failures": []
+    }
+  ],
+  "artifact_sha256": "73f9aae3b7c0645b3746e5d7501fec50abd9e35bff7c264dc7a67123bf5cc82b",
+  "verified_descriptor_files": 30,
+  "gate_report_sha256": "1160dcdce92c57408c36389386600022fa9795dd45cbf1233489bc0cfd6f8d71",
+  "raw_report_bytes_match_nested_reports": true,
+  "raw_adapter_reports_and_exit_codes_match": true
+}

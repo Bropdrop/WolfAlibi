@@ -1,0 +1,20 @@
+{
+  "cpu_count": 4,
+  "failures": [],
+  "free_disk_bytes": 91361652736,
+  "kvm_api": 12,
+  "machine": "x86_64",
+  "memlock": [
+    -1,
+    -1
+  ],
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.ci-preflight.v1",
+  "system": "Linux",
+  "tools_before_setup": {
+    "make": true,
+    "qemu-system-x86_64": false,
+    "swtpm": false,
+    "tpm2_createprimary": false
+  }
+}

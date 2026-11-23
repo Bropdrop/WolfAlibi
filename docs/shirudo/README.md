@@ -2,7 +2,9 @@
 
 This adapter checks an already captured Shirudo attestation against an operator's independently approved policy. It records a fresh challenge, runs an explicitly pinned offline verifier, and preserves the result in a signed local receipt.
 
-**Current qualification: synthetic fixtures only.** A successful synthetic assessment returns outcome `SIMULATED_POLICY_ONLY` with assurance `SYNTHETIC`. No positive verification using a real pinned Shirudo binary and valid target evidence has yet been qualified. Production use remains blocked.
+**Current qualification: genuine historical verification and fresh `LAB_VTPM` integration passed.** [CI run 45290603342](https://github.com/Bropdrop/WolfAlibi/actions/runs/45290603342) used the exact approved official Shirudo ELF, passed all eight historical cases, and produced `EVIDENCE_ACCEPTED` for a newly issued challenge from a disposable software-TPM target. All ten fresh-lab controls passed. The [qualification record and preserved public artifacts](evidence/ci-45290603342/qualification.json) identify the executed commit and precise limits. Physical hardware, measured UKI/Secure Boot and production authorization remain unqualified.
+
+A synthetic assessment still returns `SIMULATED_POLICY_ONLY` with assurance `SYNTHETIC`. The genuine integration result does not promote synthetic fixtures or historical receipts into authority.
 
 The adapter is read-only toward targets. It has no target connection, deployment, shield loading or unloading, target key management, or network API. It does write its own local challenge journal, signing key, policy records, and receipts. A locally issued challenge is a freshness request; it is not a TPM enrollment credential challenge and does not enroll a target.
 
@@ -140,9 +142,9 @@ python3 scripts/demo_shirudo.py
 
 The demo creates temporary private state and a self-generated, SHA-pinned synthetic executable. It uses actual CLI subprocesses to issue a challenge, assess a structural fixture, retrieve and verify the signed receipt, reject replay and a tampered signature, and check local policy revocation. It prints a compact JSON summary without key material and removes its temporary state. It performs no target connection or deployment and does not use an upstream Shirudo executable.
 
-The suite uses synthetic local fixtures and a synthetic verifier to exercise the adapter's policy, challenge, subprocess, journal, and receipt behavior. The test transcript from the actual checkout determines which cases ran and passed. This guide does not claim a test count or a real TPM result.
+The suite uses synthetic local fixtures and a synthetic verifier to exercise the adapter's policy, challenge, subprocess, journal, and receipt behavior. The test transcript from the actual checkout determines which cases ran and passed. This synthetic suite alone does not demonstrate genuine TPM verification.
 
-The remaining integration gate is a positive run using the approved upstream ELF binary, its recorded build/version, independently enrolled target pins, and valid evidence for a fresh adapter challenge, followed by deliberately altered controls. Synthetic success cannot close that gate. No target provisioning or collection is performed by this adapter.
+The separate [real integration workflow](REAL_INTEGRATION.md) has now passed with the approved upstream ELF and a fresh lab target. Its harness provisions the disposable VM and performs collection; the adapter's verification interface remains local. Builder identity and host chain/configuration expectations are selected before challenges; binding PCR values come from a trusted prechallenge provisioning baseline. These are laboratory trust assumptions, not hardware or manufacturer-enrollment qualification.
 
 ### Reproduce the recorded qualification
 
@@ -151,12 +153,14 @@ python3 scripts/qualify_shirudo.py \
   --output ./qualification.json --log ./qualification-tests.txt
 ```
 
-This runs the tests and CLI demo, then records their results, environment, and exact source-file SHA-256 values. [The checked-in report](evidence/synthetic-qualification.json) and [test transcript](evidence/tests.txt) contain the actual run. The report is a local execution record, not an independently witnessed attestation. CI is configured to run the synthetic checks on Python 3.11 and 3.12; the report itself records the interpreter actually used locally.
+This runs the tests and CLI demo, then records their results, environment, and exact source-file SHA-256 values. The [current harness report](evidence/real-harness-synthetic-qualification.json) and [transcript](evidence/real-harness-tests.txt) record the 102-test local run. The [initial adapter report](evidence/synthetic-qualification.json) and [initial transcript](evidence/tests.txt) remain unchanged historical records. Each synthetic report qualifies only its stated synthetic scope. [CI also passed the 102 tests and demo on Python 3.11 and 3.12](https://github.com/Bropdrop/WolfAlibi/actions/runs/45290613075).
 
-### Actual upstream startup attempt
+### Initial workspace startup attempt
 
 Official static and Debian artifacts were retrieved from [Shirudo's successful build for the pinned commit](https://github.com/shirudo-dev/shirudo/actions/runs/45269604356). Their archive digests were checked against artifact metadata. The static binary exited before `version --version-id`: its mandatory memory locking could not fit this environment's 8 MiB locked-memory limit. The Debian operator binary could not load `libtss2-esys.so.0`. Neither reached attestation verification, and no runtime version ID was obtained. The [startup diagnostic record](evidence/upstream-startup.json) includes the exact artifact and binary hashes, commands, exits, and limitations.
 
-The next integration environment must satisfy Shirudo's startup requirements, provide an approved verifier build, and obtain real evidence for the adapter's fresh nonce from an independently enrolled target. The offline verifier itself does not require a local TPM. Historical corpus files cannot answer a newly issued challenge and are not live enrollment data.
+The later successful CI run satisfied those startup requirements and exercised both the historical and fresh-target paths. Its runbook records the memlock and build-versus-runtime OpenSSL handling required on the selected Ubuntu 24.04 runner. The offline verifier itself does not require a local TPM. Historical corpus files still cannot answer a newly issued challenge and are not live enrollment data.
 
 This repository has no selected open-source license. No upstream source is copied into the adapter; [UPSTREAM.md](UPSTREAM.md) records references and the separately licensed upstream project.
+Upstream test-vector and configuration material in the preserved public evidence
+archives carries its [original BSD-2-Clause notice](evidence/ci-45290603342/upstream-license.txt).

@@ -38,9 +38,10 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--log", type=Path)
     args = parser.parse_args()
-    paths = [ROOT / "pyproject.toml", ROOT / ".github/workflows/shirudo-adapter.yml"]
+    paths = [ROOT / "pyproject.toml", *sorted((ROOT / ".github/workflows").glob("*.yml"))]
     for directory in ("shirudo_adapter", "tests", "scripts"):
         paths.extend((ROOT / directory).rglob("*.py"))
+    paths.extend((ROOT / "scripts").rglob("*.sh"))
     source_hashes = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
                      for path in sorted(paths)}
     suite = unittest.defaultTestLoader.discover(str(ROOT / "tests"))
