@@ -1,0 +1,93 @@
+{
+  "artifacts": [
+    {
+      "archive_download_url": "https://api.github.com/repos/shirudo-dev/shirudo/actions/artifacts/14865910776/zip",
+      "browser_url": "https://github.com/shirudo-dev/shirudo/actions/runs/45269604356/artifacts/14865910776",
+      "bytes": 15221402,
+      "id": 14865910776,
+      "metadata_url": "https://api.github.com/repos/shirudo-dev/shirudo/actions/artifacts/14865910776",
+      "name": "shirudo-tar",
+      "sha256": "e830f2384383adccba7c423e8afe81d1fd0b3d6e27e66ce2aed49eae632e989c"
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/shirudo-dev/shirudo/actions/artifacts/14864448088/zip",
+      "browser_url": "https://github.com/shirudo-dev/shirudo/actions/runs/45269604356/artifacts/14864448088",
+      "bytes": 12684098,
+      "id": 14864448088,
+      "metadata_url": "https://api.github.com/repos/shirudo-dev/shirudo/actions/artifacts/14864448088",
+      "name": "shirudo-deb",
+      "sha256": "f6648877a6be038376e166bf8476f6cea02f58bb4b7700597a21ed50c49a9839"
+    }
+  ],
+  "binaries": [
+    {
+      "bytes": 19216536,
+      "command": [
+        "version",
+        "--version-id"
+      ],
+      "elf_load_memory_bytes": 14388589,
+      "exit_code": 1,
+      "name": "shirudo-fb97c1e-static",
+      "sha256": "be8b79cdd7efb8e635b7965bf34fa691e5e4a378957f3829530a529097abe9d2",
+      "stderr": "hardening: cannot lock process memory: Cannot allocate memory\n"
+    },
+    {
+      "bytes": 7285480,
+      "command": [
+        "version",
+        "--version-id"
+      ],
+      "exit_code": 127,
+      "name": "shirudo-fb97c1e-operator",
+      "sha256": "9e4ef27f86a6080fee8bcc5740fe1eddf67aab5008d70ba41a09410d0fd2bf46",
+      "stderr": "error while loading shared libraries: libtss2-esys.so.0: cannot open shared object file: No such file or directory"
+    }
+  ],
+  "commit": "fb97c1ec5908c8bdbd46760c29e57677977fce74",
+  "environment": {
+    "kvm_available": false,
+    "rlimit_memlock_hard": 8388608,
+    "rlimit_memlock_soft": 8388608
+  },
+  "evidence_cryptographic_verification": "NOT_RUN",
+  "fixtures": [
+    {
+      "bytes": 5653,
+      "git_blob_sha": "d422ceb1b94e0e52aed771971355b9d405b9bdfe",
+      "name": "known-negative-evidence.json",
+      "path": "testing/fuzz/corpus/attest/evidence",
+      "sha256": "e2e3951c0caa108b345a99746e0fc6d31b30927c956e9df0c0ed297fdbacb71d",
+      "url": "https://github.com/shirudo-dev/shirudo/blob/fb97c1ec5908c8bdbd46760c29e57677977fce74/testing/fuzz/corpus/attest/evidence"
+    },
+    {
+      "bytes": 15108,
+      "git_blob_sha": "637faccb13186fed4d581fe70f2c74a57ef6411a",
+      "name": "candidate-config-history-evidence.json",
+      "path": "testing/fuzz/corpus/attest/evidence-config-history",
+      "sha256": "99b3105d3ee72334fdc63c17313f5ba931cead43248c35ebe191d53a643ce343",
+      "url": "https://github.com/shirudo-dev/shirudo/blob/fb97c1ec5908c8bdbd46760c29e57677977fce74/testing/fuzz/corpus/attest/evidence-config-history"
+    }
+  ],
+  "observed_missing_library": "libtss2-esys.so.0",
+  "operator_package": {
+    "artifact_filename": "shirudo-operator_0~fb97c1ec_amd64.deb",
+    "bytes": 6900384,
+    "package_version": "0~fb97c1ec",
+    "sha256": "baa76014ddf87b07a65fd060ec6ea306dcd7d674a30cd0801f7578fbf7f700cd",
+    "version_source": "CI artifact filename, not runtime version output"
+  },
+  "outcome": "Real upstream binaries obtained and artifact hashes verified. No attestation verification reached; runtime startup prerequisites are unavailable. No system settings/installations or binary patches made.",
+  "qualification": "Artifact/source association is GitHub workflow metadata, not an independently reproduced build. All corpus expectations are historical test-only and are not enrollment, fresh challenges, or evidence of a current target.",
+  "runtime_version_id": null,
+  "runtime_version_status": "NOT_OBTAINED_STARTUP_BLOCKED",
+  "source_docs_url": "https://github.com/shirudo-dev/shirudo/blob/fb97c1ec5908c8bdbd46760c29e57677977fce74/Documentation/reference/cli/shirudo.rst",
+  "upstream_negative": "NOT_RUN",
+  "upstream_positive": "NOT_RUN",
+  "workflow_run": {
+    "conclusion": "success",
+    "id": 45269604356,
+    "name": "Build packages",
+    "url": "https://github.com/shirudo-dev/shirudo/actions/runs/45269604356"
+  }
+}
