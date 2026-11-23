@@ -196,12 +196,24 @@ make an unsuitable dynamic executable start.
 
 ### 4. Build and boot one named VM
 
-The minimal supported upstream boot target is:
+The CI wrapper first completes the bundle with the build toolchain, then
+selects host tools for VM provisioning:
 
 ```sh
+make -C testing test-vm-bundle BUILD_CONTAINER=0 LOCAL_STACK=0
+PATH=${PATH#"$PWD/build/host-openssl/bin:"}
+export PATH
 make -C testing vm BUILD_CONTAINER=0 LOCAL_STACK=0 \
   VM_NAME="$WOLFALIBI_SHIRUDO_VM_NAME"
 ```
+
+This separation matters at the pinned revision: `run.sh` unsets the custom
+`LD_LIBRARY_PATH` for QEMU, swtpm and dracut, but leaves `PATH` intact. The TPM
+builder invokes bare `openssl`; it must select the host executable compatible
+with those host libraries. The completed bundle still uses the selected
+OpenSSL 3.5.9 build inputs. Its stamp prevents a second bundle build.
+The wrapper records public OpenSSL version diagnostics and bounded error
+lines on boot failure. It does not export raw TPM traffic or private state.
 
 The workflow or harness supplies a unique validated VM name, including the
 workflow run and attempt when appropriate. Upstream permits at most 63
@@ -211,7 +223,7 @@ exists.
 
 `BUILD_CONTAINER=0` uses the prepared host toolchain.
 `LOCAL_STACK=0` skips starting the local telemetry/OCI/backend stack. The
-`vm` target builds the required bundle first; it does not run all upstream
+`vm` target checks and reuses the completed bundle; it does not run all upstream
 unit, functional or end-to-end test suites. Do not invoke `make tests` or
 `.github/scripts/tests.sh run` merely to create this one integration target.
 

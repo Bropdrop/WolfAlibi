@@ -118,7 +118,8 @@ jobs:
           gh api repos/shirudo-dev/shirudo/actions/artifacts/14865910776/zip > artifacts/upstream.zip
           python scripts/prepare_shirudo_binary.py --archive artifacts/upstream.zip --output artifacts/verifier
       - name: Cache source-pinned upstream build dependencies
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        id: dependencies
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
         with:
           path: |
             upstream/build/target-deps
@@ -129,6 +130,15 @@ jobs:
         run: bash scripts/shirudo_ci_vm.sh setup "$PWD/upstream" "$VM_NAME"
       - name: Build and boot the disposable target
         run: bash scripts/shirudo_ci_vm.sh boot "$PWD/upstream" "$VM_NAME"
+      - name: Save completed build dependencies
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            upstream/build/target-deps
+            upstream/build/host-openssl
+            upstream/build/host-libtpms
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}
       - name: Verify fresh lab evidence and adverse controls
         run: |
           sudo prlimit --pid "$$" --memlock=unlimited:unlimited
