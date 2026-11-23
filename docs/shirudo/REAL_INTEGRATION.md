@@ -91,6 +91,9 @@ because `/dev/kvm` may initially belong to root; upstream setup subsequently
 configures the runner user's access. Create the public evidence directory as
 the runner user before a privileged probe writes a report there, so a root-
 owned directory does not prevent later unprivileged artifact creation.
+The probe applies `prlimit` after entering `sudo`, because that privilege
+transition can reset a limit raised in the parent shell. Build and assessment
+steps still raise the limit in their own unprivileged launching shells.
 
 At the pinned revision,
 [`.github/scripts/tests.sh setup`](https://github.com/shirudo-dev/shirudo/blob/fb97c1ec5908c8bdbd46760c29e57677977fce74/.github/scripts/tests.sh)

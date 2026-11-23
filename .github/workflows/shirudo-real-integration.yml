@@ -109,8 +109,7 @@ jobs:
       - name: Check disposable host and KVM before building
         run: |
           mkdir -p evidence
-          sudo prlimit --pid "$$" --memlock=unlimited:unlimited
-          sudo env GITHUB_ACTIONS=true WOLFALIBI_DISPOSABLE_CI=1 python3 scripts/shirudo_ci_preflight.py --output "$PWD/evidence/preflight.json"
+          sudo env GITHUB_ACTIONS=true WOLFALIBI_DISPOSABLE_CI=1 prlimit --memlock=unlimited:unlimited -- python3 scripts/shirudo_ci_preflight.py --output "$PWD/evidence/preflight.json"
       - name: Download pinned official verifier
         env:
           GH_TOKEN: ${{ github.token }}
