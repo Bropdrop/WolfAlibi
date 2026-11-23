@@ -4,6 +4,14 @@ This runbook describes the two real-upstream gates and the evidence needed to
 interpret them. It is a procedure, not a record that either gate passed. Use the
 machine-readable report and the exact workflow run for executed outcomes.
 
+The [executed qualification record](evidence/ci-45290603342/qualification.json)
+and [successful workflow](https://github.com/Bropdrop/WolfAlibi/actions/runs/45290603342)
+now record both gates passing at adapter commit
+`6b611753d5e8ad36c6cea7ae0a22b3de95157050`. The preserved ZIPs contain the
+original public records, and the separate artifact reviews check their hashes,
+signatures and bindings. Their scope remains the laboratory qualification
+described below.
+
 The reviewed upstream revision is
 [`fb97c1ec5908c8bdbd46760c29e57677977fce74`](https://github.com/shirudo-dev/shirudo/tree/fb97c1ec5908c8bdbd46760c29e57677977fce74).
 The adapter's existing synthetic tests remain a separate qualification layer.

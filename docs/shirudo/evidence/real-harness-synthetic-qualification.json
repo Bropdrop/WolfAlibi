@@ -24,7 +24,7 @@
     "python": "3.12.14",
     "system": "Linux"
   },
-  "generated_at_utc": "2026-11-23T23:23:41.311453+00:00",
+  "generated_at_utc": "2026-11-23T23:54:51.596426+00:00",
   "limitations": [
     "Synthetic fixtures do not demonstrate genuine TPM cryptographic verification.",
     "Competing service instances use threads; interruption is injected, not a power loss.",
@@ -38,13 +38,13 @@
   "scope": "SYNTHETIC_ADAPTER_QUALIFICATION_ONLY",
   "source_files_sha256": {
     ".github/workflows/shirudo-adapter.yml": "854aa1198a35ca77561642f88ffcfb1507524e3f950a0ca6d0a2ababd8a798ee",
-    ".github/workflows/shirudo-real-integration.yml": "e01923faa5c62ce75f7c09c031190db45c4eb2d1aad4442477463fe7c514ef5c",
+    ".github/workflows/shirudo-real-integration.yml": "8c217189c9c3cb06b6da7c3b5889b27adea8f94c40663c9443e15ee0238915c0",
     "pyproject.toml": "40350d700b8d5e6cd8f5044ddca0b5189e10ace50b39f30c5bcc439c490cb9a1",
     "scripts/demo_shirudo.py": "e751093128b53952d4512e65de1fb34d63420739cefdff9f41a7236bdd643da0",
     "scripts/prepare_shirudo_binary.py": "bf60dcab085c844f4a99d7dcbe4cb3160f2c89dea49dd277a11bf466622eb78b",
     "scripts/qualify_shirudo.py": "419973b74d4dcdd5d8a462c9f73280c81b4531029a6a43d46dfbbb81112c5bf3",
     "scripts/shirudo_ci_preflight.py": "fd73529e1d72d0a11ab61358173ba9790102e775d4eaa660142698fff5b006f0",
-    "scripts/shirudo_ci_vm.sh": "26f5e029d1bd83c95b3e751ceef30dbbf8a2e82fbf6059a1d38788c1e0541d52",
+    "scripts/shirudo_ci_vm.sh": "9f704969da140a7c3d86a28e3e0cf755858b8c979bc3b54fdabbaa1d6640dd1d",
     "scripts/shirudo_real_lab.py": "f3e6da8bd4116621a5d355d6540010167b1b270750f5f30276c8f495737ab031",
     "scripts/shirudo_real_offline.py": "8c0dfd83e19494d5572d7a2fc1a41a1b2b2bae6c737e44299f09c691cfc16dc5",
     "shirudo_adapter/__init__.py": "c0c4b5830115f8afa8824e6f66cb055c8d1fd9439445ce84ae9f600c99299f8d",
@@ -61,7 +61,7 @@
     "tests/test_real_offline.py": "883cdddc956dd67102f13b9cca69a75bb42ff49430ac328cd78a6c41bbf69f6a",
     "tests/test_runner.py": "cd4b5e7d7ae7744ce6ce74947cc926eb4b0f4d5ccb5ea88ed7be5b40c0eac80a"
   },
-  "source_snapshot_sha256": "fc0e77e9acff36ea50d08396fb8f5f897e6917477f92c997962224db14b0a8a3",
+  "source_snapshot_sha256": "88b6520d9036188e5ce0082e1b5f59fb3a7021600b7179d2cb424dad2c99429f",
   "unit_tests": {
     "count_unit": "test methods; mutation subcases are not counted separately",
     "errors": 0,

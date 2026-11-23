@@ -102,6 +102,6 @@ test_unknown_exit_does_not_become_a_rejected_or_accepted_proof (test_runner.Runn
 test_version_and_verification_share_one_deadline (test_runner.RunnerTests.test_version_and_verification_share_one_deadline) ... ok
 
 ----------------------------------------------------------------------
-Ran 102 tests in 4.991s
+Ran 102 tests in 4.966s
 
 OK
