@@ -416,6 +416,9 @@ RequiresMountsFor=/sysroot
 [Service]
 Type=oneshot
 RemainAfterExit=yes
+SyslogIdentifier=wolfalibi-image
+StandardOutput=journal+console
+StandardError=journal+console
 ExecStart=/bin/sh /usr/lib/wolfalibi/prototype-boot.sh
 [Install]
 WantedBy=initrd.target
