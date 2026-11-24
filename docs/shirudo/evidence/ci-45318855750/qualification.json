@@ -1,0 +1,306 @@
+{
+  "actual_human_approval": "NOT_RUN",
+  "approval_driver": "SCRIPTED_PTY",
+  "artifacts": [
+    {
+      "bytes": 364251,
+      "id": 14887631691,
+      "name": "shirudo-prototype-lab-86c28db9537558b4cc76d73baea4353652462147",
+      "preserved_as": "prototype-lab-public-records.zip",
+      "sha256": "bd6f9851fe279070b1484988fd22cbe0da41effca379e0e87ae657621a8c43e8",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/artifacts/14887631691"
+    },
+    {
+      "bytes": 81502,
+      "id": 14887011984,
+      "name": "shirudo-prototype-offline-86c28db9537558b4cc76d73baea4353652462147",
+      "preserved_as": "offline-public-records.zip",
+      "sha256": "385e3fa11b7764a8d1d765ebba9ee5a363b75668060fd187018336f9ae118292",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/artifacts/14887011984"
+    },
+    {
+      "bytes": 54314,
+      "id": 14885778123,
+      "name": "wolfalibi-shirudo-prototype-package-86c28db9537558b4cc76d73baea4353652462147",
+      "preserved_as": "cli-package-original.zip",
+      "sha256": "ad4fa372c134808cdea5ca8621651d35e3718e8617a45a1b42c0dfdf143e63db",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/artifacts/14885778123"
+    }
+  ],
+  "assurance": "LAB_VTPM",
+  "base_commit": "e963accab833e377a6e33444cd57e36e9620ea72",
+  "cleanup": {
+    "gate_daemons_stopped": true,
+    "host_private_state": {
+      "secure_erasure_qualified": false,
+      "status": "REMOVED"
+    },
+    "log_review": "target-log-review.json",
+    "private_keys_or_database_or_images_exported": false,
+    "secure_erasure_verified": false,
+    "vm_stop_step": "success"
+  },
+  "continuous_process_identity_qualified": false,
+  "coordinator_authority": "TRUSTED_CI_ADMINISTRATOR",
+  "counter_observations": [
+    {
+      "case": "immutable-execution",
+      "committed_operations": 0,
+      "counter": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "gate-state-access-denied",
+      "committed_operations": 0,
+      "counter": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "owner-declined",
+      "committed_operations": 0,
+      "counter": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "owner-rejected-tampered-bundle",
+      "committed_operations": 0,
+      "counter": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "owner-timeout",
+      "committed_operations": 0,
+      "counter": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "owner-terminal-required",
+      "committed_operations": 0,
+      "counter": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "forged-owner-grant",
+      "committed_operations": 0,
+      "counter": 0,
+      "result": "PASS"
+    },
+    {
+      "case": "authorized",
+      "committed_operations": 1,
+      "counter": 1,
+      "result": "PASS"
+    },
+    {
+      "case": "exact-retry",
+      "committed_operations": 1,
+      "counter": 1,
+      "result": "PASS"
+    },
+    {
+      "case": "status-recovery",
+      "committed_operations": 2,
+      "counter": 2,
+      "result": "PASS"
+    },
+    {
+      "case": "owner-grant-recovery",
+      "committed_operations": 2,
+      "counter": 2,
+      "result": "PASS"
+    },
+    {
+      "case": "recovered-exact-retry",
+      "committed_operations": 2,
+      "counter": 2,
+      "result": "PASS"
+    }
+  ],
+  "current_authorization": false,
+  "development_attempts": "development-attempts.json",
+  "executed_commit": "86c28db9537558b4cc76d73baea4353652462147",
+  "executed_tree": "bff7a0648c042215c0cdca9039e2a58bffb4bcd2",
+  "gate_image_binding": "NATIVE_CONFIG_PCR14_TRANSITIVE_BINDING",
+  "gates": {
+    "actual_sudo_terminal": {
+      "effects": 0,
+      "report": "sudo-terminal-review.json",
+      "result": "PASS",
+      "scope": "FABRICATED_FIXTURE_ACTUAL_SEPARATE_UID_AND_SUDO_TERMINAL",
+      "tests": 2
+    },
+    "fresh_evidence": {
+      "cases": 10,
+      "fresh_collections": 8,
+      "report": "lab-artifact-review.json",
+      "result": "PASS",
+      "signed_receipts": 9
+    },
+    "historical_verifier": {
+      "cases": 8,
+      "report": "offline-artifact-review.json",
+      "result": "PASS",
+      "scope": "HISTORICAL_FIXTURE_COMPATIBILITY"
+    },
+    "host_tests": {
+      "action_cli_tests_per_job": 18,
+      "jobs": 3,
+      "python_versions": [
+        "3.11",
+        "3.12"
+      ],
+      "report": "host-test-review.json",
+      "result": "PASS",
+      "skipped": 0,
+      "tests_per_job": 245
+    },
+    "package": {
+      "entrypoints": {
+        "wolfalibi-shirudo": "shirudo_adapter.cli:main",
+        "wolfalibi-shirudo-action-gate": "shirudo_adapter.action_gate_cli:main",
+        "wolfalibi-shirudo-owner": "shirudo_adapter.owner_cli:main"
+      },
+      "report": "package-review.json",
+      "result": "PASS",
+      "wheel": {
+        "bytes": 55454,
+        "filename": "wolfalibi_shirudo-0.1.0-py3-none-any.whl",
+        "record_entries": 17,
+        "sha256": "4efd5d7f28eb90e36709a64b344a228854e85dee760af94950f290651907d6b0",
+        "source_modules_matched": 12
+      }
+    },
+    "prototype": {
+      "cases": 19,
+      "counter_chain": [
+        0,
+        1,
+        2
+      ],
+      "distinct_committed_effects": 2,
+      "fresh_accepted_assessments": 5,
+      "report": "prototype-summary.json",
+      "result": "PASS"
+    }
+  },
+  "hardware_qualified": false,
+  "image": {
+    "authority": "NO_SHIRUDO_RUNTIME_AUTHORITY",
+    "config_root": "512b3045439a33fbc0da9a91e1000258b5c404198968c8117ed12f7a0a1ccade",
+    "gate_image_root": "e5d423bfb76abbd909f10d7c0bb89d7a538e58bcd338a18483d66b9d29e20d42",
+    "image_manifest_files": 975,
+    "launcher": {
+      "bytes": 39520,
+      "kind": "GNU_CHROOT",
+      "mode": 493,
+      "path": "/usr/sbin/gnuchroot",
+      "resolved_path": "/usr/sbin/gnuchroot",
+      "sha256": "412af02493d669e9846f356eb918076f8b74eea68cc23481719f2832d295ba2d",
+      "uid": 0,
+      "version": "chroot (GNU coreutils) 9.7"
+    },
+    "runtime_root": "89f7db2a47b725fbac3f8c3172776586414c10d885d8cc80fd70989d77a6c6f0",
+    "upstream_tracked_changes": false
+  },
+  "independent_artifact_review": {
+    "archive_bytes_verified_against_github_metadata": true,
+    "bytes_verified": 468913,
+    "corruption_controls_rejected": 8,
+    "files_verified": 89,
+    "result": "PASS",
+    "scope": "HISTORICAL_LAB_ARTIFACT_CONSISTENCY",
+    "scripts": {
+      "../../review_prototype_artifact.py": {
+        "bytes": 77532,
+        "sha256": "675cd103ac9edf6d89372dd030452ed57ea0799f0ce2ed47a97cf7dbee90da3e"
+      },
+      "../../review_prototype_corruptions.py": {
+        "bytes": 7165,
+        "sha256": "ae059a1c0103cfbbcc7d179271b42f5d80e878c6e7de89135ffbb0cab354713f"
+      },
+      "../ci-45290603342/review_lab_artifact.py": {
+        "bytes": 23970,
+        "sha256": "680fb2d4add10ea71b397628b9548098c0e3f23d20a928d87aaa01a352f967aa"
+      }
+    },
+    "signature_checks": 27,
+    "signature_records_verified": 20,
+    "source_matches_executed_commit": true,
+    "tpm_crypto_reexecuted_by_reviewer": false
+  },
+  "limits": [
+    "LAB_VTPM: the CI builder, administrator, hypervisor, vTPM and clocks remain trusted.",
+    "The direct QEMU boot does not establish a measured UKI, Secure Boot or hardware identity.",
+    "PCR14 binds the approved config containing the gate image root; trusted bootstrap and launcher observations link it to this process.",
+    "The immutable interpreter image receives no Shirudo runtime authority; root and the gate UID remain trusted for writable private state.",
+    "Separate UID and process custody is tested against peer accounts, not against the trusted CI administrator's sudo privileges.",
+    "The approval interface is exercised by a scripted controlling terminal. Actual human approval is NOT_RUN.",
+    "Freshness remains 30 seconds with 5-second admission and 2-second clock skew; continuous process identity and quote-to-effect atomicity are not proved.",
+    "Only a SQLite counter increment by one is authorized. No shield deployment, general command, financial action or production readiness is qualified.",
+    "The owner and target journals do not establish resistance to coordinated administrative rollback or power loss.",
+    "Receipts are historical records. They do not confer current authorization or prove secure deletion of private state."
+  ],
+  "lost_reply": {
+    "counter_at_disconnect": "UNKNOWN_UNTIL_STATUS",
+    "exact_retry_result": "ALREADY_COMMITTED",
+    "fault": "CLIENT_CLOSED_WITHOUT_READING_REPLY",
+    "initial_result": {
+      "code": "SCRIPTED_REPLY_NOT_READ",
+      "status": "AMBIGUOUS"
+    },
+    "process_crash_tested_in_this_run": false,
+    "recovered_counter": 2,
+    "same_receipt_retained": true,
+    "status_recovery_result": "COMMITTED"
+  },
+  "observed_process": {
+    "ambient_capabilities": "0000000000000000",
+    "effective_capabilities": "0000000000000000",
+    "executable_device": 64768,
+    "gids": [
+      982,
+      982,
+      982,
+      982
+    ],
+    "image_device": 64768,
+    "permitted_capabilities": "0000000000000000",
+    "process_root_device": 64768,
+    "root_write_errno": 30,
+    "root_write_open_denied_readonly": true,
+    "supplementary_groups": [
+      986
+    ],
+    "uid": 997,
+    "uids": [
+      997,
+      997,
+      997,
+      997
+    ]
+  },
+  "owner_interface_implemented": true,
+  "production_qualified": false,
+  "protected_action": {
+    "delta": 1,
+    "name": "increment_counter"
+  },
+  "prototype_version": "0.1.0",
+  "pull_request": "https://github.com/Bropdrop/WolfAlibi/pull/49",
+  "result": "QUALIFIED_WITHIN_LAB_SCOPE",
+  "schema": "wolfalibi.shirudo.prototype-qualification.v1",
+  "scope": "LAB_VTPM_IMMUTABLE_GATE_AND_SEPARATE_SCRIPTED_OWNER_COUNTER_ACTION",
+  "separate_uid_key_custody": "PEER_ACCOUNT_ACCESS_DENIAL_TESTED; ADMINISTRATOR_TRUSTED",
+  "source_note": "The executed code commit precedes the documentation/evidence publication commit. Runtime source remains unchanged.",
+  "target_identity": {
+    "gate_instance_id": "febf56a004616f243fee5b86242287fa",
+    "policy_generation": 1,
+    "policy_sha256": "91da1b3aceabd4076a4346ecc919a558d9c7564a55fe174ee57b4021c89d5267",
+    "public_key": "9fe00e697ca045089f1274065a6a6c2eb046bfe1e53d253660364bdb7a98f167",
+    "schema": "wolfalibi.shirudo.action-identity.v1",
+    "target_id": "wolfalibi-prototype-45318855750-1"
+  },
+  "workflow_attempt": 1,
+  "workflow_run": 45318855750,
+  "workflow_url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750"
+}

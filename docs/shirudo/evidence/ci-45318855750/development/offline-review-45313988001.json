@@ -1,0 +1,349 @@
+{
+  "accepted_historical_fixture_cases": 1,
+  "artifact_files": 42,
+  "artifact_total_uncompressed_bytes": 352234,
+  "artifact_zip": {
+    "bytes": 81502,
+    "extracted_files_match_zip": true,
+    "local_digest_verified": true,
+    "sha256": "2c9bf1f698ce1b6c9ebb95463bc6e9307191f4399a3997e44cdfe629f536d28a"
+  },
+  "binary_bytes_available_in_this_artifact": false,
+  "candidate_required_checks_observed": 45,
+  "case_file_copies_verified": 8,
+  "cases": [
+    {
+      "adapter_accepted": false,
+      "expected_outcome_verified": true,
+      "name": "known-negative",
+      "observed_failed_checks": [
+        "config: configuration evidence is missing",
+        "register: public area is bound to PCRs 9 and 11 as recorded",
+        "eventlog: event 1 (upatch_load foo) digest does not derive from its fields"
+      ],
+      "raw_exit_code": 1,
+      "raw_report_checks": 47,
+      "recorded_status": "REJECTED",
+      "required_failure_assertion": null
+    },
+    {
+      "adapter_accepted": true,
+      "expected_outcome_verified": true,
+      "name": "candidate-config-history",
+      "observed_failed_checks": [],
+      "raw_exit_code": 0,
+      "raw_report_checks": 61,
+      "recorded_status": "ACCEPTED",
+      "required_failure_assertion": null
+    },
+    {
+      "adapter_accepted": false,
+      "expected_outcome_verified": true,
+      "name": "quote-signature-bitflip",
+      "observed_failed_checks": [
+        "quote: ECDSA signature by the attestation key"
+      ],
+      "raw_exit_code": 1,
+      "raw_report_checks": 61,
+      "recorded_status": "REJECTED",
+      "required_failure_assertion": "quote: ECDSA signature by the attestation key"
+    },
+    {
+      "adapter_accepted": false,
+      "expected_outcome_verified": true,
+      "name": "register-value-bitflip",
+      "observed_failed_checks": [
+        "register: certified contents match the listed value",
+        "eventlog: 16 records replay to the certified value",
+        "state: register equals the expected value"
+      ],
+      "raw_exit_code": 1,
+      "raw_report_checks": 61,
+      "recorded_status": "REJECTED",
+      "required_failure_assertion": "register: certified contents match the listed value"
+    },
+    {
+      "adapter_accepted": false,
+      "expected_outcome_verified": true,
+      "name": "config-history-bitflip",
+      "observed_failed_checks": [
+        "config: config history does not match the quoted PCR"
+      ],
+      "raw_exit_code": 1,
+      "raw_report_checks": 61,
+      "recorded_status": "REJECTED",
+      "required_failure_assertion": "config: config history does not match the quoted PCR"
+    },
+    {
+      "adapter_accepted": false,
+      "expected_outcome_verified": true,
+      "name": "quoted-pcr-bitflip",
+      "observed_failed_checks": [
+        "quote: PCR digest matches the listed values",
+        "anchor: PCR 9 is not in the quote",
+        "PCR 0 matches the expected value",
+        "PCR 1 matches the expected value",
+        "PCR 2 matches the expected value",
+        "PCR 3 matches the expected value",
+        "PCR 4 matches the expected value",
+        "PCR 5 matches the expected value",
+        "PCR 6 matches the expected value",
+        "PCR 7 matches the expected value",
+        "PCR 9 matches the expected value",
+        "PCR 11 matches the expected value",
+        "PCR 12 matches the expected value",
+        "PCR 13 matches the expected value",
+        "PCR 14 matches the expected value",
+        "PCR 15 matches the expected value"
+      ],
+      "raw_exit_code": 1,
+      "raw_report_checks": 61,
+      "recorded_status": "REJECTED",
+      "required_failure_assertion": "quote: PCR digest matches the listed values"
+    },
+    {
+      "adapter_accepted": false,
+      "expected_outcome_verified": true,
+      "name": "wrong-expected-nonce",
+      "observed_failed_checks": [
+        "nonce matches the request"
+      ],
+      "raw_exit_code": 1,
+      "raw_report_checks": 61,
+      "recorded_status": "REJECTED",
+      "required_failure_assertion": "nonce matches the request"
+    },
+    {
+      "adapter_accepted": null,
+      "expected_outcome_verified": true,
+      "name": "truncated-json",
+      "observed_failed_checks": [],
+      "raw_exit_code": 2,
+      "raw_report_checks": 0,
+      "recorded_status": "PARSE_REJECTED",
+      "required_failure_assertion": null
+    }
+  ],
+  "current_authorization": false,
+  "descriptor_files_verified": 30,
+  "descriptor_references_verified": 54,
+  "enrollment_performed": false,
+  "files": {
+    "artifacts/verifier/artifact.json": {
+      "bytes": 433,
+      "sha256": "fb1c7bc9bccaf288af1fb39c85dac11769384ebabcabeb2fdaa5027b42f70292"
+    },
+    "evidence/offline/candidate-config-history.case.json": {
+      "bytes": 13542,
+      "sha256": "5b09de13c42b5282503e1fa3ef48c9dc7c03fd173d8b5d30c1d5456514eb228f"
+    },
+    "evidence/offline/candidate-config-history.evidence.json": {
+      "bytes": 15108,
+      "sha256": "99b3105d3ee72334fdc63c17313f5ba931cead43248c35ebe191d53a643ce343"
+    },
+    "evidence/offline/candidate-config-history.historical-policy.json": {
+      "bytes": 2084,
+      "sha256": "1365e56df7fb4c2d9a13d1d66995b9bdb30ff280b828bc894de06109110e88f2"
+    },
+    "evidence/offline/candidate-config-history.original.json": {
+      "bytes": 15108,
+      "sha256": "99b3105d3ee72334fdc63c17313f5ba931cead43248c35ebe191d53a643ce343"
+    },
+    "evidence/offline/candidate-config-history.raw.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/candidate-config-history.raw.stdout": {
+      "bytes": 4244,
+      "sha256": "8855c178aa55dbcf230fb53491da4b8ceebb15eef0441276f2a7f5e89948274e"
+    },
+    "evidence/offline/config-history-bitflip.case.json": {
+      "bytes": 13587,
+      "sha256": "2d6eaa8619788066992a2ed204c40c48769b276fc75ffe56a433e98fee64f711"
+    },
+    "evidence/offline/config-history-bitflip.evidence.json": {
+      "bytes": 15107,
+      "sha256": "1725800c15f22fa0bcc5f72d7ce35a065884add2fde93269636bdade11b05001"
+    },
+    "evidence/offline/config-history-bitflip.raw.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/config-history-bitflip.raw.stdout": {
+      "bytes": 4250,
+      "sha256": "44ba08b8c245ce898fb83d9a00c74062974a58a3f3d214e7e9ebd7a7fe518767"
+    },
+    "evidence/offline/gate-a-report.json": {
+      "bytes": 98650,
+      "sha256": "da0aa47dc6158924c671b4fde2d70f78a672b1c93e7d926c580b8cd469971969"
+    },
+    "evidence/offline/known-negative.case.json": {
+      "bytes": 11432,
+      "sha256": "163ecd22256106934ab3ab2c6695848caafff422490ea7fac0fa5e4648c3f7ce"
+    },
+    "evidence/offline/known-negative.evidence.json": {
+      "bytes": 5653,
+      "sha256": "e2e3951c0caa108b345a99746e0fc6d31b30927c956e9df0c0ed297fdbacb71d"
+    },
+    "evidence/offline/known-negative.historical-policy.json": {
+      "bytes": 2064,
+      "sha256": "0ce21d285a97f6ee57bfb8ede0f5216cf8cb9f1b71669faf11799e20f6073cae"
+    },
+    "evidence/offline/known-negative.original.json": {
+      "bytes": 5653,
+      "sha256": "e2e3951c0caa108b345a99746e0fc6d31b30927c956e9df0c0ed297fdbacb71d"
+    },
+    "evidence/offline/known-negative.raw.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/known-negative.raw.stdout": {
+      "bytes": 3214,
+      "sha256": "f5ba12424f8877b9c6d9dea0b4fae459376825b7f317dc8b8ecf58848dd8e701"
+    },
+    "evidence/offline/quote-signature-bitflip.case.json": {
+      "bytes": 13580,
+      "sha256": "dbb609a93e1f16407d77e48b65b1f58d48cab09bb927a114e1e97d397468f001"
+    },
+    "evidence/offline/quote-signature-bitflip.evidence.json": {
+      "bytes": 15107,
+      "sha256": "b7a724bd7f3776f254649042ad7a5632153e797e7492e5673bc961352d5af4b9"
+    },
+    "evidence/offline/quote-signature-bitflip.raw.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/quote-signature-bitflip.raw.stdout": {
+      "bytes": 4248,
+      "sha256": "480e0fec42ea038a940dfb71df229f48750031e2104031e7adb5eace0e20faf7"
+    },
+    "evidence/offline/quoted-pcr-bitflip.case.json": {
+      "bytes": 13560,
+      "sha256": "85c9934ce6cfe9fb6c8ec6cfa04392e869a92bf3b6763f303fc068aacbc74fc6"
+    },
+    "evidence/offline/quoted-pcr-bitflip.evidence.json": {
+      "bytes": 15107,
+      "sha256": "a1756fa7c84f7245795298b1d558ef292b8fe0e1f3ae0c63fdc800d49a0303f8"
+    },
+    "evidence/offline/quoted-pcr-bitflip.raw.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/quoted-pcr-bitflip.raw.stdout": {
+      "bytes": 4249,
+      "sha256": "f0d0b26b460ce3a0255f291b08587deed190d23fcf3a6ba20237ad9925a1e193"
+    },
+    "evidence/offline/register-value-bitflip.case.json": {
+      "bytes": 13590,
+      "sha256": "18d268608e37b60f347501f5dde5bfac2fbbe55f7d478d1c7ddeee88267e02f4"
+    },
+    "evidence/offline/register-value-bitflip.evidence.json": {
+      "bytes": 15107,
+      "sha256": "c9e75b350a6490fab25bb971b943e92d0e8d63b38012cacf9b810ff4df32cf0d"
+    },
+    "evidence/offline/register-value-bitflip.raw.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/register-value-bitflip.raw.stdout": {
+      "bytes": 4252,
+      "sha256": "594420f0f2c4feb20ad3c86896b8efa2cc054643fc66574b4ffc31900a4d922f"
+    },
+    "evidence/offline/source-head.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/source-head.stdout": {
+      "bytes": 41,
+      "sha256": "6fe18d10ce68bee9a3faf785ba64f6b2b1e774c0b22da44a7104722841e29271"
+    },
+    "evidence/offline/startup.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/startup.stdout": {
+      "bytes": 65,
+      "sha256": "fda97943ce43cf53863a64575c6f2c1eb1c316177310be0c10b291db38f6c80f"
+    },
+    "evidence/offline/truncated-json.case.json": {
+      "bytes": 2675,
+      "sha256": "5aa4fc7fbde141690c72cdae128072e4fb140f04fdb32310a2e125f87e869a3f"
+    },
+    "evidence/offline/truncated-json.evidence.json": {
+      "bytes": 7554,
+      "sha256": "cebd93603912521b78c0972e3527578204653183d0db1aa4ca31affdfa825848"
+    },
+    "evidence/offline/truncated-json.raw.stderr": {
+      "bytes": 66,
+      "sha256": "66fa466faa8d368d57a444a82c7f5ee4e794baae7052e54bfce5d00316eee003"
+    },
+    "evidence/offline/truncated-json.raw.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/wrong-expected-nonce.case.json": {
+      "bytes": 13548,
+      "sha256": "13c24fb83870ca936afe12e1e0710fb05dc4c5ac32d43da2330d11797efa26bf"
+    },
+    "evidence/offline/wrong-expected-nonce.evidence.json": {
+      "bytes": 15108,
+      "sha256": "99b3105d3ee72334fdc63c17313f5ba931cead43248c35ebe191d53a643ce343"
+    },
+    "evidence/offline/wrong-expected-nonce.raw.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "evidence/offline/wrong-expected-nonce.raw.stdout": {
+      "bytes": 4248,
+      "sha256": "b89fea6bc73d8c1fd54da9633f9006721a7f94a8d8b7c39653805189bf5b832e"
+    }
+  },
+  "fresh_target_claim": false,
+  "frozen_historical_policies_verified": 2,
+  "gate_report_sha256": "da0aa47dc6158924c671b4fde2d70f78a672b1c93e7d926c580b8cd469971969",
+  "historical_corpus_sha256_and_git_blob_sha1_verified": 2,
+  "limitations": [
+    "This is a local consistency and integrity review of historical CI records; the eight cases were not reexecuted.",
+    "Official archive/ELF pins and startup version agree across retained records; this artifact does not contain the verifier ELF for independent rehashing here.",
+    "Historical corpus nonces and SYNTHETIC fixture policies establish no current target state, freshness, real enrollment, hardware TPM identity, or action authority.",
+    "Upstream source association relies on separately verified GitHub workflow provenance; this review does not independently reproduce the upstream build.",
+    "Prototype approval and counter-action qualification are pending a separate genuine artifact and are not established by Gate A."
+  ],
+  "mutations_verified_against_unmodified_candidate": 6,
+  "official_artifact_metadata_matches_pins": true,
+  "official_build_reference": {
+    "archive_sha256": "e830f2384383adccba7c423e8afe81d1fd0b3d6e27e66ce2aed49eae632e989c",
+    "artifact": 14865910776,
+    "elf_sha256": "be8b79cdd7efb8e635b7965bf34fa691e5e4a378957f3829530a529097abe9d2",
+    "qualification": "CI source association; not an independently reproduced build",
+    "run": 45269604356,
+    "url": "https://github.com/shirudo-dev/shirudo/actions/runs/45269604356/artifacts/14865910776"
+  },
+  "parse_rejection_cases": 1,
+  "parse_rejection_verified": true,
+  "raw_adapter_exit_codes_match": true,
+  "raw_json_reports_verified": 7,
+  "raw_report_assertions_compared": 413,
+  "raw_reports_match_nested_and_adapter_reports": true,
+  "receipt_created": false,
+  "recorded_binary": {
+    "bytes": 19216536,
+    "elf": true,
+    "sha256": "be8b79cdd7efb8e635b7965bf34fa691e5e4a378957f3829530a529097abe9d2"
+  },
+  "recorded_expected_outcomes_verified": 8,
+  "recorded_startup_success_verified": true,
+  "recorded_version_id": "7e222b2b27b2408615a4f5b20cb31215e185ee5d6f0ae0bee2910f7479f58c2d",
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.offline-artifact-review.v1",
+  "scope": "HISTORICAL_FIXTURE_COMPATIBILITY_RECORD_REVIEW",
+  "source_commit": "fb97c1ec5908c8bdbd46760c29e57677977fce74",
+  "tpm_cryptography_reexecuted": false,
+  "verification_rejection_cases": 6,
+  "verifier_executed_by_this_review": false,
+  "workflow_artifact_id": 14884436755,
+  "workflow_artifact_url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45313988001/artifacts/14884436755",
+  "workflow_commit": "0db64a96d7b1cbe66735c51e2fbb4f85e0462ff5",
+  "workflow_provenance": "GitHub association supplied by parent after authenticated verification; not re-fetched by this read-only review",
+  "workflow_run": 45313988001
+}

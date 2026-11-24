@@ -32,9 +32,11 @@ software, or contact remote services.
 The owner account, administrator, controlling terminal, local clock, installed
 Python package and dependencies remain trusted. Another process with the same
 UID, or the host administrator, can control that authority. Separate process
-IDs or different keys alone do not establish separate custody. The actual
-laboratory integration must test access from the unprivileged coordinator and
-verifier accounts.
+IDs or different keys alone do not establish separate custody. The laboratory
+integration tests private-state access from the unprivileged client and peer
+signing accounts. Its CI coordinator is a trusted administrator with sudo
+access, not a confined peer. See the [prototype guide](PROTOTYPE.md) for the
+recorded process and custody boundaries.
 
 Owner state is created with mode `0700`. Its signing key, public identity and
 SQLite journal require private ownership, regular files, and no shared hard

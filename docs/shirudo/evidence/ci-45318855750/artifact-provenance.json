@@ -1,0 +1,526 @@
+{
+  "archive_files_verified": 174,
+  "archive_uncompressed_bytes": 951305,
+  "artifacts": [
+    {
+      "archive_download_url": "https://api.github.com/repos/Bropdrop/WolfAlibi/actions/artifacts/14887631691/zip",
+      "created_at": "2026-11-24T03:43:05Z",
+      "digest": "sha256:bd6f9851fe279070b1484988fd22cbe0da41effca379e0e87ae657621a8c43e8",
+      "expired": false,
+      "expires_at": "2026-12-08T03:43:04Z",
+      "id": 14887631691,
+      "name": "shirudo-prototype-lab-86c28db9537558b4cc76d73baea4353652462147",
+      "size_in_bytes": 364251,
+      "updated_at": "2026-11-24T03:43:05Z",
+      "url": "https://api.github.com/repos/Bropdrop/WolfAlibi/actions/artifacts/14887631691",
+      "workflow_run": {
+        "head_branch": "feat/shirudo-prototype-v1",
+        "head_repository_id": 1465988122,
+        "head_sha": "86c28db9537558b4cc76d73baea4353652462147",
+        "id": 45318855750,
+        "repository_id": 1465988122
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/Bropdrop/WolfAlibi/actions/artifacts/14887011984/zip",
+      "created_at": "2026-11-24T03:21:03Z",
+      "digest": "sha256:385e3fa11b7764a8d1d765ebba9ee5a363b75668060fd187018336f9ae118292",
+      "expired": false,
+      "expires_at": "2026-12-08T03:21:02Z",
+      "id": 14887011984,
+      "name": "shirudo-prototype-offline-86c28db9537558b4cc76d73baea4353652462147",
+      "size_in_bytes": 81502,
+      "updated_at": "2026-11-24T03:21:03Z",
+      "url": "https://api.github.com/repos/Bropdrop/WolfAlibi/actions/artifacts/14887011984",
+      "workflow_run": {
+        "head_branch": "feat/shirudo-prototype-v1",
+        "head_repository_id": 1465988122,
+        "head_sha": "86c28db9537558b4cc76d73baea4353652462147",
+        "id": 45318855750,
+        "repository_id": 1465988122
+      }
+    },
+    {
+      "archive_download_url": "https://api.github.com/repos/Bropdrop/WolfAlibi/actions/artifacts/14885778123/zip",
+      "created_at": "2026-11-24T03:21:24Z",
+      "digest": "sha256:ad4fa372c134808cdea5ca8621651d35e3718e8617a45a1b42c0dfdf143e63db",
+      "expired": false,
+      "expires_at": "2026-12-08T03:21:22Z",
+      "id": 14885778123,
+      "name": "wolfalibi-shirudo-prototype-package-86c28db9537558b4cc76d73baea4353652462147",
+      "size_in_bytes": 54314,
+      "updated_at": "2026-11-24T03:21:24Z",
+      "url": "https://api.github.com/repos/Bropdrop/WolfAlibi/actions/artifacts/14885778123",
+      "workflow_run": {
+        "head_branch": "feat/shirudo-prototype-v1",
+        "head_repository_id": 1465988122,
+        "head_sha": "86c28db9537558b4cc76d73baea4353652462147",
+        "id": 45318855750,
+        "repository_id": 1465988122
+      }
+    }
+  ],
+  "commit_signature_note": "GitHub API association checked; the source commit is not cryptographically signed.",
+  "commit_signature_verified": false,
+  "current_authorization": false,
+  "downloaded_bytes_matched_github_digests": true,
+  "downloaded_original_archives": [
+    {
+      "bytes": 364251,
+      "id": 14887631691,
+      "name": "shirudo-prototype-lab-86c28db9537558b4cc76d73baea4353652462147",
+      "preserved_as": "prototype-lab-public-records.zip",
+      "sha256": "bd6f9851fe279070b1484988fd22cbe0da41effca379e0e87ae657621a8c43e8",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/artifacts/14887631691"
+    },
+    {
+      "bytes": 81502,
+      "id": 14887011984,
+      "name": "shirudo-prototype-offline-86c28db9537558b4cc76d73baea4353652462147",
+      "preserved_as": "offline-public-records.zip",
+      "sha256": "385e3fa11b7764a8d1d765ebba9ee5a363b75668060fd187018336f9ae118292",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/artifacts/14887011984"
+    },
+    {
+      "bytes": 54314,
+      "id": 14885778123,
+      "name": "wolfalibi-shirudo-prototype-package-86c28db9537558b4cc76d73baea4353652462147",
+      "preserved_as": "cli-package-original.zip",
+      "sha256": "ad4fa372c134808cdea5ca8621651d35e3718e8617a45a1b42c0dfdf143e63db",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/artifacts/14885778123"
+    }
+  ],
+  "exact_original_public_copies": {
+    "authorized-result.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 3181,
+      "member": "evidence/prototype/cases/authorized/result.json",
+      "sha256": "88867fc6054c42dfae84699b6d568f55648e026accfc71b6d7de0325760b7458"
+    },
+    "host-cleanup.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 54,
+      "member": "evidence/host-cleanup.json",
+      "sha256": "fc7e48ac29b5f859ba4e5c3b29c95e91a85428a12f614edcb9631fdf14963abf"
+    },
+    "host-role-identities.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 175,
+      "member": "evidence/prototype/host-role-identities.json",
+      "sha256": "428e62b97c6edf99a42ed40358bf829e0b5114bd3790d74b9c18fa96b68a84d3"
+    },
+    "image-boot-report.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 1290,
+      "member": "evidence/prototype/measurement/boot-report.json",
+      "sha256": "422af1fb90476b201f86878b4f7040fa821a7aec58b7a437dcce9fda355f3c4e"
+    },
+    "image-build-result.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 2104,
+      "member": "evidence/prototype/measurement/build-result.json",
+      "sha256": "ab551d6d7a9a4c56b6eaa4895794373cf7fc92d33acd5a842473e126c10c08c2"
+    },
+    "immutable-execution.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 20540,
+      "member": "evidence/prototype/cases/immutable-execution/result.json",
+      "sha256": "4c04352eecc4ff699b4cad77c52f3c96621b0fcd1007ef4afcca63a9dd9a4cd4"
+    },
+    "lab-summary.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 3077,
+      "member": "evidence/lab/summary.json",
+      "sha256": "a3201c650dfbd89adee4be7582f92e727484a6e13826e2b0670e63bcbd258c9a"
+    },
+    "launch-bindings.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 1529,
+      "member": "evidence/prototype/measurement/launch-bindings.json",
+      "sha256": "2b93b2244bd34b2f302be4977247f45885debdcc7d9c8628ebe1afa0240bca74"
+    },
+    "native-gate-image-manifest.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 466,
+      "member": "evidence/prototype/measurement/native-manifest.json",
+      "sha256": "f9adea217359b4243c104dd9092dbb3eeea17f49e204c228bba7bb227ba5311c"
+    },
+    "owner-profile.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 1574,
+      "member": "evidence/prototype/owner-profile.json",
+      "sha256": "3bd6f29851b721ee0c669a0c88324b39bc5714e4f19a97b0a297ff3321dac5af"
+    },
+    "preflight.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 372,
+      "member": "evidence/preflight.json",
+      "sha256": "2a18b81d129c9b96af18ff54ce5a7c490f29b0fb3d488f1d3f1aa08d612d19bf"
+    },
+    "prototype-boot-policy.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 1948,
+      "member": "evidence/prototype/boot-policy.json",
+      "sha256": "9579fc0a7e18a94fe190afa5d9bd791c7ca0bdf98f8ad343bbd7846fed313a01"
+    },
+    "prototype-summary.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 43584,
+      "member": "evidence/prototype/summary.json",
+      "sha256": "98c29491a826cc5aac2c3f7843ea5e1ca19159597c2e80093dded7f8b2e82def"
+    },
+    "prototype-target-identity.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 337,
+      "member": "evidence/prototype/target-identity.json",
+      "sha256": "22eefb47337d0f33d1537931b6108f85eb2e2dce65897e68acdd459ae3069a75"
+    },
+    "prototype-trust.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 1412,
+      "member": "evidence/prototype/trust.json",
+      "sha256": "bdb2f026fa93a6bd1b171e9c489392728c532287669d2207a5e5b9e993a8c3d7"
+    },
+    "status-recovery-result.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 3186,
+      "member": "evidence/prototype/cases/status-recovery/result.json",
+      "sha256": "fcb61bad9ac5e5584d78562a15199b55b8d544df5a99d40c42718cd8d31a8dbb"
+    },
+    "target-accounts.json": {
+      "archive": "prototype-lab-public-records.zip",
+      "bytes": 66,
+      "member": "evidence/prototype/target-accounts.json",
+      "sha256": "f03242794a43230f5b9bc33152e68bfbedd63020688fb5ac5278100d1c933081"
+    }
+  },
+  "jobs": [
+    {
+      "conclusion": "success",
+      "id": 138192187495,
+      "logs_url": null,
+      "name": "Genuine verifier and historical fixtures",
+      "run_id": 45318855750,
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Install adapter",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Download pinned official artifact",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run genuine historical-fixture gate",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Retain historical evidence and artifact provenance",
+          "number": 8,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "number": 14,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 15,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 16,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "id": 138192187881,
+      "logs_url": null,
+      "name": "Complete Python and Unix socket tests",
+      "run_id": 45318855750,
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Install adapter",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run every Python test including real process and socket boundaries",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Exercise the actual sudo and separate-owner terminal boundary",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Build the installable CLI package",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Retain installable package",
+          "number": 8,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "number": 15,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 16,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 17,
+          "status": "completed"
+        }
+      ]
+    },
+    {
+      "conclusion": "success",
+      "id": 138192443604,
+      "logs_url": null,
+      "name": "Immutable gate, separate owner approval, and genuine target effects",
+      "run_id": 45318855750,
+      "status": "completed",
+      "steps": [
+        {
+          "conclusion": "success",
+          "name": "Set up job",
+          "number": 1,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 2,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 3,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "number": 4,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Install adapter",
+          "number": 5,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Check disposable host and KVM before building",
+          "number": 6,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Download pinned official verifier",
+          "number": 7,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Restore source-pinned upstream build dependencies",
+          "number": 8,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Prepare upstream toolchain and pinned test kernel",
+          "number": 9,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Provision separate ephemeral owner and verifier accounts",
+          "number": 10,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Build separate gate image and signed native config binding",
+          "number": 11,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Boot approved immutable images with cold verity rejection controls",
+          "number": 12,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Save completed build dependencies",
+          "number": 13,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Verify native fresh lab evidence and adverse controls",
+          "number": 14,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Qualify separate owner ceremony and immutable target gate",
+          "number": 15,
+          "status": "completed"
+        },
+        {
+          "conclusion": "skipped",
+          "name": "Show bounded public boot diagnostics on failure",
+          "number": 16,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Stop the disposable VM",
+          "number": 17,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Remove ephemeral private host signing state",
+          "number": 18,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Retain only explicit public qualification records",
+          "number": 19,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065",
+          "number": 36,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 37,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Post Run actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+          "number": 38,
+          "status": "completed"
+        },
+        {
+          "conclusion": "success",
+          "name": "Complete job",
+          "number": 39,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "result": "VERIFIED_AGAINST_CONNECTED_GITHUB_METADATA",
+  "retrieved_at": "2026-11-24 03:43:31 UTC",
+  "schema": "wolfalibi.shirudo.prototype-ci-provenance.v1",
+  "source_commit_api": "https://api.github.com/repos/Bropdrop/WolfAlibi/git/commits/86c28db9537558b4cc76d73baea4353652462147",
+  "source_tree": "bff7a0648c042215c0cdca9039e2a58bffb4bcd2",
+  "workflow": {
+    "conclusion": "success",
+    "created_at": "2026-11-24T03:20:46Z",
+    "event": "push",
+    "head_branch": "feat/shirudo-prototype-v1",
+    "head_sha": "86c28db9537558b4cc76d73baea4353652462147",
+    "html_url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750",
+    "id": 45318855750,
+    "name": "Shirudo complete LAB prototype",
+    "path": ".github/workflows/shirudo-prototype-integration.yml",
+    "repository": "Bropdrop/WolfAlibi",
+    "run_attempt": 1,
+    "run_started_at": "2026-11-24T03:20:46Z",
+    "status": "completed",
+    "updated_at": "2026-11-24T03:43:10Z"
+  }
+}

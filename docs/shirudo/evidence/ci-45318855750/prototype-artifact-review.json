@@ -1,0 +1,31 @@
+{
+  "actual_human_approval": "NOT_RUN",
+  "current_authorization": false,
+  "ed25519_signature_checks": 27,
+  "ed25519_signatures_verified": 20,
+  "executed_code_commit": "86c28db9537558b4cc76d73baea4353652462147",
+  "executed_code_tree": "bff7a0648c042215c0cdca9039e2a58bffb4bcd2",
+  "expected_run_id": 45318855750,
+  "external_provenance": "REQUIRES_SEPARATE_AUTHENTICATED_CHECK",
+  "file_count": 89,
+  "final_counter": 2,
+  "genuine_recorded_assessments": 5,
+  "image_manifest_files": 975,
+  "limitations": [
+    "Checks historical consistency and signatures under retained public LAB keys; they are not an external identity root.",
+    "Does not rerun Shirudo, TPM quote or certification cryptography, dm-verity, kernel controls, or target operations.",
+    "GitHub run/job/archive association and the code commit/tree require a separate authenticated provenance check.",
+    "PCR14-to-gate binding relies on recorded trusted-builder, initrd and launcher observations; no live or continuous process identity is proved.",
+    "Separate-UID access probes and scripted PTY events are recorded observations, not independent custody from root or actual human approval.",
+    "Builder, administrator, hypervisor, software TPM, role code, signing state, gate UID, journals and clocks remain trusted.",
+    "No hardware identity, Secure Boot, measured UKI, production action, coordinated rollback or power-loss guarantee is established.",
+    "The two recorded counter effects and their receipts grant no current authority. Actual human approval remains NOT_RUN."
+  ],
+  "recorded_counter_effects": 2,
+  "recorded_owner_grants": 2,
+  "required_cases": 19,
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.prototype-artifact-review.v1",
+  "scope": "HISTORICAL_LAB_ARTIFACT_CONSISTENCY",
+  "total_bytes": 468913
+}

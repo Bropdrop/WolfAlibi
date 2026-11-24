@@ -1,0 +1,156 @@
+{
+  "actual_human_approval": "NOT_RUN",
+  "archive": {
+    "bytes": 279031,
+    "file": "lab.zip",
+    "prototype_members_match_reviewed_files": true,
+    "sha256": "b44bfd3831abbb4e78ce0a22e54d9e21bfadc83722e391889fb37abb9b4f2a0d"
+  },
+  "artifact_manifest_sha256": "eb6395f6f741e659bc7bb491b14c575ea1c03eab6ad61a1ddef02609c9085a52",
+  "checked_image_source_entries": 975,
+  "checked_public_bytes": 257919,
+  "checked_public_files": 44,
+  "checks": [
+    "All 44 reviewed files match the provided SHA-256-pinned ZIP members byte for byte",
+    "Exact retained public file/directory set and all file sizes/SHA-256 values",
+    "Pinned policy, baseline, enrollment, authority keys and owner profile",
+    "Owner boot-policy signature, full trust, image/config roots and anchors",
+    "975-entry source manifest, selected source pins and fixed import-path launcher",
+    "Cold wrong-root and corrupted-data dm-verity EIO observations",
+    "Exact bootstrap denial reasons and no private gate initialization for the controls",
+    "Separate-UID key custody access-denial observations",
+    "GNU launcher metadata and root-owned read-only boot-report copy",
+    "Bind source/destination device-inode identity and required read-only states",
+    "Final process credential drop, zero effective/permitted/ambient capabilities and immutable code mappings",
+    "Client state access denial and zero-effect private journal observations",
+    "Four owned units stopped with MainPID zero"
+  ],
+  "cleanup_units": [
+    {
+      "ActiveState": "failed",
+      "Id": "wolfproto-check-1.service",
+      "MainPID": "0"
+    },
+    {
+      "ActiveState": "failed",
+      "Id": "wolfproto-check-2.service",
+      "MainPID": "0"
+    },
+    {
+      "ActiveState": "inactive",
+      "Id": "wolfproto-check-3.service",
+      "MainPID": "0"
+    },
+    {
+      "ActiveState": "inactive",
+      "Id": "wolfproto-gate.service",
+      "MainPID": "0"
+    }
+  ],
+  "current_authorization": false,
+  "executed_code_commit": "0db64a96d7b1cbe66735c51e2fbb4f85e0462ff5",
+  "executed_code_tree": "4a68de0460f85f1af792064e09e44e22c0a3b1f1",
+  "external_provenance": "REQUIRES_SEPARATE_AUTHENTICATED_CHECK",
+  "fresh_genuine_assessments": 0,
+  "full_reviewer": {
+    "reason": "LAYOUT:exact-public-exports",
+    "required_cases": 19,
+    "required_public_files": 89,
+    "result": "FAIL"
+  },
+  "immutable_process_observation": {
+    "ambient_capabilities": "0000000000000000",
+    "effective_capabilities": "0000000000000000",
+    "executable_device": 64768,
+    "gids": [
+      982,
+      982,
+      982,
+      982
+    ],
+    "image_device": 64768,
+    "permitted_capabilities": "0000000000000000",
+    "pid": 6130,
+    "process_root_device": 64768,
+    "root_write_errno": 30,
+    "supplementary_groups": [
+      986
+    ],
+    "uid": 997,
+    "uids": [
+      997,
+      997,
+      997,
+      997
+    ]
+  },
+  "launcher": {
+    "bytes": 39520,
+    "kind": "GNU_CHROOT",
+    "mode": 493,
+    "path": "/usr/sbin/gnuchroot",
+    "resolved_path": "/usr/sbin/gnuchroot",
+    "sha256": "412af02493d669e9846f356eb918076f8b74eea68cc23481719f2832d295ba2d",
+    "uid": 0,
+    "version": "chroot (GNU coreutils) 9.7"
+  },
+  "limitations": [
+    "This is a partial historical consistency review of the first eight recorded cases; the owner ceremony stopped before READY, assessment or grant evidence was retained.",
+    "The full 19-case/89-file prototype reviewer remains unchanged and rejects this incomplete artifact.",
+    "No fresh accepted TPM assessment, owner approval, counter commit, retry, recovery or full prototype qualification is established by this run.",
+    "Checks historical consistency and signatures under retained public LAB keys; they are not an external identity root.",
+    "Does not rerun Shirudo, TPM quote or certification cryptography, dm-verity, kernel controls, or target operations.",
+    "GitHub run/job/archive association and the code commit/tree require a separate authenticated provenance check.",
+    "PCR14-to-gate binding relies on recorded trusted-builder, initrd and launcher observations; no live or continuous process identity is proved.",
+    "Separate-UID access probes and scripted PTY events are recorded observations, not independent custody from root or actual human approval.",
+    "Builder, administrator, hypervisor, software TPM, role code, signing state, gate UID, journals and clocks remain trusted.",
+    "No hardware identity, Secure Boot, measured UKI, production action, coordinated rollback or power-loss guarantee is established.",
+    "The recorded zero-effect ledger and retained boot-policy signature grant no current action authority. Actual human approval remains NOT_RUN."
+  ],
+  "prototype_qualification": "NOT_ESTABLISHED",
+  "recorded_committed_operations": 0,
+  "recorded_counter": 0,
+  "recorded_counter_effects": 0,
+  "recorded_owner_grants": 0,
+  "remaining_cases_not_run": [
+    "owner-declined",
+    "owner-rejected-tampered-bundle",
+    "owner-timeout",
+    "owner-terminal-required",
+    "forged-owner-grant",
+    "authorized",
+    "exact-retry",
+    "lost-reply",
+    "status-recovery",
+    "owner-grant-recovery",
+    "recovered-exact-retry"
+  ],
+  "result": "PARTIAL_EVIDENCE_CONSISTENT",
+  "retained_summary": {
+    "failure_code": "OWNER_TTY_CLOSED",
+    "failure_stage": "scripted terminal prompt",
+    "result": "BLOCKED_ENVIRONMENT"
+  },
+  "reviewed_at_utc": "2026-11-24T03:12:03.035556+00:00",
+  "run_id": 45313988001,
+  "schema": "wolfalibi.shirudo.prototype-partial-review.v1",
+  "scope": "HISTORICAL_LAB_BOOTSTRAP_AND_LAUNCH_ONLY",
+  "signature_scope": "OWNER_BOOT_POLICY_ONLY_UNDER_RETAINED_PUBLIC_LAB_KEY",
+  "unique_ed25519_signatures_verified": 1,
+  "verified_bind_names": [
+    "state",
+    "socket",
+    "config-manifest",
+    "boot-report"
+  ],
+  "verified_recorded_cases": [
+    "measured-config-binding",
+    "verity-wrong-root",
+    "verity-corrupted-data",
+    "unsigned-boot-policy",
+    "boot-policy-root-mismatch",
+    "private-key-separation",
+    "immutable-execution",
+    "gate-state-access-denied"
+  ]
+}

@@ -1,5 +1,14 @@
 # Shirudo evidence adapter
 
+**Prototype 0.1.0 qualified within its laboratory scope.** The
+[complete integration run](https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750)
+passed all 19 prototype cases with five fresh genuine assessments and exactly
+two counter effects. The [operating guide](PROTOTYPE.md) and
+[qualification record](evidence/ci-45318855750/qualification.json) identify the
+executed source, installable package, original evidence and independent review.
+The owner interface was exercised through `SCRIPTED_PTY`; actual human approval
+remains `NOT_RUN`. Hardware and production qualification remain unestablished.
+
 This adapter checks an already captured Shirudo attestation against an operator's independently approved policy. It records a fresh challenge, runs an explicitly pinned offline verifier, and preserves the result in a signed local receipt.
 
 **Current qualification: genuine historical verification and fresh `LAB_VTPM` integration passed.** [CI run 45290603342](https://github.com/Bropdrop/WolfAlibi/actions/runs/45290603342) used the exact approved official Shirudo ELF, passed all eight historical cases, and produced `EVIDENCE_ACCEPTED` for a newly issued challenge from a disposable software-TPM target. All ten fresh-lab controls passed. The [qualification record and preserved public artifacts](evidence/ci-45290603342/qualification.json) identify the executed commit and precise limits. Physical hardware, measured UKI/Secure Boot and production authorization remain unqualified.
@@ -17,8 +26,18 @@ fresh accepted assessments and exactly four committed counter effects.
 The [qualification and original public evidence](evidence/ci-45298950620/qualification.json)
 also record the 171-test host passes and standalone artifact review.
 The evidence adapter's receipts retain
-`authorization: NONE`. The gate and its dependencies are trusted software
-installed after boot, outside the approved boot measurement.
+`authorization: NONE`. In that Gate C revision, the gate and its dependencies
+were trusted software installed after boot, outside the approved boot measurement.
+
+The [prototype operating guide](PROTOTYPE.md) covers the completed laboratory integration:
+a separate dm-verity gate image bound by Shirudo's native signed configuration,
+an owner-signed boot policy, and a separate owner process with a terminal
+approval ceremony. Its [owner interface](OWNER_APPROVAL.md) requires `READY`
+before fresh collection and confirmation of the specific verified operation.
+Its standalone reviewer verified 89 public files, all 19 cases and 20 distinct
+signed records through 27 signature checks. Eight altered evidence sets were
+rejected. Its exact source revision and qualification are separate from the
+historical Gate B and Gate C records above.
 
 This feature branch starts from WolfAlibi's documentation-only main commit `a7fabefe0c27abf328828a257f3fbce1796dadef`. The older WolfAlibi engine and research labs remain on their existing draft branches. Their historical test counts and assurance claims are not inherited by this adapter.
 

@@ -1,0 +1,56 @@
+{
+  "actual_human_approval": "NOT_RUN",
+  "adapter_imported": false,
+  "clean_artifact_manifest_sha256": "bcb67b611cfd54c6d05925626060c58246062b024646ef5f1d8e6ab592ea078b",
+  "clean_artifact_result": "PASS",
+  "controls": [
+    {
+      "case": "forged-owner-signature",
+      "failed_check": "authorized:owner-grant:signature",
+      "result": "REJECTED"
+    },
+    {
+      "case": "forged-target-signature",
+      "failed_check": "authorized:action:signature",
+      "result": "REJECTED"
+    },
+    {
+      "case": "valid-assessment-from-another-operation",
+      "failed_check": "authorized:assessment-bindings",
+      "result": "REJECTED"
+    },
+    {
+      "case": "mismatched-ledger-request-binding",
+      "failed_check": "ORACLE:authority-effect-ledger-binding",
+      "result": "REJECTED"
+    },
+    {
+      "case": "boolean-substituted-for-counter",
+      "failed_check": "ORACLE:counter",
+      "result": "REJECTED"
+    },
+    {
+      "case": "missing-kernel-EIO-evidence",
+      "failed_check": "BOOT:kernel-EIO-observation",
+      "result": "REJECTED"
+    },
+    {
+      "case": "scripted-approval-relabelled-as-human",
+      "failed_check": "authorized:scripted-terminal-record",
+      "result": "REJECTED"
+    },
+    {
+      "case": "altered-source-with-coordinated-manifests",
+      "failed_check": "SOURCE:reviewed-commit:shirudo_adapter/action_gate.py",
+      "result": "REJECTED"
+    }
+  ],
+  "current_authorization": false,
+  "external_provenance": "REQUIRES_SEPARATE_AUTHENTICATED_CHECK",
+  "modified_file_manifest_entries_recomputed": true,
+  "original_artifact_modified": false,
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.prototype-artifact-corruption-review.v1",
+  "scope": "HISTORICAL_LAB_ARTIFACT_CONSISTENCY",
+  "target_contact": false
+}

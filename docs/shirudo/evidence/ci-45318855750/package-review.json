@@ -1,0 +1,27 @@
+{
+  "entrypoints": {
+    "wolfalibi-shirudo": "shirudo_adapter.cli:main",
+    "wolfalibi-shirudo-action-gate": "shirudo_adapter.action_gate_cli:main",
+    "wolfalibi-shirudo-owner": "shirudo_adapter.owner_cli:main"
+  },
+  "executed_commit": "86c28db9537558b4cc76d73baea4353652462147",
+  "executed_tree": "bff7a0648c042215c0cdca9039e2a58bffb4bcd2",
+  "limitations": [
+    "Checks the retained wheel metadata, all RECORD entries and packaged Python bytes against the executed source; does not independently reproduce the build or qualify a target."
+  ],
+  "requires_dist": [
+    "cryptography==50.0.0"
+  ],
+  "requires_python": ">=3.11",
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.prototype-package-review.v1",
+  "scope": "ARCHIVE_AND_SOURCE_CONSISTENCY",
+  "wheel": {
+    "bytes": 55454,
+    "filename": "wolfalibi_shirudo-0.1.0-py3-none-any.whl",
+    "record_entries": 17,
+    "sha256": "4efd5d7f28eb90e36709a64b344a228854e85dee760af94950f290651907d6b0",
+    "source_modules_matched": 12
+  },
+  "workflow_run": 45318855750
+}

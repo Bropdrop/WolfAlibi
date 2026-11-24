@@ -1,0 +1,84 @@
+{
+  "schema": "wolfalibi.shirudo.sudo-terminal-review.v1",
+  "head_commit": "86c28db9537558b4cc76d73baea4353652462147",
+  "tested_tree": "bff7a0648c042215c0cdca9039e2a58bffb4bcd2",
+  "result": "PASS",
+  "workflow_run": 45318855750,
+  "job_id": 138192187881,
+  "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/job/138192187881",
+  "scope": "FABRICATED_TERMINAL_REGRESSION",
+  "command": "python -m unittest tests.prototype_sudo_probe -v",
+  "tests": 2,
+  "seconds": 0.792,
+  "skipped": 0,
+  "records": [
+    {
+      "adapter_source": "INSTALLED_PACKAGE",
+      "files": {
+        "support.py": {
+          "bytes": 5842,
+          "mode": "0444",
+          "sha256": "7e623fb86a61710c6c6a396befdee9fb17a3baa8129ffd90b328124f7537ce48"
+        },
+        "test_action_gate.py": {
+          "bytes": 32907,
+          "mode": "0444",
+          "sha256": "76a087564e8190200b4b540cbf4d6cd6e499830feef5a6e428d3e076b800d8ee"
+        },
+        "test_owner.py": {
+          "bytes": 22868,
+          "mode": "0444",
+          "sha256": "1064edfae391d989018c36518e8945c0c5a32a55cffc5202b089174f2e4e542d"
+        }
+      },
+      "probe": "public-fixture-source-staging",
+      "result": "PASS"
+    },
+    {
+      "actual_human_approval": "NOT_RUN",
+      "committed_operations": 0,
+      "counter": 0,
+      "events": [
+        "READY",
+        "AWAITING_APPROVAL",
+        "GRANT_ISSUED"
+      ],
+      "owner_signature_verified": true,
+      "probe": "separate-owner-sudo-terminal-handoff",
+      "recorded_grants": 1,
+      "result": "PASS",
+      "scope": "FABRICATED_TERMINAL_REGRESSION",
+      "uid": 999
+    },
+    {
+      "actual_human_approval": "NOT_RUN",
+      "committed_operations": 0,
+      "counter": 0,
+      "owner_result": {
+        "message": "Owner approval requires its foreground controlling terminal",
+        "reason": "TERMINAL_REQUIRED",
+        "status": "BLOCKED"
+      },
+      "probe": "original-sudo-background-condition",
+      "recorded_grants": 0,
+      "result": "PASS",
+      "scope": "FABRICATED_TERMINAL_REGRESSION",
+      "terminal_observation": {
+        "foreground_group": 3203,
+        "is_tty": true,
+        "process_group": 3204,
+        "uid": 999
+      },
+      "uid": 999
+    }
+  ],
+  "actual_human_approval": "NOT_RUN",
+  "genuine_tpm_verification": false,
+  "target_effects": 0,
+  "limitations": [
+    "Records are authenticated CI job output, not a new independent execution.",
+    "This directly reproduces the old sudo background condition on the selected runner; the earlier failed VM run did not retain its early owner event.",
+    "Private synthetic keys were created in the dedicated test UID. Trusted administrator control is not excluded.",
+    "A scripted PTY and fabricated assessment do not establish human approval or genuine attestation."
+  ]
+}

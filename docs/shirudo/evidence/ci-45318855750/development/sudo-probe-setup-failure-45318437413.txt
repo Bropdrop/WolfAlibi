@@ -1,0 +1,53 @@
+Ran 245 tests in 23.400s
+2026-11-24T03:17:55.0130079Z 
+2026-11-24T03:17:55.0130206Z OK
+2026-11-24T03:17:55.0467055Z ##[group]Run python -m unittest tests.prototype_sudo_probe -v
+2026-11-24T03:17:55.0467585Z [36;1mpython -m unittest tests.prototype_sudo_probe -v[0m
+2026-11-24T03:17:55.0488009Z shell: /usr/bin/bash -e {0}
+2026-11-24T03:17:55.0488260Z env:
+2026-11-24T03:17:55.0488565Z   UPSTREAM_COMMIT: fb97c1ec5908c8bdbd46760c29e57677977fce74
+2026-11-24T03:17:55.0488914Z   WOLFALIBI_DISPOSABLE_CI: 1
+2026-11-24T03:17:55.0489214Z   pythonLocation: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-24T03:17:55.0489629Z   PKG_CONFIG_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib/pkgconfig
+2026-11-24T03:17:55.0490044Z   Python_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-24T03:17:55.0490413Z   Python2_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-24T03:17:55.0490785Z   Python3_ROOT_DIR: /opt/hostedtoolcache/Python/3.12.16/x64
+2026-11-24T03:17:55.0491164Z   LD_LIBRARY_PATH: /opt/hostedtoolcache/Python/3.12.16/x64/lib
+2026-11-24T03:17:55.0491480Z ##[endgroup]
+2026-11-24T03:17:55.2458266Z test_handoff_forwards_ready_and_final_approval_under_separate_uid (tests.prototype_sudo_probe.ActualSudoOwnerTerminalTests.test_handoff_forwards_ready_and_final_approval_under_separate_uid) ... FAIL
+2026-11-24T03:17:55.2867498Z test_old_pipe_chain_is_background_and_owner_rejects_it (tests.prototype_sudo_probe.ActualSudoOwnerTerminalTests.test_old_pipe_chain_is_background_and_owner_rejects_it) ... FAIL
+2026-11-24T03:17:55.3479269Z 
+2026-11-24T03:17:55.3479746Z ======================================================================
+2026-11-24T03:17:55.3481171Z FAIL: test_handoff_forwards_ready_and_final_approval_under_separate_uid (tests.prototype_sudo_probe.ActualSudoOwnerTerminalTests.test_handoff_forwards_ready_and_final_approval_under_separate_uid)
+2026-11-24T03:17:55.3482107Z ----------------------------------------------------------------------
+2026-11-24T03:17:55.3482481Z Traceback (most recent call last):
+2026-11-24T03:17:55.3490433Z   File "/home/runner/work/WolfAlibi/WolfAlibi/tests/prototype_sudo_probe.py", line 172, in setUp
+2026-11-24T03:17:55.3491357Z     self.public = self.helper.receive()
+2026-11-24T03:17:55.3491652Z                   ^^^^^^^^^^^^^^^^^^^^^
+2026-11-24T03:17:55.3492238Z   File "/home/runner/work/WolfAlibi/WolfAlibi/tests/prototype_sudo_probe.py", line 101, in receive
+2026-11-24T03:17:55.3492905Z     raise AssertionError("Public fixture output unavailable: " +
+2026-11-24T03:17:55.3493427Z AssertionError: Public fixture output unavailable: Traceback (most recent call last):
+2026-11-24T03:17:55.3494407Z   File "<string>", line 5, in <module>
+2026-11-24T03:17:55.3494734Z ModuleNotFoundError: No module named 'tests'
+2026-11-24T03:17:55.3494944Z 
+2026-11-24T03:17:55.3494949Z 
+2026-11-24T03:17:55.3495073Z ======================================================================
+2026-11-24T03:17:55.3495892Z FAIL: test_old_pipe_chain_is_background_and_owner_rejects_it (tests.prototype_sudo_probe.ActualSudoOwnerTerminalTests.test_old_pipe_chain_is_background_and_owner_rejects_it)
+2026-11-24T03:17:55.3496741Z ----------------------------------------------------------------------
+2026-11-24T03:17:55.3497107Z Traceback (most recent call last):
+2026-11-24T03:17:55.3497637Z   File "/home/runner/work/WolfAlibi/WolfAlibi/tests/prototype_sudo_probe.py", line 172, in setUp
+2026-11-24T03:17:55.3498436Z     self.public = self.helper.receive()
+2026-11-24T03:17:55.3498709Z                   ^^^^^^^^^^^^^^^^^^^^^
+2026-11-24T03:17:55.3499191Z   File "/home/runner/work/WolfAlibi/WolfAlibi/tests/prototype_sudo_probe.py", line 101, in receive
+2026-11-24T03:17:55.3499800Z     raise AssertionError("Public fixture output unavailable: " +
+2026-11-24T03:17:55.3500295Z AssertionError: Public fixture output unavailable: Traceback (most recent call last):
+2026-11-24T03:17:55.3500758Z   File "<string>", line 5, in <module>
+2026-11-24T03:17:55.3501055Z ModuleNotFoundError: No module named 'tests'
+2026-11-24T03:17:55.3501251Z 
+2026-11-24T03:17:55.3501255Z 
+2026-11-24T03:17:55.3501651Z ----------------------------------------------------------------------
+2026-11-24T03:17:55.3501988Z Ran 2 tests in 0.191s
+2026-11-24T03:17:55.3502131Z 
+2026-11-24T03:17:55.3502215Z FAILED (failures=2)
+2026-11-24T03:17:55.3685246Z ##[error]Process completed with exit code 1.
+2026-11-24T03:17:55.3840499Z

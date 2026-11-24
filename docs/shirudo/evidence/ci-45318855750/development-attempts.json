@@ -1,0 +1,79 @@
+{
+  "schema": "wolfalibi.shirudo.prototype-development-attempts.v1",
+  "scope": "FAILED_DEVELOPMENT_RUNS_NOT_PROTOTYPE_QUALIFICATION",
+  "current_authorization": false,
+  "attempts": [
+    {
+      "run": 45307224946,
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45307224946",
+      "executed_commit": "feafa8752c209b75d888bd04557ffb88e6887ed8",
+      "executed_tree": "ecad19193755e02d5468e53fb5007adcf0c971d5",
+      "prototype_qualified": false,
+      "observed_failure": "The initrd image service failed and its required native-init dependency remained blocked.",
+      "diagnosis": "Static review found an unsupported --readonly option on veritysetup open. The next revision removed that option and retained independent read-only and cold EIO checks.",
+      "diagnosis_limit": "The first run did not retain the precise failing command; removal of the unsupported option was followed by a successful boot, not a recovered original-command error.",
+      "archive": {
+        "file": "development/lab-public-records-45307224946.zip",
+        "artifact_id": 14881348528,
+        "bytes": 75401,
+        "sha256": "8c8bd09f1f7a20bb237df70f7a9b4644859334ff91cebee8045b67c8d229da23"
+      }
+    },
+    {
+      "run": 45309239335,
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45309239335",
+      "executed_commit": "95d211979261cdbab57108681c19b5fa50c1dfab",
+      "executed_tree": "051d493afe648140e60d1371411d88e31230595c",
+      "prototype_qualified": false,
+      "passed": "Image boot, cold EIO controls, and the existing genuine fresh-evidence gate passed. Three initial prototype cases were retained.",
+      "observed_failure": "First immutable-gate command exited before valid public JSON; the wrapper then tried to decode empty stdout and discarded the child's stderr.",
+      "diagnosis": "Pinned upstream mount-guard source was consistent with systemd namespace staging on protected /run. The launcher was changed to verified GNU chroot with explicitly prepared ordinary-device bindings.",
+      "diagnosis_limit": "The original service error was not retained. The mount-namespace explanation remains source-supported inference; the later GNU launcher and final nonroot process observations were genuinely verified.",
+      "archive": {
+        "file": "development/lab-public-records-45309239335.zip",
+        "artifact_id": 14882954296,
+        "bytes": 268327,
+        "sha256": "b94d58bd5961e949591bc63d71d40897147af13b39dfe83f118dd8aa6202ed91"
+      }
+    },
+    {
+      "run": 45313988001,
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45313988001",
+      "executed_commit": "0db64a96d7b1cbe66735c51e2fbb4f85e0462ff5",
+      "executed_tree": "4a68de0460f85f1af792064e09e44e22c0a3b1f1",
+      "prototype_qualified": false,
+      "passed": "Eight initial prototype controls, including immutable execution, boot-policy denials, peer-UID custody and client state denial; the existing fresh-evidence gate also passed.",
+      "observed_failure": {
+        "code": "OWNER_TTY_CLOSED",
+        "stage": "scripted terminal prompt",
+        "prototype_assessments": 0,
+        "counter": 0,
+        "committed_operations": 0
+      },
+      "diagnosis": "The original sudo stdout-pipe topology was subsequently reproduced in the dedicated real-account regression: the owner was backgrounded and correctly rejected it with TERMINAL_REQUIRED. The explicit scripted launcher now requests sudo's standard SIGTTIN foreground handoff.",
+      "diagnosis_limit": "This run did not retain its own early owner JSON event. The later regression directly demonstrates the mechanism on the selected runner; it does not recover the absent original event.",
+      "later_regression": "sudo-terminal-review.json",
+      "partial_review": "development/partial-review-45313988001.json",
+      "fresh_evidence_review": "development/fresh-evidence-review-45313988001.json",
+      "archive": {
+        "file": "development/lab-public-records-45313988001.zip",
+        "artifact_id": 14885259274,
+        "bytes": 279031,
+        "sha256": "b44bfd3831abbb4e78ce0a22e54d9e21bfadc83722e391889fb37abb9b4f2a0d"
+      }
+    },
+    {
+      "run": 45318437413,
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318437413",
+      "executed_commit": "42570ad785b7b7d782808e21f22b26a3889393cf",
+      "executed_tree": "ccb8f86ed739b18376065d1d4bc997546b6cdf7d",
+      "prototype_qualified": false,
+      "passed": "All 245 core host tests and the historical fixture gate passed.",
+      "observed_failure": "Both new actual-sudo tests failed in fixture setup with ModuleNotFoundError: No module named 'tests', before terminal qualification.",
+      "vm": "NOT_STARTED_UNIT_GATE_FAILED",
+      "correction": "Stage exactly three public fixture modules outside the private runner checkout in a fresh root-owned directory; verify their bytes, SHA-256, ownership, modes and import origins. Keep private state under the separate test UID.",
+      "log_excerpt": "development/sudo-probe-setup-failure-45318437413.txt"
+    }
+  ],
+  "source_note": "These failed runs are retained as development evidence. They are not substituted for the final candidate's complete genuine run and independent artifact reviews."
+}
