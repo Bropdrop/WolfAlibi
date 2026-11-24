@@ -8,6 +8,14 @@ A synthetic assessment still returns `SIMULATED_POLICY_ONLY` with assurance `SYN
 
 The adapter is read-only toward targets. It has no target connection, deployment, shield loading or unloading, target key management, or network API. It does write its own local challenge journal, signing key, policy records, and receipts. A locally issued challenge is a freshness request; it is not a TPM enrollment credential challenge and does not enroll a target.
 
+The new [laboratory action gate](ACTION_GATE.md) is a separate target component.
+It requires both an accepted assessment and a separately signed owner grant
+before incrementing its private SQLite counter by one. Its source, process
+transport and integration harness are implemented; genuine action qualification
+is pending the recorded action workflow. The evidence adapter's receipts retain
+`authorization: NONE`. The gate and its dependencies are trusted software
+installed after boot, outside the approved boot measurement.
+
 This feature branch starts from WolfAlibi's documentation-only main commit `a7fabefe0c27abf328828a257f3fbce1796dadef`. The older WolfAlibi engine and research labs remain on their existing draft branches. Their historical test counts and assurance claims are not inherited by this adapter.
 
 ## What an accepted result means
