@@ -81,7 +81,7 @@ The original uploaded ZIP contains 559 files, including its manifest. The review
 - Embedded and separately supplied `SHA256SUMS` SHA-256: `978f565b08c21247f2a6b726afe9e6bdabc47d527165a9dd0b670cefdb0ca182`.
 - Original ZIP size: 726402 bytes.
 
-This commit publishes a reviewed summary and a derived per-trial hash index, **not the original archive, original manifest or runner**. The full archive remains in owner custody; direct binary transfer from the review environment to GitHub was unavailable. These commitments identify the precise archive reviewed. They cannot substitute for access to its bytes. Publish the exact original ZIP and manifest in a follow-up evidence-only commit before describing the complete evidence as publicly accessible. Do not regenerate or silently edit the original evidence.
+The original [evidence archive](WT-SIREN-002-evidence.zip), [external manifest](SHA256SUMS), [offline review script](review_wt_siren_002.py), and [independent review output](WT-SIREN-002-independent-review.json) are published in this directory. The archive and manifest have the exact SHA-256 values listed above. The review script has SHA-256 `a72c280a447a44d7516dfcb48e20f09b00b55eccfad59facdac483a8b5736c30`. The independent review output has SHA-256 `8a8579040c5a7b1f1ab499a2a96a97daead08c51ba05daf34788ea404844526e`.
 
 ## Reproduction
 
