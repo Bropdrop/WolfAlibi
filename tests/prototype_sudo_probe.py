@@ -12,11 +12,13 @@ or actual human approval is claimed.
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import selectors
 import shutil
 import signal
+import stat
 import subprocess
 import sys
 import time
@@ -27,6 +29,8 @@ from scripts import shirudo_prototype_host as host
 from shirudo_adapter.model import canonical_json, digest, strict_json
 from shirudo_adapter.receipt import verify_record
 
+FIXTURE_SOURCE_FILES = ("test_owner.py", "test_action_gate.py", "support.py")
+
 
 # This helper retains fabricated authority keys within the separate test UID.
 # Only public records cross its bounded JSON pipe. The real owner CLI alone
@@ -34,8 +38,15 @@ from shirudo_adapter.receipt import verify_record
 FIXTURE_HELPER = r"""
 import json, os, sqlite3, sys, time
 from pathlib import Path
+# Resolve the installed adapter before adding the public fixture-only path.
+# The private runner checkout is never an import path for this role.
+import shirudo_adapter
 sys.path.insert(0, sys.argv[1])
-from tests.test_owner import OwnerFixture
+import test_owner, test_action_gate, support
+if any(Path(module.__file__).parent != Path(sys.argv[1])
+       for module in (test_owner, test_action_gate, support)):
+    raise SystemExit('Unexpected public fixture module source')
+from test_owner import OwnerFixture
 from shirudo_adapter.model import canonical_json, strict_json
 fixture = OwnerFixture(Path(sys.argv[2]))
 intent = fixture.intent()
@@ -135,6 +146,28 @@ class ActualSudoOwnerTerminalTests(unittest.TestCase):
         cls.created_user = True
         cls.run_command(["sudo", "-n", "install", "-d", "-m", "0755", "-o", "root", "-g", "root", str(cls.base)])
         cls.run_command(["sudo", "-n", "install", "-d", "-m", "0700", "-o", cls.user, "-g", cls.user, str(cls.base / "owner")])
+        cls.public_sources = cls.base / "public-fixtures"
+        cls.run_command(["sudo", "-n", "install", "-d", "-m", "0755", "-o", "root", "-g", "root", str(cls.public_sources)])
+        info = cls.public_sources.lstat()
+        if not stat.S_ISDIR(info.st_mode) or info.st_uid != 0 or info.st_gid != 0 or stat.S_IMODE(info.st_mode) != 0o755:
+            raise AssertionError("Public fixture source directory is not root-owned 0755")
+        manifest = {}
+        for name in FIXTURE_SOURCE_FILES:
+            source, destination = host.ROOT / "tests" / name, cls.public_sources / name
+            original = host.read_bounded_file(source, host.MAX_PUBLIC)
+            cls.run_command(["sudo", "-n", "install", "-m", "0444", "-o", "root", "-g", "root", str(source), str(destination)])
+            copied = host.read_bounded_file(destination, host.MAX_PUBLIC)
+            info = destination.lstat()
+            expected = hashlib.sha256(original).hexdigest()
+            if (not stat.S_ISREG(info.st_mode) or info.st_uid != 0 or info.st_gid != 0
+                    or stat.S_IMODE(info.st_mode) != 0o444 or info.st_nlink != 1
+                    or copied != original or hashlib.sha256(copied).hexdigest() != expected):
+                raise AssertionError("Public fixture copy verification failed: " + name)
+            manifest[name] = {"bytes": len(copied), "sha256": expected, "mode": "0444"}
+        if {path.name for path in cls.public_sources.iterdir()} != set(FIXTURE_SOURCE_FILES):
+            raise AssertionError("Unexpected public fixture source entry")
+        print(json.dumps({"probe": "public-fixture-source-staging", "result": "PASS",
+                          "adapter_source": "INSTALLED_PACKAGE", "files": manifest}, sort_keys=True))
         cls.exchange.mkdir(mode=0o755)
         cls.uid = int(cls.run_command(["id", "-u", cls.user]).stdout)
         if cls.uid <= 0 or cls.uid == os.geteuid():
@@ -167,7 +200,7 @@ class ActualSudoOwnerTerminalTests(unittest.TestCase):
         self.fixture_root = self.base / "owner" / self.name
         self.prefix = self.roles.argv("owner", ["identity"])[:9]
         self.helper = PublicFixture([*self.prefix, self.roles.python, "-I", "-B", "-c",
-            FIXTURE_HELPER, str(host.ROOT), str(self.fixture_root)])
+            FIXTURE_HELPER, str(self.public_sources), str(self.fixture_root)])
         self.addCleanup(self.helper.close)
         self.public = self.helper.receive()
         self.assertEqual(self.public["uid"], self.uid)
