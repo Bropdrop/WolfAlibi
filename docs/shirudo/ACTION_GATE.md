@@ -1,8 +1,20 @@
 # Shirudo action gate: laboratory contract
 
 This stage adds one target-enforced action to the qualified evidence adapter:
-increment a protected SQLite counter by exactly one. Qualification is pending
-until the recorded workflow and public evidence say otherwise.
+increment a protected SQLite counter by exactly one.
+
+**Qualified within the laboratory scope.**
+[CI run 45298950620](https://github.com/Bropdrop/WolfAlibi/actions/runs/45298950620)
+passed all 171 host tests, repeated the eight historical verifier checks and
+ten fresh-evidence controls, then passed all 26 action checks in the disposable
+VM. Twelve fresh assessments were accepted. Exactly four effects committed,
+forming the counter history `0 → 1 → 2 → 3 → 4`.
+
+The [qualification record](evidence/ci-45298950620/qualification.json) links the
+executed commit, workflow, original archives, independent review and precise
+limits. The executed code is
+[`521a3c887e86a9d4db0c4b416433146d7161fef9`](https://github.com/Bropdrop/WolfAlibi/commit/521a3c887e86a9d4db0c4b416433146d7161fef9).
+The later evidence publication does not change that runtime source.
 
 The target requires both a genuine accepted assessment and an owner-signed
 grant for its own operation challenge. Existing Shirudo assessment receipts
@@ -35,6 +47,26 @@ declared cross-host clock skew. The gate admits an adapter challenge at most
 adapter challenge can belong to at most one operation. This does not prove
 continuous target state, atomicity between a TPM quote and a later effect,
 or resistance to coordinated restoration of all trusted state and clocks.
+
+## Authorization path
+
+The verifier issues a nonce before collection. The target first admits that
+signed challenge and returns its own operation challenge. After the verifier
+accepts the collected evidence, the owner signer binds one grant to both
+records. The client then submits the grant and assessment to the target.
+
+```mermaid
+flowchart TD
+    E["Fresh target evidence"] --> V["Pinned Shirudo verifier"]
+    V -->|"Signed assessment"| G["Target action gate"]
+    O["Owner signer"] -->|"Bound single-use grant"| G
+    G --> T["One SQLite transaction"]
+    T --> R["Counter, consumed authority and receipt"]
+```
+
+The database transaction is the protected effect boundary. A caller receiving
+no reply must query the retained operation ID. It cannot infer that execution
+failed or start another operation merely because the connection was lost.
 
 ## Core API
 
@@ -130,8 +162,9 @@ claim. An administrator may request a one-shot process-exit fault for the
 laboratory; the client protocol exposes no fault or administration operation.
 
 The CI harness transfers only a bounded public source/configuration archive
-over the existing trusted guest connection. It verifies the archive and each
-installed file before use. The owner key stays in host memory; the verifier key
+over the existing trusted guest connection. It verifies the archive, records
+hashes of the source bytes written by the trusted installer, and compares those
+records with the approved source before use. The owner key stays in host memory; the verifier key
 and journal stay in a separate host temporary directory. The target signer and
 database remain private in the guest. Public exports include request, grant,
 assessment, decision, receipt, ledger observations, trust metadata, source
@@ -173,7 +206,7 @@ arguments identify the already booted named VM and pinned verifier:
 python scripts/shirudo_action_lab.py \
   --upstream ./upstream \
   --vm-name "$VM_NAME" \
-  --verifier ./official/shirudo \
+  --verifier ./artifacts/verifier/shirudo \
   --output ./evidence/action
 ```
 
@@ -182,3 +215,47 @@ gate CLI is also available as `wolfalibi-shirudo-action-gate` or
 `python -m shirudo_adapter.action_gate_cli`. `--help` describes the explicit
 state and socket paths. A new deployment requires a separately approved trust
 file; no key or target is inferred from a submitted receipt.
+
+## Review the preserved evidence
+
+The original [public lab archive](evidence/ci-45298950620/lab-public-records.zip)
+contains both the repeated Gate B and new action records. Its SHA-256 is
+`29393789222e073b325e72645f83c50288082037259a238fe39c1b8e67522c11`.
+The separate [historical archive](evidence/ci-45298950620/offline-public-records.zip)
+has SHA-256
+`e50fdf6e068966ee4eaa2f09481652a205a0d55878c2bde7f4af5c727f371e8d`.
+Both matched the authenticated GitHub artifact metadata when downloaded;
+[the provenance record](evidence/ci-45298950620/artifact-provenance.json)
+retains that association.
+
+From the repository root, extract into a new review directory and run:
+
+```bash
+python -m zipfile -e \
+  docs/shirudo/evidence/ci-45298950620/lab-public-records.zip \
+  ./action-evidence-review
+
+python docs/shirudo/review_action_artifact.py \
+  ./action-evidence-review/evidence/action
+
+python docs/shirudo/review_action_corruptions.py \
+  ./action-evidence-review/evidence/action
+```
+
+The standalone reviewer imports no adapter code and performs no target or
+network operation. Its [recorded pass](evidence/ci-45298950620/action-artifact-review.json)
+checked 185 files, all twelve material sets, the complete accepted report
+contract, all 26 controls and four unique effects. It performed 80 signature
+verifications, including repeated bindings. It also compared the trusted
+installer's source records and source archive with the executed commit.
+
+The [seven corruption controls](evidence/ci-45298950620/review-corruption-checks.json)
+all failed at their expected checks. Their modified file manifests were
+recomputed, so the signature, ledger, counter and source controls had to reach
+the corresponding semantic checks. The original evidence was unchanged.
+
+These reviews authenticate retained records under the laboratory public keys.
+They do not rerun TPM cryptography or replace the separately checked CI
+provenance. Root database observations and process-exit observations remain
+trusted laboratory measurements. VM shutdown succeeded; its private state was
+not uploaded, and secure erasure was not qualified.

@@ -10,9 +10,13 @@ The adapter is read-only toward targets. It has no target connection, deployment
 
 The new [laboratory action gate](ACTION_GATE.md) is a separate target component.
 It requires both an accepted assessment and a separately signed owner grant
-before incrementing its private SQLite counter by one. Its source, process
-transport and integration harness are implemented; genuine action qualification
-is pending the recorded action workflow. The evidence adapter's receipts retain
+before incrementing its private SQLite counter by one.
+[CI run 45298950620](https://github.com/Bropdrop/WolfAlibi/actions/runs/45298950620)
+qualified this laboratory action path: all 26 controls passed with twelve
+fresh accepted assessments and exactly four committed counter effects.
+The [qualification and original public evidence](evidence/ci-45298950620/qualification.json)
+also record the 171-test host passes and standalone artifact review.
+The evidence adapter's receipts retain
 `authorization: NONE`. The gate and its dependencies are trusted software
 installed after boot, outside the approved boot measurement.
 

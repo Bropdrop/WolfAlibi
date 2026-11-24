@@ -1,0 +1,49 @@
+{
+  "schema": "wolfalibi.shirudo.action-host-test-review.v1",
+  "result": "PASS",
+  "head_commit": "521a3c887e86a9d4db0c4b416433146d7161fef9",
+  "tested_tree": "1d4356d5b0da3c7dfef13b0c3f9c246a778ba64b",
+  "command": "python -m unittest discover -s tests -v",
+  "jobs": [
+    {
+      "workflow_run": 45298950620,
+      "job_id": 138126331486,
+      "python": "3.12",
+      "tests": 171,
+      "seconds": 10.981,
+      "action_cli_tests": 18,
+      "skipped": 0,
+      "result": "OK",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45298950620/job/138126331486"
+    },
+    {
+      "workflow_run": 45298966370,
+      "job_id": 138126386997,
+      "python": "3.12",
+      "tests": 171,
+      "seconds": 11.099,
+      "action_cli_tests": 18,
+      "skipped": 0,
+      "result": "OK",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45298966370/job/138126386997"
+    },
+    {
+      "workflow_run": 45298966370,
+      "job_id": 138126387370,
+      "python": "3.11",
+      "tests": 171,
+      "seconds": 12.846,
+      "action_cli_tests": 18,
+      "skipped": 0,
+      "result": "OK",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45298966370/job/138126387370"
+    }
+  ],
+  "scope": "HOST_UNIT_AND_PROCESS_SOCKET_TESTS",
+  "genuine_action_qualification": false,
+  "limitations": [
+    "These host tests use explicitly fabricated assessment fixtures and do not run genuine Shirudo evidence collection.",
+    "The actual process/socket and SQLite interruption boundaries ran on the GitHub hosts; local workspace socket restrictions were not bypassed.",
+    "This review summarizes the completed job logs and does not rerun them."
+  ]
+}

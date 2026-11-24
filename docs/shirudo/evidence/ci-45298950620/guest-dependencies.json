@@ -1,0 +1,1 @@
+{"cryptography": "50.0.0", "python": "3.14.4", "schema": "wolfalibi.shirudo.action-guest-dependencies.v1", "scope": "DEPENDENCY_SETUP_ONLY", "status": "READY", "venv": "/opt/wolfalibi-action-venv"}
