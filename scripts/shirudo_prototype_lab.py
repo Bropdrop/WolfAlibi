@@ -40,7 +40,8 @@ NATIVE_MANIFEST = "/run/shirudo/config/etc/wolfalibi/gate-image.json"
 WITNESS_MANIFEST = "/run/wolfalibi/config-witness/etc/wolfalibi/gate-image.json"
 BOOT_REPORT = "/run/wolfalibi/image-boot.json"
 STATE_PARENT = "/var/lib/wolfalibi-prototype/state"
-SOCKET_PARENT = "/run/wolfalibi-prototype/socket"
+SOCKET_PARENT = "/var/lib/wolfalibi-prototype/socket"
+BOOT_REPORT_COPY = "/var/lib/wolfalibi-prototype/bootstrap/image-boot.json"
 SOCKET = SOCKET_PARENT + "/gate.sock"
 GATE_USER = "wolfproto-gate"
 CLIENT_USER = "wolfproto-client"
@@ -74,9 +75,82 @@ args=json.loads(base64.b64decode(sys.argv[1],validate=True))
 assert isinstance(args,list) and 1<=len(args)<=80 and all(isinstance(x,str) and len(x)<20000 for x in args)
 p=subprocess.run(args,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=35)
 assert len(p.stdout)<=262144 and len(p.stderr)<=65536
-print(json.dumps({'exit_code':p.returncode,'document':json.loads(p.stdout),
+try:document=json.loads(p.stdout)
+except (ValueError,UnicodeError):document=None
+print(json.dumps({'exit_code':p.returncode,'document':document,
  'stderr_bytes':len(p.stderr),'stderr_sha256':hashlib.sha256(p.stderr).hexdigest(),
  'public_error':p.stderr[-4096:].decode('utf-8','replace') if p.returncode else ''},sort_keys=True))
+'''
+
+PREPARE_BINDINGS = r'''
+import hashlib,json,os,pathlib,re,stat,subprocess,sys
+image=pathlib.Path('/run/wolfalibi/image')
+source=pathlib.Path('/run/wolfalibi/image-boot.json')
+copy=pathlib.Path('/var/lib/wolfalibi-prototype/bootstrap/image-boot.json')
+assert os.geteuid()==0 and len(sys.argv)==2
+launcher=None
+for candidate in ('/usr/sbin/gnuchroot','/usr/sbin/chroot','/usr/bin/chroot'):
+ path=pathlib.Path(candidate)
+ if not path.exists():continue
+ resolved=path.resolve(strict=True);s=resolved.stat();mode=stat.S_IMODE(s.st_mode)
+ if not stat.S_ISREG(s.st_mode) or not mode & 0o111 or mode & 0o6022 or not 0<s.st_size<=16*1024*1024:continue
+ if any(p.stat().st_uid!=0 or stat.S_IMODE(p.stat().st_mode)&0o022 for p in (resolved,*resolved.parents)):continue
+ version=subprocess.run([candidate,'--version'],capture_output=True,timeout=5,
+  env={'PATH':'/usr/bin:/bin','LC_ALL':'C'})
+ if version.returncode or not version.stdout or len(version.stdout)>4096:continue
+ first=version.stdout.decode('ascii').splitlines()[0]
+ if re.fullmatch(r'(?:gnu)?chroot \(GNU coreutils\) [0-9]+(?:\.[0-9]+)+',first) is None:continue
+ data=resolved.read_bytes();assert len(data)==s.st_size
+ launcher={'kind':'GNU_CHROOT','path':candidate,'resolved_path':str(resolved),'uid':s.st_uid,
+  'mode':mode,'bytes':len(data),'sha256':hashlib.sha256(data).hexdigest(),'version':first}
+ break
+assert launcher is not None,'No trusted GNU chroot executable found'
+raw=source.read_bytes();assert len(raw)<=16384 and hashlib.sha256(raw).hexdigest()==sys.argv[1]
+copy.parent.mkdir(mode=0o755)
+copy.parent.chmod(0o755)
+assert copy.parent.stat().st_uid==0 and stat.S_IMODE(copy.parent.stat().st_mode)==0o755
+fd=os.open(copy,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o444)
+with os.fdopen(fd,'wb') as f:f.write(raw);f.flush();os.fsync(f.fileno());os.fchmod(f.fileno(),0o444)
+assert copy.read_bytes()==raw and source.read_bytes()==raw
+run_device=os.stat('/run').st_dev
+mounts=[]
+for name,src,dst,readonly in [
+ ('state','/var/lib/wolfalibi-prototype/state','/state',False),
+ ('socket','/var/lib/wolfalibi-prototype/socket','/socket',False),
+ ('config-manifest','/run/wolfalibi/config-witness/etc/wolfalibi/gate-image.json','/run/wolfalibi/config-manifest.json',True),
+ ('boot-report',str(copy),'/run/wolfalibi/image-boot.json',True)]:
+ target=str(image)+dst
+ before=os.stat(src);assert before.st_dev!=run_device
+ subprocess.run(['mount','--bind',src,target],check=True,timeout=10)
+ if readonly:subprocess.run(['mount','-o','remount,bind,ro',target],check=True,timeout=10)
+ after=os.stat(target)
+ assert (before.st_dev,before.st_ino)==(after.st_dev,after.st_ino)
+ observed=bool(os.statvfs(target).f_flag & os.ST_RDONLY);assert observed==readonly
+ mounts.append({'name':name,'source':src,'destination':target,'read_only':observed,
+  'source_device':before.st_dev,'destination_device':after.st_dev,
+  'source_inode':before.st_ino,'destination_inode':after.st_ino})
+s=copy.stat()
+print(json.dumps({'schema':'wolfalibi.shirudo.prototype-bindings.v1',
+ 'launcher':launcher,
+ 'boot_report_copy':{'source':str(source),'copy':str(copy),'sha256':hashlib.sha256(raw).hexdigest(),
+  'uid':s.st_uid,'mode':stat.S_IMODE(s.st_mode)},'mounts':mounts},sort_keys=True))
+'''
+
+BIND_MANIFEST = r'''
+import hashlib,json,os,subprocess,sys
+assert os.geteuid()==0 and len(sys.argv)==3
+source=sys.argv[1];target='/run/wolfalibi/image/run/wolfalibi/config-manifest.json'
+assert source in ('/run/wolfalibi/config-witness/etc/wolfalibi/gate-image.json',
+ '/var/lib/wolfalibi-prototype/state/negative-manifest.json')
+raw=open(source,'rb').read(16385);assert len(raw)<=16384 and hashlib.sha256(raw).hexdigest()==sys.argv[2]
+before=os.stat(source);assert before.st_dev!=os.stat('/run').st_dev
+subprocess.run(['umount',target],check=True,timeout=10)
+subprocess.run(['mount','--bind',source,target],check=True,timeout=10)
+subprocess.run(['mount','-o','remount,bind,ro',target],check=True,timeout=10)
+after=os.stat(target)
+assert (before.st_dev,before.st_ino)==(after.st_dev,after.st_ino)
+assert os.statvfs(target).f_flag & os.ST_RDONLY and open(target,'rb').read(16385)==raw
+print(json.dumps({'sha256':hashlib.sha256(raw).hexdigest(),'read_only':True},sort_keys=True))
 '''
 
 STORE_POLICY = r'''
@@ -110,7 +184,7 @@ def read_exact(s,n):
 deadline=time.monotonic()+5
 try:
  with socket.socket(socket.AF_UNIX,socket.SOCK_STREAM) as s:
-  s.settimeout(5);s.connect('/run/wolfalibi-prototype/socket/gate.sock')
+  s.settimeout(5);s.connect('/var/lib/wolfalibi-prototype/socket/gate.sock')
   s.sendall(struct.pack('!I',len(data))+data);s.shutdown(socket.SHUT_WR)
   if sys.argv[2]=='drop':
    result={'status':'AMBIGUOUS','code':'SCRIPTED_REPLY_NOT_READ'}
@@ -157,7 +231,11 @@ for line in (p/'maps').read_text().splitlines():
  if len(fields)==6 and fields[5].startswith('/') and int(fields[4])>0:
   entry=p/'map_files'/fields[0]
   maps.append({'path':fields[5],'device':os.stat(entry).st_dev})
-result={'pid':pid,'uid':int(status['Uid'].split()[0]),'effective_capabilities':status['CapEff'].strip(),
+result={'pid':pid,'uid':int(status['Uid'].split()[0]),'uids':[int(x) for x in status['Uid'].split()],
+ 'gids':[int(x) for x in status['Gid'].split()],
+ 'supplementary_groups':[int(x) for x in status['Groups'].split()],
+ 'effective_capabilities':status['CapEff'].strip(),'permitted_capabilities':status['CapPrm'].strip(),
+ 'ambient_capabilities':status['CapAmb'].strip(),
  'command':(p/'cmdline').read_bytes().rstrip(b'\0').decode().split('\0'),
  'image_device':root.stat().st_dev,'process_root_device':(p/'root').stat().st_dev,
  'process_root_inode':(p/'root').stat().st_ino,'image_inode':root.stat().st_ino,
@@ -205,6 +283,8 @@ class PrototypeLab(RealLab):
         self.units = []
         self.current_unit = None
         self.gate_uid = None
+        self.gate_gid = None
+        self.launcher = None
         self.client_uid = None
         self.client_gid = None
         self.identity = None
@@ -231,30 +311,44 @@ class PrototypeLab(RealLab):
     def guest_json(self, args, stage):
         return parse_input(self.guest(args, stage), 262144, stage)
 
-    def unit_arguments(self, command, *, name=None, wait=True, manifest_source=WITNESS_MANIFEST):
+    def unit_arguments(self, command, *, name=None, wait=True):
+        require(self.launcher in ('/usr/sbin/gnuchroot', '/usr/sbin/chroot', '/usr/bin/chroot'),
+                "LAUNCHER_NOT_VERIFIED", "fixed GNU chroot")
         name = name or f"wolfproto-check-{len(self.units) + 1}.service"
         self.units.append(name)
+        # No mount-namespace setup under Shirudo's protected /run. Trusted root
+        # enters the already-bound ordinary image, then chroot drops all IDs
+        # before exec. The final process credentials and mappings are observed.
         args = ["systemd-run", "--quiet", "--unit", name, "--property=Type=exec",
-            f"--property=User={GATE_USER}", f"--property=Group={GATE_USER}",
-            f"--property=SupplementaryGroups={CLIENT_USER}", "--property=UMask=0077",
-            "--property=NoNewPrivileges=yes", "--property=CapabilityBoundingSet=",
-            "--property=AmbientCapabilities=", "--property=PrivateDevices=yes",
-            f"--property=RootDirectory={IMAGE}",
-            f"--property=BindPaths={STATE_PARENT}:/state {SOCKET_PARENT}:/socket",
-            f"--property=BindReadOnlyPaths={manifest_source}:/run/wolfalibi/config-manifest.json "
-                f"{BOOT_REPORT}:/run/wolfalibi/image-boot.json"]
+            "--property=User=0", "--property=Group=0", "--property=UMask=0077",
+            "--property=NoNewPrivileges=yes",
+            "--property=CapabilityBoundingSet=CAP_SYS_CHROOT CAP_SETUID CAP_SETGID",
+            "--property=AmbientCapabilities="]
         if wait:
             args.extend(["--wait", "--pipe"])
-        args.extend([*ENTRY, command, "--state", "/state/gate", "--boot-policy", "/state/boot-policy.json"])
+        args.extend([self.launcher, f"--userspec={self.gate_uid}:{self.gate_gid}",
+            f"--groups={self.client_gid}", IMAGE, *ENTRY, command,
+            "--state", "/state/gate", "--boot-policy", "/state/boot-policy.json"])
         if command == "serve":
             args.extend(["--socket", "/socket/gate.sock", "--socket-gid", str(self.client_gid),
                          "--replace-stale-socket"])
         return args
 
-    def gate_command(self, mode, *, manifest_source=WITNESS_MANIFEST):
-        args = self.unit_arguments(mode, manifest_source=manifest_source)
-        return self.guest_json(["/usr/bin/python3", "-I", "-c", RUN_JSON,
+    def gate_command(self, mode):
+        args = self.unit_arguments(mode)
+        result = self.guest_json(["/usr/bin/python3", "-I", "-c", RUN_JSON,
             base64.b64encode(canonical_json(args)).decode("ascii")], f"immutable gate {mode}")
+        # Fixed gate commands emit public JSON only. Retain their actual error
+        # if the launcher exits before that protocol is available.
+        if not isinstance(result.get("document"), dict):
+            self.artifacts.json("diagnostics/gate-command.json", result)
+            raise EnvironmentFailure("GATE_OUTPUT_INVALID", f"immutable gate {mode}")
+        return result
+
+    def bind_manifest(self, source, expected_sha):
+        result = self.guest_json(["/usr/bin/python3", "-I", "-c", BIND_MANIFEST, source, expected_sha],
+                                 "readonly manifest binding")
+        require(result == {"sha256": expected_sha, "read_only": True}, "MANIFEST_BINDING", source)
 
     def store_policy(self, envelope, *, name="boot-policy.json"):
         data = canonical_json(envelope) + b"\n"
@@ -368,14 +462,25 @@ class PrototypeLab(RealLab):
                     "--no-create-home", "--home-dir", "/nonexistent", "--shell",
                     "/usr/sbin/nologin", GATE_USER], "separate target gate account")
         self.gate_uid = int(self.guest(["id", "-u", GATE_USER], "target gate uid"))
+        self.gate_gid = int(self.guest(["id", "-g", GATE_USER], "target gate gid"))
         self.client_uid = int(self.guest(["id", "-u", CLIENT_USER], "target client uid"))
         self.client_gid = int(self.guest(["id", "-g", CLIENT_USER], "target client gid"))
-        require(self.gate_uid > 0 and self.client_uid > 0 and self.gate_uid != self.client_uid,
+        require(self.gate_uid > 0 and self.gate_gid > 0 and self.client_uid > 0 and self.gate_uid != self.client_uid,
                 "TARGET_UID_SEPARATION", "gate and client")
         self.guest(["install", "-d", "-m", "0700", "-o", GATE_USER, "-g", GATE_USER,
                     STATE_PARENT], "private gate state parent")
         self.guest(["install", "-d", "-m", "0755", "-o", GATE_USER, "-g", GATE_USER,
                     SOCKET_PARENT], "nonreplaceable gate socket parent")
+        bindings = self.guest_json(["/usr/bin/python3", "-I", "-c", PREPARE_BINDINGS, sha256(boot_raw)],
+                                  "ordinary image data bindings and verified report copy")
+        require(bindings["boot_report_copy"]["sha256"] == sha256(boot_raw)
+                and bindings["boot_report_copy"]["uid"] == 0
+                and bindings["boot_report_copy"]["mode"] == 0o444,
+                "BOOT_REPORT_COPY", "readonly bootstrap report")
+        require(bindings["launcher"]["kind"] == "GNU_CHROOT" and bindings["launcher"]["uid"] == 0,
+                "LAUNCHER_NOT_VERIFIED", "root-owned GNU chroot")
+        self.launcher = bindings["launcher"]["path"]
+        self.artifacts.json("measurement/launch-bindings.json", bindings)
         broken = copy.deepcopy(self.boot_policy)
         broken["signature"] = "0" * 128
         self.store_policy(broken)
@@ -389,7 +494,8 @@ class PrototypeLab(RealLab):
         wrong_manifest = copy.deepcopy(self.manifest)
         wrong_manifest["gate_image_root"] = "0" * 64
         self.store_policy(wrong_manifest, name="negative-manifest.json")
-        result = self.gate_command("check", manifest_source=STATE_PARENT + "/negative-manifest.json")
+        self.bind_manifest(STATE_PARENT + "/negative-manifest.json", sha256(canonical_json(wrong_manifest) + b"\n"))
+        result = self.gate_command("check")
         require(result["exit_code"] == 2 and result["document"].get("status") == "BLOCKED"
                 and result["document"].get("reason") == "BOOTSTRAP_BINDING",
                 "BOOT_ROOT_ACCEPTED", "valid signature with substituted manifest")
@@ -397,6 +503,7 @@ class PrototypeLab(RealLab):
         self.record("boot-policy-root-mismatch", {"bootstrap_result": result,
             "owner_signature_unchanged": True, "manifest_substitution": "TRUSTED_LAB_READONLY_BIND",
             "native_config_unmodified": True, "private_gate_initialized": False})
+        self.bind_manifest(WITNESS_MANIFEST, sha256(raw_witness))
         initialized = self.gate_command("init")
         require(initialized["exit_code"] == 0 and initialized["document"]["status"] == "INITIALIZED",
                 "GATE_INIT", "immutable target gate")
@@ -404,7 +511,7 @@ class PrototypeLab(RealLab):
         require(self.identity["policy_sha256"] == self.policy_sha and self.identity["target_id"] == self.vm_name,
                 "GATE_IDENTITY", "fresh initialized target")
         self.artifacts.json("target-identity.json", self.identity)
-        self.artifacts.json("target-accounts.json", {"gate_uid": self.gate_uid,
+        self.artifacts.json("target-accounts.json", {"gate_uid": self.gate_uid, "gate_gid": self.gate_gid,
             "client_uid": self.client_uid, "client_gid": self.client_gid})
         profile = {"schema": "wolfalibi.shirudo.owner-profile.v1", "target_id": self.vm_name,
             "gate_instance_id": self.identity["gate_instance_id"], "gate_public_key": self.identity["public_key"],
@@ -429,7 +536,10 @@ class PrototypeLab(RealLab):
         require(response.get("status") == "STATUS", "GATE_START", "target service")
         process = self.guest_json(["/usr/bin/python3", "-I", "-c", PROCESS_PROBE, self.current_unit],
                                   "immutable interpreter process and mappings")
-        require(process["uid"] == self.gate_uid and int(process["effective_capabilities"], 16) == 0
+        require(process["uid"] == self.gate_uid and process["uids"] == [self.gate_uid] * 4
+                and process["gids"] == [self.gate_gid] * 4 and process["supplementary_groups"] == [self.client_gid]
+                and all(int(process[field], 16) == 0 for field in
+                        ("effective_capabilities", "permitted_capabilities", "ambient_capabilities"))
                 and process["command"][:len(ENTRY)] == ENTRY
                 and process["image_device"] == process["process_root_device"] == process["executable_device"]
                 and process["image_inode"] == process["process_root_inode"]
@@ -599,6 +709,20 @@ class PrototypeLab(RealLab):
                     "RECOVERED_RETRY", "lost reply exact retry")
             self.record("recovered-exact-retry", self.effect(repeat, lost, 2))
         finally:
+            if sys.exc_info()[0] is not None and self.units:
+                # These are our fixed gate units; their output contains public
+                # protocol records. Preserve the real launcher error on failure.
+                try:
+                    raw = self.guest(["systemctl", "show", *self.units, "--property=Id",
+                        "--property=Result", "--property=ExecMainCode", "--property=ExecMainStatus"],
+                        "failed prototype unit results")
+                    self.artifacts.write("diagnostics/unit-results.txt", raw)
+                    args = ["journalctl", "--no-pager", "--output=short-iso", "-n", "60"]
+                    for unit in self.units:
+                        args.extend(["--unit", unit])
+                    self.artifacts.write("diagnostics/unit-journal.txt", self.guest(args, "failed prototype unit journal"))
+                except (LabFailure, EnvironmentFailure):
+                    pass
             if self.current_unit is not None:
                 self.guest(["systemctl", "stop", self.current_unit], "stop prototype gate")
                 self.current_unit = None

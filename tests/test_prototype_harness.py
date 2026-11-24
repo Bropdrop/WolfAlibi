@@ -7,10 +7,13 @@ TPM or claim human consent. actual_human_approval remains NOT_RUN.
 
 from __future__ import annotations
 
+import base64
 import copy
+import hashlib
 import os
 import sqlite3
 import stat
+import subprocess
 import sys
 import tempfile
 import threading
@@ -22,6 +25,7 @@ from unittest.mock import patch
 
 from shirudo_adapter.model import canonical_json, digest, strict_json
 from scripts import shirudo_prototype_host as host
+from scripts.shirudo_prototype_lab import RUN_JSON
 from scripts.shirudo_real_lab import EnvironmentFailure, LabFailure
 
 try:
@@ -40,6 +44,30 @@ class PrototypeHostCase(unittest.TestCase):
         self.roles = object.__new__(host.Roles)
         self.roles.exchange = self.root / "public"
         self.roles.exchange.mkdir(mode=0o755)
+
+
+class GateCommandDiagnosticsTests(unittest.TestCase):
+    def invoke(self, child):
+        args = base64.b64encode(canonical_json([sys.executable, "-I", "-c", child])).decode("ascii")
+        result = subprocess.run([sys.executable, "-I", "-c", RUN_JSON, args],
+                                capture_output=True, timeout=5)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return strict_json(result.stdout, 262144)
+
+    def test_empty_protocol_output_preserves_the_underlying_launcher_error(self):
+        error = b"Failed to prepare execution environment\n"
+        result = self.invoke("import sys;sys.stderr.write('Failed to prepare execution environment\\n');sys.exit(226)")
+        self.assertEqual(result["exit_code"], 226)
+        self.assertIsNone(result["document"])
+        self.assertEqual(result["public_error"], error.decode())
+        self.assertEqual(result["stderr_bytes"], len(error))
+        self.assertEqual(result["stderr_sha256"], hashlib.sha256(error).hexdigest())
+
+    def test_valid_nonzero_denial_remains_a_protocol_record(self):
+        result = self.invoke("import json,sys;print(json.dumps({'status':'BLOCKED','reason':'INVALID_SIGNATURE'}));sys.exit(2)")
+        self.assertEqual(result["exit_code"], 2)
+        self.assertEqual(result["document"], {"status": "BLOCKED", "reason": "INVALID_SIGNATURE"})
+        self.assertEqual(result["public_error"], "")
 
 
 class PublicExchangeTests(PrototypeHostCase):
