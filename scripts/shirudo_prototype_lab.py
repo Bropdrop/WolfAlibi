@@ -46,6 +46,39 @@ SOCKET = SOCKET_PARENT + "/gate.sock"
 GATE_USER = "wolfproto-gate"
 CLIENT_USER = "wolfproto-client"
 ENTRY = ["/usr/bin/python3", "-I", "-B", "-S", "/opt/wolfalibi/gate_entry.py"]
+OWNER_DIAGNOSTIC_LIMIT = 1_048_576
+
+
+def capture_owner_terminal_failure(terminal):
+    """Retain bounded public child output even if it exits before READY.
+
+    These are the fixed owner's public JSON channel and scripted terminal,
+    never its private state, environment, or arbitrary process descriptors.
+    Capture runs before the context manager closes those two known channels.
+    """
+    captured = {}
+    for name, descriptor, previous in (
+            ("pending_stdout", terminal.process.stdout.fileno(), terminal.buffer),
+            ("terminal_transcript", terminal.master, terminal.transcript)):
+        data = bytearray(previous[:OWNER_DIAGNOSTIC_LIMIT])
+        while len(data) < OWNER_DIAGNOSTIC_LIMIT:
+            try:
+                part = os.read(descriptor, min(16_384, OWNER_DIAGNOSTIC_LIMIT - len(data)))
+            except (BlockingIOError, OSError):
+                break
+            if not part:
+                break
+            data.extend(part)
+        captured[name] = bytes(data)
+    record = {
+        "schema": "wolfalibi.shirudo.prototype-owner-terminal-failure.v1",
+        "driver": "SCRIPTED_PTY", "actual_human_approval": "NOT_RUN",
+        "exit_code": terminal.process.poll(), "events": list(terminal.records),
+        "channels": {name: {"bytes": len(data), "sha256": sha256(data),
+            "at_capture_limit": len(data) == OWNER_DIAGNOSTIC_LIMIT}
+            for name, data in captured.items()},
+    }
+    return record, captured
 
 REQUIRED_CASES = frozenset({
     "measured-config-binding", "verity-wrong-root", "verity-corrupted-data",
@@ -587,51 +620,60 @@ class PrototypeLab(RealLab):
         intent_file = self.roles.public(name + "-intent.json", intent)
         bundle_name = name + "-bundle.json"
         args = self.roles.argv("owner", ["approve", "--intent", str(intent_file),
-            "--bundle", str(self.roles.exchange / bundle_name), "--ready-timeout", "15", "--bundle-timeout", "25"])
+            "--bundle", str(self.roles.exchange / bundle_name), "--ready-timeout", "15", "--bundle-timeout", "25"],
+            terminal=True)
         with OwnerTerminal(args) as terminal:
-            terminal.wait_prompt("Type READY")
-            terminal.send("READY")
-            ready = terminal.event()
-            require(ready.get("status") == "READY", "OWNER_NOT_READY", name)
-            bundle = self.fresh_bundle(name, intent["request_id"])
-            submitted = copy.deepcopy(bundle)
-            if behavior == "tamper":
-                submitted["assessment"]["signature"] = "0" * 128
-            self.roles.public(bundle_name, submitted)
-            event = terminal.event()
-            if behavior != "tamper":
-                require(event.get("status") == "AWAITING_APPROVAL", "OWNER_DID_NOT_REVIEW", name)
-                if behavior != "timeout":
-                    terminal.send("NO" if behavior == "deny" else event["approval_phrase"])
-                event = terminal.event(timeout=35)
-            return_code = terminal.process.wait(timeout=5)
-            record = {"driver": "SCRIPTED_PTY", "actual_human_approval": "NOT_RUN",
-                "ready": ready, "events": terminal.records, "exit_code": return_code,
-                "terminal_transcript_sha256": sha256(bytes(terminal.transcript)),
-                "terminal_transcript_bytes": len(terminal.transcript)}
-            self.artifacts.json(f"materials/{name}/terminal.json", record)
-            self.artifacts.write(f"materials/{name}/terminal-transcript.txt", bytes(terminal.transcript))
-            self.artifacts.json(f"materials/{name}/submitted-bundle.json", submitted)
-            if behavior == "approve":
-                require(event.get("status") in ("GRANT_ISSUED", "GRANT_RECORDED") and return_code == 0,
-                        "OWNER_GRANT", name)
-                request = {"operation_id": bundle["action_challenge"]["payload"]["operation_id"],
-                    "grant": event["grant"], "assessment": bundle["assessment"]}
-                self.artifacts.json(f"materials/{name}/request.json", request)
-                return {"bundle": bundle, "request": request, "ceremony": record}
-            expected = {"deny": ("DENIED", "OWNER_DECLINED", 1),
-                        "tamper": ("BLOCKED", "INVALID_SIGNATURE", 2),
-                        "timeout": ("DENIED", "APPROVAL_TIMEOUT", 1)}[behavior]
-            require((event.get("status"), event.get("reason"), return_code) == expected
-                    and (behavior != "tamper" or not any(e.get("status") == "AWAITING_APPROVAL"
-                                                        for e in terminal.records)),
-                    "OWNER_DENIAL", name)
-            operation_id = bundle["action_challenge"]["payload"]["operation_id"]
-            _, no_grant = self.roles.invoke("owner", ["grant", "--operation-id", operation_id], accepted=(2,))
-            require(no_grant.get("reason") == "UNKNOWN_OPERATION", "DENIED_GRANT_PERSISTED", name)
-            self.record(name, {"operation_id": operation_id, "terminal_result": event,
-                "owner_journal_result": no_grant, "driver": "SCRIPTED_PTY"}, counter=0)
-            return None
+            try:
+                terminal.wait_prompt("Type READY")
+                terminal.send("READY")
+                ready = terminal.event()
+                require(ready.get("status") == "READY", "OWNER_NOT_READY", name)
+                bundle = self.fresh_bundle(name, intent["request_id"])
+                submitted = copy.deepcopy(bundle)
+                if behavior == "tamper":
+                    submitted["assessment"]["signature"] = "0" * 128
+                self.roles.public(bundle_name, submitted)
+                event = terminal.event()
+                if behavior != "tamper":
+                    require(event.get("status") == "AWAITING_APPROVAL", "OWNER_DID_NOT_REVIEW", name)
+                    if behavior != "timeout":
+                        terminal.send("NO" if behavior == "deny" else event["approval_phrase"])
+                    event = terminal.event(timeout=35)
+                return_code = terminal.process.wait(timeout=5)
+                record = {"driver": "SCRIPTED_PTY", "actual_human_approval": "NOT_RUN",
+                    "ready": ready, "events": terminal.records, "exit_code": return_code,
+                    "terminal_transcript_sha256": sha256(bytes(terminal.transcript)),
+                    "terminal_transcript_bytes": len(terminal.transcript)}
+                self.artifacts.json(f"materials/{name}/terminal.json", record)
+                self.artifacts.write(f"materials/{name}/terminal-transcript.txt", bytes(terminal.transcript))
+                self.artifacts.json(f"materials/{name}/submitted-bundle.json", submitted)
+                if behavior == "approve":
+                    require(event.get("status") in ("GRANT_ISSUED", "GRANT_RECORDED") and return_code == 0,
+                            "OWNER_GRANT", name)
+                    request = {"operation_id": bundle["action_challenge"]["payload"]["operation_id"],
+                        "grant": event["grant"], "assessment": bundle["assessment"]}
+                    self.artifacts.json(f"materials/{name}/request.json", request)
+                    return {"bundle": bundle, "request": request, "ceremony": record}
+                expected = {"deny": ("DENIED", "OWNER_DECLINED", 1),
+                            "tamper": ("BLOCKED", "INVALID_SIGNATURE", 2),
+                            "timeout": ("DENIED", "APPROVAL_TIMEOUT", 1)}[behavior]
+                require((event.get("status"), event.get("reason"), return_code) == expected
+                        and (behavior != "tamper" or not any(e.get("status") == "AWAITING_APPROVAL"
+                                                            for e in terminal.records)),
+                        "OWNER_DENIAL", name)
+                operation_id = bundle["action_challenge"]["payload"]["operation_id"]
+                _, no_grant = self.roles.invoke("owner", ["grant", "--operation-id", operation_id], accepted=(2,))
+                require(no_grant.get("reason") == "UNKNOWN_OPERATION", "DENIED_GRANT_PERSISTED", name)
+                self.record(name, {"operation_id": operation_id, "terminal_result": event,
+                    "owner_journal_result": no_grant, "driver": "SCRIPTED_PTY"}, counter=0)
+                return None
+            except Exception:
+                diagnostic, channels = capture_owner_terminal_failure(terminal)
+                diagnostic["case"] = name
+                self.artifacts.json("diagnostics/owner-terminal.json", diagnostic)
+                for channel, data in channels.items():
+                    self.artifacts.write("diagnostics/owner-" + channel + ".txt", data)
+                raise
 
     def effect(self, document, material, expected):
         receipt = document["receipt"]

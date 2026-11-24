@@ -258,6 +258,95 @@ class RoleCommandShapeTests(unittest.TestCase):
                 self.assertEqual(argv[9:14], ["/trusted/python", "-I", "-B", "-m", module])
                 self.assertEqual(argv[-2:], ["--state", str(roles.base / role / "state")])
 
+    def test_handoff_is_explicit_and_only_wraps_owner_approval(self):
+        roles = object.__new__(host.Roles)
+        roles.python = "/trusted/python"
+        roles.base = Path("/var/lib/wolfalibi-prototype/test")
+        ordinary = roles.argv("owner", ["approve"])
+        self.assertEqual(ordinary[12:14], ["-m", "shirudo_adapter.owner_cli"])
+        scripted = roles.argv("owner", ["approve"], terminal=True)
+        self.assertEqual(scripted[12:14], ["-c", host.OWNER_TERMINAL_LAUNCHER])
+        self.assertEqual(ordinary[:12], scripted[:12])
+        self.assertEqual(ordinary[14:], scripted[14:])
+        for role, args in (("owner", ["identity"]), ("owner", []), ("verifier", ["approve"])):
+            with self.subTest(role=role, args=args), self.assertRaises(EnvironmentFailure) as raised:
+                roles.argv(role, args, terminal=True)
+            self.assertEqual(raised.exception.code, "ROLE_TERMINAL_SCOPE")
+
+
+class OwnerTerminalHandoffTests(unittest.TestCase):
+    def test_missing_controlling_terminal_blocks_before_owner_exec(self):
+        result = subprocess.run([sys.executable, "-I", "-c", host.OWNER_TERMINAL_HANDOFF +
+            "\nraise RuntimeError('must not reach owner execution')\n"],
+            stdin=subprocess.DEVNULL, capture_output=True, start_new_session=True, timeout=5)
+        self.assertEqual(result.returncode, 2)
+        self.assertEqual(strict_json(result.stdout, 4096)["reason"], "OWNER_TTY_HANDOFF")
+        self.assertEqual(result.stderr, b"")
+
+    def test_normal_job_control_handoff_preserves_two_way_terminal_input(self):
+        # A same-UID supervisor models the documented sudo SIGTTIN handshake.
+        # The separate mandatory sudo probe covers sudo's actual forwarding.
+        child = host.OWNER_TERMINAL_HANDOFF + r'''
+fd = os.open('/dev/tty', os.O_RDWR)
+for prompt, expected in ((b'First READY: ', 'READY'), (b'Final APPROVE: ', 'APPROVE')):
+    os.write(fd, prompt)
+    answer = os.read(fd, 128).decode('ascii').strip()
+    print(json.dumps({'answer':answer,'expected':expected,'uid':os.geteuid(),
+        'foreground':os.tcgetpgrp(fd)==os.getpgrp()}), flush=True)
+os.close(fd)
+'''
+        supervisor = r'''
+import os, signal, sys
+child = os.fork()
+if child == 0:
+    os.setpgid(0, 0)
+    os.execv(sys.executable, [sys.executable, '-I', '-c', CHILD_CODE])
+def stop(signum, frame):
+    try:
+        os.killpg(child, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    os._exit(128 + signum)
+signal.signal(signal.SIGTERM, stop)
+signal.signal(signal.SIGALRM, stop)
+signal.alarm(10)
+_, status = os.waitpid(child, os.WUNTRACED)
+if not os.WIFSTOPPED(status) or os.WSTOPSIG(status) != signal.SIGTTIN:
+    stop(signal.SIGTERM, None)
+os.tcsetpgrp(2, child)
+os.killpg(child, signal.SIGCONT)
+_, status = os.waitpid(child, 0)
+os._exit(os.waitstatus_to_exitcode(status))
+'''.replace("CHILD_CODE", repr(child))
+        with host.OwnerTerminal([sys.executable, "-I", "-c", supervisor]) as terminal:
+            for prompt, answer in (("First READY", "READY"), ("Final APPROVE", "APPROVE")):
+                terminal.wait_prompt(prompt, timeout=5)
+                terminal.send(answer)
+                event = terminal.event(timeout=5)
+                self.assertEqual(event, {"answer": answer, "expected": answer,
+                                         "uid": os.geteuid(), "foreground": True})
+            self.assertEqual(terminal.process.wait(timeout=5), 0)
+
+    def test_prompt_failure_retains_early_json_and_terminal_diagnostic(self):
+        child = ("import json,sys; print(json.dumps({'status':'BLOCKED',"
+                 "'reason':'TERMINAL_REQUIRED'}),flush=True);"
+                 "sys.stderr.write('public launch diagnostic\\n');sys.exit(2)")
+        with host.OwnerTerminal([sys.executable, "-c", child]) as terminal:
+            with self.assertRaises(EnvironmentFailure) as raised:
+                terminal.wait_prompt("Type READY", timeout=3)
+            self.assertEqual(raised.exception.code, "OWNER_TTY_CLOSED")
+            self.assertEqual(strict_json(bytes(terminal.buffer).strip(), 4096),
+                             {"status": "BLOCKED", "reason": "TERMINAL_REQUIRED"})
+            self.assertIn(b"public launch diagnostic", terminal.transcript)
+
+    def test_prompt_wait_also_bounds_early_stdout(self):
+        child = "import sys,time;sys.stdout.write('x'*1025);sys.stdout.flush();time.sleep(5)"
+        with patch.object(host, "MAX_PUBLIC", 1024):
+            with host.OwnerTerminal([sys.executable, "-c", child]) as terminal:
+                with self.assertRaises(LabFailure) as raised:
+                    terminal.wait_prompt("Type READY", timeout=3)
+                self.assertEqual(raised.exception.code, "OWNER_OUTPUT_LIMIT")
+
 
 if __name__ == "__main__":
     unittest.main()

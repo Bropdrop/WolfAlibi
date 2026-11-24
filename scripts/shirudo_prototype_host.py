@@ -39,6 +39,42 @@ USERS = {"owner": "wolfproto-owner", "verifier": "wolfproto-verifier",
 MODULES = {"owner": "shirudo_adapter.owner_cli", "verifier": "shirudo_adapter.cli"}
 MAX_PUBLIC = 1_048_576
 
+# This fixed LAB-only shim runs after sudo/prlimit/setpriv, under the owner
+# account. sudo with use_pty may initially run a pipe-stdout command in the
+# background. Request its normal job-control foreground handoff before the
+# unchanged owner CLI requires a foreground controlling terminal. The parent
+# OwnerTerminal timeout bounds an unavailable/noncooperating supervisor.
+OWNER_TERMINAL_HANDOFF = r"""
+import json, os, signal, sys
+try:
+    fd = os.open('/dev/tty', os.O_RDWR | os.O_NOCTTY | os.O_CLOEXEC)
+    try:
+        if not os.isatty(fd):
+            raise OSError('No controlling terminal')
+        previous = signal.signal(signal.SIGTTIN, signal.SIG_DFL)
+        try:
+            for attempt in range(3):
+                if os.tcgetpgrp(fd) == os.getpgrp():
+                    break
+                os.killpg(os.getpgrp(), signal.SIGTTIN)
+            if os.tcgetpgrp(fd) != os.getpgrp():
+                raise OSError('No foreground handoff')
+        finally:
+            signal.signal(signal.SIGTTIN, previous)
+    finally:
+        os.close(fd)
+except OSError:
+    print(json.dumps({'status':'BLOCKED','reason':'OWNER_TTY_HANDOFF',
+        'message':'The owner role could not obtain its foreground controlling terminal'}), flush=True)
+    raise SystemExit(2)
+"""
+OWNER_TERMINAL_LAUNCHER = OWNER_TERMINAL_HANDOFF + r"""
+if len(sys.argv) < 2 or sys.argv[1] != 'approve':
+    raise SystemExit(2)
+os.execv(sys.executable, [sys.executable, '-I', '-B', '-m',
+    'shirudo_adapter.owner_cli', *sys.argv[1:]])
+"""
+
 
 def selected_run() -> str:
     require(os.environ.get("GITHUB_ACTIONS") == "true"
@@ -81,15 +117,21 @@ class Roles:
                 command(["sudo", "-n", "install", "-d", "-m", "0700", "-o", user, "-g", user,
                          str(self.base / role)])
 
-    def argv(self, role, args):
+    def argv(self, role, args, *, terminal=False):
         require(role in MODULES, "ROLE_NAME", "role invocation", environment=True)
+        require(type(terminal) is bool and (not terminal or
+                (role == "owner" and args and args[0] == "approve")),
+                "ROLE_TERMINAL_SCOPE", "fixed owner approval launcher", environment=True)
         # Raise the limit after sudo's PAM session, then drop the UID without
         # a second PAM reset. The pinned upstream verifier needs this memlock
         # limit even though it performs evidence verification on the host.
+        program = (["-c", OWNER_TERMINAL_LAUNCHER]
+                   if terminal
+                   else ["-m", MODULES[role]])
         return ["sudo", "-n", "prlimit", "--memlock=unlimited:unlimited", "--",
                 "setpriv", "--reuid=" + USERS[role], "--regid=" + USERS[role], "--init-groups",
-                self.python, "-I", "-B", "-m",
-                MODULES[role], *args, "--state", str(self.base / role / "state")]
+                self.python, "-I", "-B", *program, *args,
+                "--state", str(self.base / role / "state")]
 
     def invoke(self, role, args, *, accepted=(0,)):
         code, raw = command(self.argv(role, args), accepted=accepted)
@@ -225,18 +267,28 @@ class OwnerTerminal:
         deadline = time.monotonic() + timeout
         needle = text.encode("ascii")
         with selectors.DefaultSelector() as selector:
-            selector.register(self.master, selectors.EVENT_READ)
+            selector.register(self.master, selectors.EVENT_READ, "terminal")
+            selector.register(self.process.stdout, selectors.EVENT_READ, "stdout")
+            terminal_closed = False
             while needle not in self.transcript and time.monotonic() < deadline:
                 for key, _ in selector.select(0.05):
                     try:
                         data = os.read(key.fd, 16_384)
-                    except OSError:
-                        data = b""
+                    except OSError as exc:
+                        if key.data == "terminal" and exc.errno == 5:
+                            data = b""
+                        else:
+                            raise
                     if not data:
-                        raise EnvironmentFailure("OWNER_TTY_CLOSED", "scripted terminal prompt")
-                    require(len(self.transcript) + len(data) <= MAX_PUBLIC,
+                        selector.unregister(key.fileobj)
+                        terminal_closed |= key.data == "terminal"
+                        continue
+                    dest = self.buffer if key.data == "stdout" else self.transcript
+                    require(len(dest) + len(data) <= MAX_PUBLIC,
                             "OWNER_OUTPUT_LIMIT", "scripted terminal prompt")
-                    self.transcript.extend(data)
+                    dest.extend(data)
+                if terminal_closed and not selector.get_map():
+                    raise EnvironmentFailure("OWNER_TTY_CLOSED", "scripted terminal prompt")
         require(needle in self.transcript, "OWNER_PROMPT_TIMEOUT", "scripted terminal", environment=True)
 
     def close(self):
