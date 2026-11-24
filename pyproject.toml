@@ -12,6 +12,7 @@ dependencies = ["cryptography==50.0.0"]
 [project.scripts]
 wolfalibi-shirudo = "shirudo_adapter.cli:main"
 wolfalibi-shirudo-action-gate = "shirudo_adapter.action_gate_cli:main"
+wolfalibi-shirudo-owner = "shirudo_adapter.owner_cli:main"
 
 [tool.setuptools]
 packages = ["shirudo_adapter"]
