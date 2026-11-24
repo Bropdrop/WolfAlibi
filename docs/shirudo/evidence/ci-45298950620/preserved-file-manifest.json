@@ -1,0 +1,89 @@
+{
+  "executed_commit": "521a3c887e86a9d4db0c4b416433146d7161fef9",
+  "files": {
+    "action-artifact-review.json": {
+      "bytes": 2393,
+      "sha256": "a5038b01962d8ea6759182c89e9c68bee2d03e94240295a925609cc7ff205606"
+    },
+    "action-summary.json": {
+      "bytes": 62835,
+      "sha256": "e1a5f59c388ced572563d9e2b7794b7bb34263fce986c93c17847703aee36dde"
+    },
+    "action-target-identity.json": {
+      "bytes": 334,
+      "sha256": "d17eb88b3d444af87c0f4bf52d0df2d9e056b4d53525cb561d534f2ce34d2d85"
+    },
+    "action-trust.json": {
+      "bytes": 1400,
+      "sha256": "acdbd558dfd9b7dc44432624e109b73e063c8b6ab5741128d2a67fc2a1a02fdd"
+    },
+    "artifact-provenance.json": {
+      "bytes": 11163,
+      "sha256": "6ee8e5fca4b2a079c5aab12d2ef3f858a0c368450d9a4411be40535bc6ce0ef4"
+    },
+    "authorized-effect-receipt.json": {
+      "bytes": 1294,
+      "sha256": "22a4c7ccdfad43e75101b6d05b1b59a1dfb7f4459a8caf562ecf4954705853e9"
+    },
+    "guest-dependencies.json": {
+      "bytes": 198,
+      "sha256": "7ab24234aea98f70050f6b5fa42250ac56343f7917268cf2811043e5bd665f53"
+    },
+    "host-test-review.json": {
+      "bytes": 1680,
+      "sha256": "fb1c80ba1f937c07fbb54ab1c8dbd4d04a12513f2d833502e7b1024cd2c1eae1"
+    },
+    "lab-artifact-review.json": {
+      "bytes": 2645,
+      "sha256": "70e23f07be47ec58a4b30c314cfcd19cb6da065c53978e7fd298a8db0a00ed3d"
+    },
+    "lab-public-records.zip": {
+      "bytes": 439692,
+      "sha256": "29393789222e073b325e72645f83c50288082037259a238fe39c1b8e67522c11"
+    },
+    "lab-summary.json": {
+      "bytes": 3077,
+      "sha256": "a3201c650dfbd89adee4be7582f92e727484a6e13826e2b0670e63bcbd258c9a"
+    },
+    "official-artifact.json": {
+      "bytes": 433,
+      "sha256": "fb1c7bc9bccaf288af1fb39c85dac11769384ebabcabeb2fdaa5027b42f70292"
+    },
+    "offline-artifact-review.json": {
+      "bytes": 1639,
+      "sha256": "476daf4ba6565aba3b0754d24167c4630568e94f315694634913c61bb86d9a69"
+    },
+    "offline-public-records.zip": {
+      "bytes": 81502,
+      "sha256": "e50fdf6e068966ee4eaa2f09481652a205a0d55878c2bde7f4af5c727f371e8d"
+    },
+    "preflight.json": {
+      "bytes": 372,
+      "sha256": "da0b062fd754deb5fb017c2047761056f6349615fe79d3c21e991273c6187f3c"
+    },
+    "qualification.json": {
+      "bytes": 9690,
+      "sha256": "e8596cc6e6ae40083fe9e59c6cb1c227fc5d6fa36f34bad16bde95be690b5d33"
+    },
+    "review-corruption-checks.json": {
+      "bytes": 1343,
+      "sha256": "3f340ca677c5341852ef01d6abc69555e2523def57aab0b71d333334065d98f7"
+    },
+    "upstream-license.txt": {
+      "bytes": 1306,
+      "sha256": "b867b6a7c42630db3b2ee8fe2105b18751dbc554e53f37a0095f98bdbbf7f1aa"
+    }
+  },
+  "reviewers": {
+    "review_action_artifact.py": {
+      "bytes": 60968,
+      "sha256": "af0ed2db32e469d7a5c800c1d8121387ae8bc685d597c97aadcaa071e1991087"
+    },
+    "review_action_corruptions.py": {
+      "bytes": 6197,
+      "sha256": "c80b71b30fe761e3363f04b9c8c7ea7552586762d8a9045e5cff3dbdc0d3f420"
+    }
+  },
+  "schema": "wolfalibi.shirudo.preserved-evidence-manifest.v1",
+  "workflow_run": 45298950620
+}

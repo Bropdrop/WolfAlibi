@@ -1,0 +1,46 @@
+{
+  "accepted_recorded_upstream_reports_verified": 12,
+  "artifact_manifest_sha256": "8446d1252af94f9ede3e56ab2d37c3fb2bfb2e472abc399c94ff44ae8eabb7b5",
+  "bytes_verified": 737856,
+  "case_results_verified": 26,
+  "counter_chain": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "current_authorization": false,
+  "expected_ci_context": {
+    "commit": "521a3c887e86a9d4db0c4b416433146d7161fef9",
+    "repository": "Bropdrop/WolfAlibi",
+    "run_association_independently_verified": false,
+    "run_id": 45298950620,
+    "tree": "1d4356d5b0da3c7dfef13b0c3f9c246a778ba64b"
+  },
+  "files_verified": 185,
+  "gate_instance_id": "ea2a0ee717bdd0c30d0a1b09562a703d",
+  "hardware_qualification": false,
+  "human_approval_implemented": false,
+  "independent_tpm_verification": false,
+  "limitations": [
+    "Checks consistency and Ed25519 signatures under public LAB keys retained in this artifact; those keys are not an external identity root.",
+    "Does not independently execute Shirudo or verify the underlying TPM quote/certification cryptography.",
+    "Source content is pinned to the reviewed code commit; GitHub run, job, artifact and archive association require a separate authenticated provenance check.",
+    "Builder, hypervisor, software TPM, verifier signer, owner signer, target root, databases, clocks and recorded observations remain trusted.",
+    "No hardware identity, independent owner custody, human approval, measured gate image, continuous state or coordinated rollback resistance is established.",
+    "Effect receipts authenticate past laboratory counter records; they provide no current authorization or general target command authority.",
+    "Process-exit observations do not establish power-loss durability or complete agent confinement."
+  ],
+  "material_sets_verified": 12,
+  "policy_sha256": "e764ee5990ec845d50ebfe42bff2ef04d2fd4410e270f8f722d5d15df56a0fba",
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.action-artifact-review.v1",
+  "scope": "PUBLIC_ARTIFACT_CONSISTENCY_UNDER_RETAINED_LAB_KEYS",
+  "signature_verifications": 80,
+  "source_content_matches_commit": "521a3c887e86a9d4db0c4b416433146d7161fef9",
+  "summary_sha256": "e1a5f59c388ced572563d9e2b7794b7bb34263fce986c93c17847703aee36dde",
+  "target_id": "wolfalibi-action-45298950620-1",
+  "trust_sha256": "755e64824aa7c3fd318217abba84390b3e40fcc326bbec2aa679116add52e55e",
+  "unique_effects_verified": 4
+}

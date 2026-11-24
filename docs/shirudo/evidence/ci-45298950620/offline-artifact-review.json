@@ -1,0 +1,63 @@
+{
+  "artifact_id": 14877287944,
+  "artifact_sha256": "e50fdf6e068966ee4eaa2f09481652a205a0d55878c2bde7f4af5c727f371e8d",
+  "cases": [
+    {
+      "case": "known-negative",
+      "expected_outcome_observed": true,
+      "raw_exit": 1,
+      "status": "REJECTED"
+    },
+    {
+      "case": "candidate-config-history",
+      "expected_outcome_observed": true,
+      "raw_exit": 0,
+      "status": "ACCEPTED"
+    },
+    {
+      "case": "quote-signature-bitflip",
+      "expected_outcome_observed": true,
+      "raw_exit": 1,
+      "status": "REJECTED"
+    },
+    {
+      "case": "register-value-bitflip",
+      "expected_outcome_observed": true,
+      "raw_exit": 1,
+      "status": "REJECTED"
+    },
+    {
+      "case": "config-history-bitflip",
+      "expected_outcome_observed": true,
+      "raw_exit": 1,
+      "status": "REJECTED"
+    },
+    {
+      "case": "quoted-pcr-bitflip",
+      "expected_outcome_observed": true,
+      "raw_exit": 1,
+      "status": "REJECTED"
+    },
+    {
+      "case": "wrong-expected-nonce",
+      "expected_outcome_observed": true,
+      "raw_exit": 1,
+      "status": "REJECTED"
+    },
+    {
+      "case": "truncated-json",
+      "expected_outcome_observed": true,
+      "raw_exit": 2,
+      "status": "PARSE_REJECTED"
+    }
+  ],
+  "current_authorization": false,
+  "fresh_target_claim": false,
+  "raw_adapter_reports_and_exit_codes_match": true,
+  "raw_report_bytes_match_nested_reports": true,
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.offline-artifact-review.v1",
+  "verified_descriptor_files": 30,
+  "workflow_commit": "521a3c887e86a9d4db0c4b416433146d7161fef9",
+  "workflow_run": 45298950620
+}

@@ -1,0 +1,84 @@
+{
+  "artifact_files": 70,
+  "cases": [
+    {
+      "case": "positive",
+      "outcome": "EVIDENCE_ACCEPTED",
+      "reason": "REQUIRED_CHECKS_PASSED",
+      "upstream_failures": []
+    },
+    {
+      "case": "new-nonce-stale-evidence",
+      "outcome": "REJECTED",
+      "reason": "NONCE_MISMATCH",
+      "upstream_failures": []
+    },
+    {
+      "case": "tampered-signature",
+      "outcome": "REJECTED",
+      "reason": "UPSTREAM_REJECTED",
+      "upstream_failures": [
+        "quote: ECDSA signature by the attestation key"
+      ]
+    },
+    {
+      "case": "wrong-identity",
+      "outcome": "REJECTED",
+      "reason": "TARGET_MISMATCH",
+      "upstream_failures": []
+    },
+    {
+      "case": "wrong-chain",
+      "outcome": "REJECTED",
+      "reason": "STATE_MISMATCH",
+      "upstream_failures": []
+    },
+    {
+      "case": "wrong-config",
+      "outcome": "REJECTED",
+      "reason": "UPSTREAM_REJECTED",
+      "upstream_failures": [
+        "config: config root was not approved by the operator"
+      ]
+    },
+    {
+      "case": "wrong-binding",
+      "outcome": "REJECTED",
+      "reason": "UPSTREAM_REJECTED",
+      "upstream_failures": [
+        "binding: PCR 9 held the expected value"
+      ]
+    },
+    {
+      "case": "expired-challenge",
+      "outcome": "REJECTED",
+      "reason": "CHALLENGE_EXPIRED",
+      "upstream_failures": []
+    },
+    {
+      "case": "revoked-policy",
+      "outcome": "REJECTED",
+      "reason": "POLICY_REVOKED",
+      "upstream_failures": []
+    }
+  ],
+  "control_cases": 10,
+  "current_authorization": false,
+  "distinct_fresh_collection_nonces": 8,
+  "ed25519_signatures_verified": 18,
+  "issued_challenges": 9,
+  "manifest_digests_verified": 69,
+  "no_unexpected_or_private_artifact_files": true,
+  "pcr11_is_zero": true,
+  "result": "PASS",
+  "review_limits": [
+    "Ed25519 signatures were independently verified against the retained CI public key; that key has no separate external identity anchor.",
+    "TPM verification results are signed records of the genuine pinned verifier's CI execution; this review does not execute the TPM verifier again.",
+    "Replay denial is an unsigned CI control result checked for artifact consistency; the private journal is intentionally absent.",
+    "Revocation and private-state cleanup are recorded CI assertions; the deleted private state cannot be reexamined after download.",
+    "Expiry/revocation assessments intentionally have no signed evidence digest because they stop before reading the evidence file."
+  ],
+  "schema": "wolfalibi.shirudo.independent-artifact-review.v1",
+  "signed_receipts": 9,
+  "tpm_verifier_reexecuted": false
+}

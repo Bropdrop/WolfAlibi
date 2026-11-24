@@ -1,0 +1,47 @@
+{
+  "adapter_imported": false,
+  "clean_artifact_result": "PASS",
+  "controls": [
+    {
+      "case": "forged-owner-signature",
+      "failed_check": "authorized:grant:signature",
+      "result": "REJECTED"
+    },
+    {
+      "case": "forged-target-signature",
+      "failed_check": "authorized:action:signature",
+      "result": "REJECTED"
+    },
+    {
+      "case": "mismatched-oracle-request-binding",
+      "failed_check": "ORACLE:retained-authority-binding",
+      "result": "REJECTED"
+    },
+    {
+      "case": "denial-concealing-an-extra-effect",
+      "failed_check": "forged-owner:ordered-counter-observations",
+      "result": "REJECTED"
+    },
+    {
+      "case": "boolean-substituted-for-counter",
+      "failed_check": "ORACLE:counter",
+      "result": "REJECTED"
+    },
+    {
+      "case": "omitted-required-control",
+      "failed_check": "LAYOUT:exact-public-exports",
+      "result": "REJECTED"
+    },
+    {
+      "case": "altered-source-with-matching-manifests",
+      "failed_check": "SOURCE:reviewed-commit:shirudo_adapter/action_gate.py",
+      "result": "REJECTED"
+    }
+  ],
+  "current_authorization": false,
+  "modified_file_manifest_entries_recomputed": true,
+  "original_artifact_modified": false,
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.action-artifact-corruption-review.v1",
+  "target_contact": false
+}

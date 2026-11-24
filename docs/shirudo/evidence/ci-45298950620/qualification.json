@@ -1,0 +1,350 @@
+{
+  "artifacts": [
+    {
+      "bytes": 439692,
+      "id": 14878707054,
+      "name": "shirudo-action-lab-521a3c887e86a9d4db0c4b416433146d7161fef9",
+      "sha256": "29393789222e073b325e72645f83c50288082037259a238fe39c1b8e67522c11",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45298950620/artifacts/14878707054"
+    },
+    {
+      "bytes": 81502,
+      "id": 14877287944,
+      "name": "shirudo-action-offline-521a3c887e86a9d4db0c4b416433146d7161fef9",
+      "sha256": "e50fdf6e068966ee4eaa2f09481652a205a0d55878c2bde7f4af5c727f371e8d",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45298950620/artifacts/14877287944"
+    }
+  ],
+  "assurance": "LAB_VTPM",
+  "base_commit": "a18dafd104e04ca202a5b81d1c0b595fdc951a1b",
+  "cleanup": {
+    "observed_log": "[test-vm] stopped VM: wolfalibi-action-45298950620-1 (state preserved)",
+    "private_host_verifier_state_removed": true,
+    "secure_erasure_verified": false,
+    "target_private_state_exported": false,
+    "vm_stop_step": "success"
+  },
+  "counter_observations": [
+    {
+      "after": 1,
+      "before": 0,
+      "case": "authorized",
+      "expected_delta": 1,
+      "observed_delta": 1,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "exact-retry",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "attestation-reuse",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "completed-operation-conflict",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "assessment-alone",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "grant-alone",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "forged-owner",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "forged-verifier",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "widened-action",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "wrong-target",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "wrong-policy",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "different-valid-assessment",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "grant-revoked",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "grant-expired",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 1,
+      "before": 1,
+      "case": "operation-expired",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 2,
+      "before": 1,
+      "case": "concurrent",
+      "expected_delta": 1,
+      "observed_delta": 1,
+      "result": "PASS"
+    },
+    {
+      "after": 2,
+      "before": 2,
+      "case": "direct-database-access",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 2,
+      "before": 2,
+      "case": "client-admin-denied",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 2,
+      "before": 2,
+      "case": "before-commit-interruption",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 3,
+      "before": 2,
+      "case": "before-commit-retry",
+      "expected_delta": 1,
+      "observed_delta": 1,
+      "result": "PASS"
+    },
+    {
+      "after": 4,
+      "before": 3,
+      "case": "after-commit-lost-reply",
+      "expected_delta": 1,
+      "observed_delta": 1,
+      "result": "PASS"
+    },
+    {
+      "after": 4,
+      "before": 4,
+      "case": "lost-reply-status-recovery",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 4,
+      "before": 4,
+      "case": "lost-reply-exact-retry",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 4,
+      "before": 4,
+      "case": "policy-revoked",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 4,
+      "before": 4,
+      "case": "prepare-after-revocation",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    },
+    {
+      "after": 4,
+      "before": 4,
+      "case": "historical-retry-after-revocation",
+      "expected_delta": 0,
+      "observed_delta": 0,
+      "result": "PASS"
+    }
+  ],
+  "current_authorization": false,
+  "executed_commit": "521a3c887e86a9d4db0c4b416433146d7161fef9",
+  "executed_tree": "1d4356d5b0da3c7dfef13b0c3f9c246a778ba64b",
+  "gate_instance_id": "ea2a0ee717bdd0c30d0a1b09562a703d",
+  "gate_measured_into_boot_image": false,
+  "gates": {
+    "fresh_evidence": {
+      "cases": 10,
+      "fresh_collections": 8,
+      "report": "lab-artifact-review.json",
+      "result": "PASS",
+      "signed_challenges": 9,
+      "signed_receipts": 9
+    },
+    "historical_verifier": {
+      "cases": 8,
+      "report": "offline-artifact-review.json",
+      "result": "PASS",
+      "scope": "HISTORICAL_FIXTURE_COMPATIBILITY"
+    },
+    "host_tests": {
+      "action_cli_tests_per_job": 18,
+      "python_versions": [
+        "3.11",
+        "3.12"
+      ],
+      "report": "host-test-review.json",
+      "result": "PASS",
+      "skipped": 0,
+      "tests_per_job": 171
+    },
+    "target_action": {
+      "cases": 26,
+      "counter_chain": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "distinct_committed_effects": 4,
+      "fresh_accepted_assessments": 12,
+      "report": "action-summary.json",
+      "result": "PASS"
+    }
+  },
+  "guest_runtime": {
+    "cryptography": "50.0.0",
+    "python": "3.14.4",
+    "schema": "wolfalibi.shirudo.action-guest-dependencies.v1",
+    "scope": "DEPENDENCY_SETUP_ONLY",
+    "status": "READY",
+    "venv": "/opt/wolfalibi-action-venv"
+  },
+  "hardware_qualified": false,
+  "human_approval_implemented": false,
+  "independent_artifact_review": {
+    "archive_bytes_verified_against_github_metadata": true,
+    "corruption_controls_rejected": 7,
+    "files_verified": 185,
+    "material_sets": 12,
+    "recorded_upstream_reports": 12,
+    "result": "PASS",
+    "scripts": {
+      "review_action_artifact.py": {
+        "sha256": "af0ed2db32e469d7a5c800c1d8121387ae8bc685d597c97aadcaa071e1991087"
+      },
+      "review_action_corruptions.py": {
+        "sha256": "c80b71b30fe761e3363f04b9c8c7ea7552586762d8a9045e5cff3dbdc0d3f420"
+      }
+    },
+    "signature_verifications": 80,
+    "source_matches_executed_commit": true,
+    "tpm_crypto_reexecuted": false,
+    "unique_effects": 4
+  },
+  "independent_owner_key_custody": false,
+  "limits": [
+    "LAB_VTPM: builder, hypervisor, vTPM state and operator remain trusted.",
+    "LAB_OWNER_GRANT uses an ephemeral test signer; no human approval ceremony is implemented.",
+    "Owner and verifier use distinct keys in the same trusted host harness; independent key custody is not qualified.",
+    "The gate and Python dependencies are installed after boot and are not measured into the approved boot image.",
+    "Gate root, private state, trusted signers and local clocks remain trusted; no coordinated rollback resistance is claimed.",
+    "Freshness is bounded to 30 seconds with 2 seconds of clock skew; continuous state and quote-to-effect atomicity are not proved.",
+    "The only effect is one SQLite counter increment; process-exit tests do not establish power-loss durability.",
+    "Grants are bearer capabilities for a named operation; socket group membership restricts access but does not identify a particular agent process.",
+    "Existing assessment and new effect receipts remain historical records, not current authorization.",
+    "No production shield, general command runner, hardware identity or complete agent confinement is qualified."
+  ],
+  "owner_authority": "LAB_OWNER_GRANT",
+  "privilege_boundary": {
+    "client_uid": 999,
+    "configured_socket_mode": "0660",
+    "database_mode": "0600",
+    "direct_database_write_access": false,
+    "errno": 13,
+    "gate_uid": 0,
+    "state_mode": "0700"
+  },
+  "production_qualified": false,
+  "protected_action": {
+    "delta": 1,
+    "name": "increment_counter"
+  },
+  "pull_request": "https://github.com/Bropdrop/WolfAlibi/pull/48",
+  "result": "QUALIFIED_WITHIN_LAB_SCOPE",
+  "schema": "wolfalibi.shirudo.action-qualification.v1",
+  "scope": "LAB_VTPM_TARGET_ENFORCED_SINGLE_COUNTER_ACTION",
+  "source_note": "The executed code commit precedes the documentation/evidence publication commit. Runtime source remains unchanged.",
+  "target_id": "wolfalibi-action-45298950620-1",
+  "target_public_key": "2f734999f4470c936f797af3d91a6a4edc9e4e6c8888f238bbc64efb121fabb3",
+  "workflow_run": 45298950620,
+  "workflow_url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45298950620"
+}

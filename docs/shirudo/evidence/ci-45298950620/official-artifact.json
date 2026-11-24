@@ -1,0 +1,10 @@
+{
+  "archive_sha256": "e830f2384383adccba7c423e8afe81d1fd0b3d6e27e66ce2aed49eae632e989c",
+  "artifact_id": 14865910776,
+  "executable_bytes": 19216536,
+  "executable_sha256": "be8b79cdd7efb8e635b7965bf34fa691e5e4a378957f3829530a529097abe9d2",
+  "result": "PASS",
+  "schema": "wolfalibi.shirudo.artifact.v1",
+  "source_association": "UPSTREAM_GITHUB_WORKFLOW_METADATA",
+  "source_commit": "fb97c1ec5908c8bdbd46760c29e57677977fce74"
+}

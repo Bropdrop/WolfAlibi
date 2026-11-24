@@ -1,0 +1,27 @@
+{
+  "payload": {
+    "action": {
+      "delta": 1,
+      "name": "increment_counter"
+    },
+    "attestation_challenge_sha256": "8a8d937dfff8898217ecfd49c1a51537428ebb5cbda0f3f7154c9f503cccc523",
+    "attestation_receipt_sha256": "3c62f4857f45904a54bf1e1ecac138c690197bcee9141df613c3102c5b032bfa",
+    "authorization": "CONSUMED_FOR_RECORDED_EFFECT",
+    "committed_at_ms": 1795481441840,
+    "counter_after": 1,
+    "counter_before": 0,
+    "gate_instance_id": "ea2a0ee717bdd0c30d0a1b09562a703d",
+    "grant_id": "560af52c363883968de05740d1e65d59",
+    "grant_sha256": "25902c79064c20e8c3d2eb027052bc9e9c6ed4a141db48bc801663d13c3dac44",
+    "operation_id": "cc81152bb66a7f5cc4d371fa11675946",
+    "operation_nonce": "7a1c3890ec67caed16c3b6699041583fdfaef3c7599379a4f060df26601bd85f",
+    "policy_generation": 1,
+    "policy_sha256": "e764ee5990ec845d50ebfe42bff2ef04d2fd4410e270f8f722d5d15df56a0fba",
+    "receipt_id": "cbecaa87a05774156d73f58fc8bf147d",
+    "schema": "wolfalibi.shirudo.effect-receipt.v1",
+    "scope": "LAB_COUNTER_EFFECT_ONLY",
+    "target_id": "wolfalibi-action-45298950620-1"
+  },
+  "schema": "wolfalibi.signed-record.v1",
+  "signature": "e1eb23d3da33270e34fbb610a17fa6f4b1d08b48868d063c36ae3faa84333d33aa9486b095e499eb6ce937ab5b24fd14e9cb5a22944d790654572b7f31e4240b"
+}
