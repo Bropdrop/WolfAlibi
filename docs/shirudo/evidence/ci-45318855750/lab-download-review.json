@@ -1,0 +1,15 @@
+{
+  "archive_bytes": 364251,
+  "archive_sha256": "bd6f9851fe279070b1484988fd22cbe0da41effca379e0e87ae657621a8c43e8",
+  "artifact_id": 14887631691,
+  "current_authorization": false,
+  "extracted_files": 174,
+  "head_sha": "86c28db9537558b4cc76d73baea4353652462147",
+  "result": "PASS",
+  "run_conclusion": "success",
+  "run_id": 45318855750,
+  "safe_extraction": true,
+  "schema": "wolfalibi.shirudo.download-review.v1",
+  "source_tree": "bff7a0648c042215c0cdca9039e2a58bffb4bcd2",
+  "uncompressed_bytes": 951305
+}

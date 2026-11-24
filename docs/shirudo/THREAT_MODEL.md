@@ -6,7 +6,22 @@ The adapter verifies already captured evidence against a registered policy and r
 
 The adapter does not enforce target behavior, discover a safe shield, establish a target's complete execution history, or authorize a downstream effect. `EVIDENCE_ACCEPTED` is a bounded evidence decision. It must not be converted into a claim that a host is currently safe or an AI agent is fully confined.
 
-Qualification is currently limited to synthetic fixtures. `SIMULATED_POLICY_ONLY` is not hardware attestation. A policy's `LAB_VTPM` or `HARDWARE_TPM` label is not evidence that its stated trust assumptions were met.
+Genuine historical verification and fresh `LAB_VTPM` evidence passed in
+[Gate B](evidence/ci-45290603342/qualification.json). The separate target counter
+gate passed [Gate C](evidence/ci-45298950620/qualification.json). Those records
+retain their exact executed revisions and assumptions. `SIMULATED_POLICY_ONLY`
+remains synthetic, and a policy's `LAB_VTPM` or `HARDWARE_TPM` label alone is not
+evidence that its stated trust assumptions were met.
+
+The [prototype extension](PROTOTYPE.md) adds a separate immutable gate image
+and a [terminal owner approval component](OWNER_APPROVAL.md). Its
+[separate laboratory qualification](evidence/ci-45318855750/qualification.json)
+records 19 passing cases, five fresh genuine assessments and two counter
+effects. Approval was driven by `SCRIPTED_PTY`; actual human approval remains
+`NOT_RUN`. The trusted builder, initrd and launcher connect the configuration's
+image root to the observed process. This does not establish continuous process
+identity, isolation from the administrator or production readiness. This
+document describes the evidence adapter's continuing trust assumptions.
 
 ## Trusted components and inputs
 
@@ -69,8 +84,13 @@ The upstream verifier checks its attestation model; it does not prove that the m
 
 See the [pinned upstream threat model](https://github.com/shirudo-dev/shirudo/blob/fb97c1ec5908c8bdbd46760c29e57677977fce74/Documentation/security/threat-model.rst). This adapter adds no claim of complete monitoring, kernel correctness, hardware authenticity beyond enrollment, or independent witness custody.
 
-## Qualification still required
+## Qualification boundaries
 
 Synthetic tests can demonstrate local policy handling, nonce binding, replay refusal, failure consumption, report validation, and receipt integrity. They cannot demonstrate TPM authenticity, deployment compatibility, a real shield's effectiveness, or successful execution of the actual upstream verification path.
 
-Before describing the upstream path as qualified, retain exact binary/build/version evidence, a valid fresh attestation and independent pins, an actual positive run, and altered-evidence controls. Do not relax required checks to make a convenient archived fixture pass. Full production qualification, operational enrollment, and independent rollback resistance remain outside this feature.
+The retained Gate B and Gate C records include exact binary/build/version
+evidence, fresh attestations and independent pins, actual positive runs, and
+altered-evidence controls. Subsequent runtime or deployment claims require their
+own matching evidence. Do not relax required checks to make a convenient
+archived fixture pass. Full production qualification, operational enrollment,
+and independent rollback resistance remain outside this feature.

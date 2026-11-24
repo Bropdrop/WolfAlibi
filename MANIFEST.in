@@ -1,0 +1,5 @@
+include README.md
+recursive-include scripts *.py *.sh
+recursive-include tests *.py
+recursive-include docs/shirudo *.md *.py *.json *.txt *.zip
+include .github/workflows/shirudo-prototype-integration.yml

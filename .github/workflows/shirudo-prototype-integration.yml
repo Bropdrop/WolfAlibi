@@ -1,0 +1,227 @@
+name: Shirudo complete LAB prototype
+
+on:
+  push:
+    branches: ['feat/shirudo-prototype-v1']
+    paths:
+      - 'shirudo_adapter/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'pyproject.toml'
+      - '.github/workflows/shirudo-prototype-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: shirudo-prototype-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  UPSTREAM_COMMIT: fb97c1ec5908c8bdbd46760c29e57677977fce74
+  WOLFALIBI_DISPOSABLE_CI: '1'
+
+jobs:
+  unit-tests:
+    name: Complete Python and Unix socket tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install adapter
+        run: python -m pip install .
+      - name: Run every Python test including real process and socket boundaries
+        run: python -m unittest discover -s tests -v
+      - name: Exercise the actual sudo and separate-owner terminal boundary
+        run: python -m unittest tests.prototype_sudo_probe -v
+      - name: Build the installable CLI package
+        run: python -m pip wheel . --no-deps --wheel-dir packages
+      - name: Retain installable package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: wolfalibi-shirudo-prototype-package-${{ github.sha }}
+          path: packages/*.whl
+          if-no-files-found: error
+          retention-days: 14
+
+  offline:
+    name: Genuine verifier and historical fixtures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      binary_ready: ${{ steps.gate.outputs.binary_ready }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: shirudo-dev/shirudo
+          ref: fb97c1ec5908c8bdbd46760c29e57677977fce74
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install adapter
+        run: python -m pip install .
+      - name: Download pinned official artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts
+          gh api repos/shirudo-dev/shirudo/actions/artifacts/14865910776/zip > artifacts/upstream.zip
+          python scripts/prepare_shirudo_binary.py --archive artifacts/upstream.zip --output artifacts/verifier
+      - name: Run genuine historical-fixture gate
+        id: gate
+        run: |
+          sudo prlimit --pid "$$" --memlock=unlimited:unlimited
+          set +e
+          python scripts/shirudo_real_offline.py --upstream "$PWD/upstream" --verifier "$PWD/artifacts/verifier/shirudo" --output "$PWD/evidence/offline"
+          gate_status=$?
+          set -e
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          report = Path('evidence/offline/gate-a-report.json')
+          ready = report.exists() and json.loads(report.read_text()).get('binary_ready') is True
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as stream:
+              stream.write(f'binary_ready={str(ready).lower()}\n')
+          PY
+          exit "$gate_status"
+      - name: Retain historical evidence and artifact provenance
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: shirudo-prototype-offline-${{ github.sha }}
+          path: |
+            evidence/offline/
+            artifacts/verifier/artifact.json
+          if-no-files-found: error
+          retention-days: 14
+
+  fresh-prototype:
+    name: Immutable gate, separate owner approval, and genuine target effects
+    needs: [unit-tests, offline]
+    # All process/socket tests are mandatory before any VM provisioning.
+    # Preserve the historical gate's own verdict while allowing fresh evidence
+    # testing when its exact verifier started but an old corpus was rejected.
+    if: ${{ always() && !cancelled() && needs['unit-tests'].result == 'success' && needs.offline.outputs.binary_ready == 'true' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 100
+    env:
+      VM_NAME: wolfalibi-prototype-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: shirudo-dev/shirudo
+          ref: fb97c1ec5908c8bdbd46760c29e57677977fce74
+          path: upstream
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install adapter
+        run: python -m pip install .
+      - name: Check disposable host and KVM before building
+        run: |
+          mkdir -p evidence
+          sudo env GITHUB_ACTIONS=true WOLFALIBI_DISPOSABLE_CI=1 prlimit --memlock=unlimited:unlimited -- python3 scripts/shirudo_ci_preflight.py --output "$PWD/evidence/preflight.json"
+      - name: Download pinned official verifier
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p artifacts
+          gh api repos/shirudo-dev/shirudo/actions/artifacts/14865910776/zip > artifacts/upstream.zip
+          python scripts/prepare_shirudo_binary.py --archive artifacts/upstream.zip --output artifacts/verifier
+      - name: Restore source-pinned upstream build dependencies
+        id: dependencies
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            upstream/build/target-deps
+            upstream/build/host-openssl
+            upstream/build/host-libtpms
+          key: shirudo-deps-ubuntu24-x64-fb97c1ec5908c8bdbd46760c29e57677977fce74-v1
+      - name: Prepare upstream toolchain and pinned test kernel
+        run: bash scripts/shirudo_ci_vm.sh setup "$PWD/upstream" "$VM_NAME"
+      - name: Provision separate ephemeral owner and verifier accounts
+        run: |
+          sudo prlimit --pid "$$" --memlock=unlimited:unlimited
+          python scripts/shirudo_prototype_host.py provision --verifier "$PWD/artifacts/verifier/shirudo" --output "$PWD/evidence/authorities"
+      - name: Build separate gate image and signed native config binding
+        run: bash scripts/shirudo_prototype_vm.sh build "$PWD/upstream" "$VM_NAME" "$PWD/artifacts/prototype" "$PWD/evidence/authorities"
+      - name: Boot approved immutable images with cold verity rejection controls
+        run: bash scripts/shirudo_prototype_vm.sh boot "$PWD/upstream" "$VM_NAME" "$PWD/artifacts/prototype" "$PWD/evidence/authorities"
+      - name: Save completed build dependencies
+        if: steps.dependencies.outputs.cache-hit != 'true'
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: |
+            upstream/build/target-deps
+            upstream/build/host-openssl
+            upstream/build/host-libtpms
+          key: ${{ steps.dependencies.outputs.cache-primary-key }}
+      - name: Verify native fresh lab evidence and adverse controls
+        run: |
+          sudo prlimit --pid "$$" --memlock=unlimited:unlimited
+          python scripts/shirudo_real_lab.py --upstream "$PWD/upstream" --vm-name "$VM_NAME" --verifier "$PWD/artifacts/verifier/shirudo" --bundle "$PWD/artifacts/prototype/bundle" --output "$PWD/evidence/lab"
+      - name: Qualify separate owner ceremony and immutable target gate
+        run: |
+          sudo prlimit --pid "$$" --memlock=unlimited:unlimited
+          python scripts/shirudo_prototype_lab.py --upstream "$PWD/upstream" --vm-name "$VM_NAME" --verifier "$PWD/artifacts/verifier/shirudo" --build "$PWD/artifacts/prototype" --authorities "$PWD/evidence/authorities" --output "$PWD/evidence/prototype"
+      - name: Show bounded public boot diagnostics on failure
+        if: failure()
+        run: |
+          python - <<'PYDIAG'
+          import os, re
+          from pathlib import Path
+          root = Path('upstream/build/test-vm/vms') / os.environ['VM_NAME']
+          for name in ('console.log', 'result/guest.log'):
+              path = root / name
+              if path.is_file():
+                  with path.open('rb') as stream:
+                      stream.seek(max(0, path.stat().st_size - 131072))
+                      lines = stream.read(131072).decode('utf-8', 'replace').splitlines()
+                  selected = [line[:1500] for line in lines if re.search(r'wolfalibi|fail|error|Traceback|exception', line, re.I)]
+                  for line in selected[-60:]:
+                      print(re.sub(r'[0-9a-fA-F]{64,}', '[hex omitted]', line))
+          PYDIAG
+      - name: Stop the disposable VM
+        if: always()
+        run: bash scripts/shirudo_ci_vm.sh stop "$PWD/upstream" "$VM_NAME"
+      - name: Remove ephemeral private host signing state
+        if: always()
+        run: python scripts/shirudo_prototype_host.py cleanup > evidence/host-cleanup.json
+      - name: Retain only explicit public qualification records
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: shirudo-prototype-lab-${{ github.sha }}
+          path: |
+            evidence/preflight.json
+            evidence/authorities/
+            evidence/host-cleanup.json
+            evidence/lab/
+            evidence/prototype/
+            artifacts/prototype/build-result.json
+            artifacts/prototype/build-commands.jsonl
+            artifacts/prototype/public/gate-image.json
+            artifacts/prototype/public/image-source-manifest.json
+            artifacts/prototype/public/boot-descriptor.json
+            artifacts/prototype/public/staged-runtime-probe.json
+            artifacts/prototype/public/offline-image-controls.json
+            artifacts/prototype/public/config-signing-certificate.der
+            artifacts/verifier/artifact.json
+          if-no-files-found: error
+          retention-days: 14

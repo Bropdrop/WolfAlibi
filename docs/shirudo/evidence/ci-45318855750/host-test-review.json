@@ -1,0 +1,49 @@
+{
+  "schema": "wolfalibi.shirudo.prototype-host-test-review.v1",
+  "head_commit": "86c28db9537558b4cc76d73baea4353652462147",
+  "tested_tree": "bff7a0648c042215c0cdca9039e2a58bffb4bcd2",
+  "result": "PASS",
+  "scope": "HOST_UNIT_AND_PROCESS_SOCKET_TESTS",
+  "command": "python -m unittest discover -s tests -v",
+  "jobs": [
+    {
+      "workflow_run": 45318855750,
+      "job_id": 138192187881,
+      "python": "3.12",
+      "tests": 245,
+      "seconds": 23.018,
+      "skipped": 0,
+      "action_cli_tests": 18,
+      "result": "OK",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/job/138192187881"
+    },
+    {
+      "workflow_run": 45318862760,
+      "job_id": 138192208991,
+      "python": "3.11",
+      "tests": 245,
+      "seconds": 18.175,
+      "skipped": 0,
+      "action_cli_tests": 18,
+      "result": "OK",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318862760/job/138192208991"
+    },
+    {
+      "workflow_run": 45318862760,
+      "job_id": 138192209250,
+      "python": "3.12",
+      "tests": 245,
+      "seconds": 18.774,
+      "skipped": 0,
+      "action_cli_tests": 18,
+      "result": "OK",
+      "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318862760/job/138192209250"
+    }
+  ],
+  "genuine_prototype_qualification": false,
+  "limitations": [
+    "Host fixtures are fabricated; genuine TPM integration is qualified separately.",
+    "Actual sockets, subprocesses and scripted PTYs ran in CI. No actual human approval is claimed.",
+    "This review summarizes authenticated completed job logs and does not rerun them."
+  ]
+}

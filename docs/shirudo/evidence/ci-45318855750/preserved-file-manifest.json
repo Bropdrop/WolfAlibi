@@ -1,0 +1,195 @@
+{
+  "current_authorization": false,
+  "files": {
+    "artifact-provenance.json": {
+      "bytes": 18465,
+      "sha256": "6969a8d1830f1426e29a1114d8416e14867894c50967de4dad670ca4178e64c3"
+    },
+    "authorized-result.json": {
+      "bytes": 3181,
+      "sha256": "88867fc6054c42dfae84699b6d568f55648e026accfc71b6d7de0325760b7458"
+    },
+    "cli-package-original.zip": {
+      "bytes": 54314,
+      "sha256": "ad4fa372c134808cdea5ca8621651d35e3718e8617a45a1b42c0dfdf143e63db"
+    },
+    "development-attempts.json": {
+      "bytes": 5256,
+      "sha256": "7c08827bbac51e4b6e94016f18b21c38ded329852775114d9ccde62f1fa43263"
+    },
+    "development-ci-provenance.json": {
+      "bytes": 5628,
+      "sha256": "edd724ab9ff5862a9333777bf75162ad7eb7ccc12bc55da76b3f55a13498d128"
+    },
+    "development/fresh-evidence-review-45313988001.json": {
+      "bytes": 2645,
+      "sha256": "70e23f07be47ec58a4b30c314cfcd19cb6da065c53978e7fd298a8db0a00ed3d"
+    },
+    "development/lab-public-records-45307224946.zip": {
+      "bytes": 75401,
+      "sha256": "8c8bd09f1f7a20bb237df70f7a9b4644859334ff91cebee8045b67c8d229da23"
+    },
+    "development/lab-public-records-45309239335.zip": {
+      "bytes": 268327,
+      "sha256": "b94d58bd5961e949591bc63d71d40897147af13b39dfe83f118dd8aa6202ed91"
+    },
+    "development/lab-public-records-45313988001.zip": {
+      "bytes": 279031,
+      "sha256": "b44bfd3831abbb4e78ce0a22e54d9e21bfadc83722e391889fb37abb9b4f2a0d"
+    },
+    "development/offline-review-45313988001.json": {
+      "bytes": 14380,
+      "sha256": "72fefecdd2b13e275f70279c55d41472c2860e508709c560762957f870236540"
+    },
+    "development/partial-review-45313988001.json": {
+      "bytes": 6068,
+      "sha256": "62e0003cbbd13fd45bc88b9be4d5873fcb7083024aa4c754067f1b566aa2de7e"
+    },
+    "development/sudo-probe-setup-failure-45318437413.txt": {
+      "bytes": 4453,
+      "sha256": "6c4b0f55095053c4109ce6a658b1d60cfb6f8ad98b582fad77c0ef39bce25b24"
+    },
+    "host-cleanup.json": {
+      "bytes": 54,
+      "sha256": "fc7e48ac29b5f859ba4e5c3b29c95e91a85428a12f614edcb9631fdf14963abf"
+    },
+    "host-role-identities.json": {
+      "bytes": 175,
+      "sha256": "428e62b97c6edf99a42ed40358bf829e0b5114bd3790d74b9c18fa96b68a84d3"
+    },
+    "host-test-review.json": {
+      "bytes": 1614,
+      "sha256": "78129676d72ffb251f7e0062cfcbce0ee35101d86caaa0192d6cf261d9dca9fb"
+    },
+    "image-boot-report.json": {
+      "bytes": 1290,
+      "sha256": "422af1fb90476b201f86878b4f7040fa821a7aec58b7a437dcce9fda355f3c4e"
+    },
+    "image-build-result.json": {
+      "bytes": 2104,
+      "sha256": "ab551d6d7a9a4c56b6eaa4895794373cf7fc92d33acd5a842473e126c10c08c2"
+    },
+    "immutable-execution.json": {
+      "bytes": 20540,
+      "sha256": "4c04352eecc4ff699b4cad77c52f3c96621b0fcd1007ef4afcca63a9dd9a4cd4"
+    },
+    "lab-artifact-review.json": {
+      "bytes": 2645,
+      "sha256": "70e23f07be47ec58a4b30c314cfcd19cb6da065c53978e7fd298a8db0a00ed3d"
+    },
+    "lab-download-review.json": {
+      "bytes": 514,
+      "sha256": "385bd3c4b63be0ba51c4985267c064bbd356d875bfc8ac0280a264f499857068"
+    },
+    "lab-summary.json": {
+      "bytes": 3077,
+      "sha256": "a3201c650dfbd89adee4be7582f92e727484a6e13826e2b0670e63bcbd258c9a"
+    },
+    "launch-bindings.json": {
+      "bytes": 1529,
+      "sha256": "2b93b2244bd34b2f302be4977247f45885debdcc7d9c8628ebe1afa0240bca74"
+    },
+    "native-gate-image-manifest.json": {
+      "bytes": 466,
+      "sha256": "f9adea217359b4243c104dd9092dbb3eeea17f49e204c228bba7bb227ba5311c"
+    },
+    "official-artifact.json": {
+      "bytes": 433,
+      "sha256": "fb1c7bc9bccaf288af1fb39c85dac11769384ebabcabeb2fdaa5027b42f70292"
+    },
+    "offline-artifact-review.json": {
+      "bytes": 15045,
+      "sha256": "0c425ce993f0f885bc6a3c85ad96efb3b679907a3e85104b7e1da0e0346de513"
+    },
+    "offline-public-records.zip": {
+      "bytes": 81502,
+      "sha256": "385e3fa11b7764a8d1d765ebba9ee5a363b75668060fd187018336f9ae118292"
+    },
+    "owner-profile.json": {
+      "bytes": 1574,
+      "sha256": "3bd6f29851b721ee0c669a0c88324b39bc5714e4f19a97b0a297ff3321dac5af"
+    },
+    "package-review.json": {
+      "bytes": 1033,
+      "sha256": "79ba62d7139e46c28726ae17f61e43661bb9ee903114ca0f3400cf6e1a918aa9"
+    },
+    "preflight.json": {
+      "bytes": 372,
+      "sha256": "2a18b81d129c9b96af18ff54ce5a7c490f29b0fb3d488f1d3f1aa08d612d19bf"
+    },
+    "prototype-artifact-review.json": {
+      "bytes": 1810,
+      "sha256": "d59c168c567d76be04507fa612266405dba2099038ee9c6b8c149c9dae128a00"
+    },
+    "prototype-boot-policy.json": {
+      "bytes": 1948,
+      "sha256": "9579fc0a7e18a94fe190afa5d9bd791c7ca0bdf98f8ad343bbd7846fed313a01"
+    },
+    "prototype-lab-public-records.zip": {
+      "bytes": 364251,
+      "sha256": "bd6f9851fe279070b1484988fd22cbe0da41effca379e0e87ae657621a8c43e8"
+    },
+    "prototype-summary.json": {
+      "bytes": 43584,
+      "sha256": "98c29491a826cc5aac2c3f7843ea5e1ca19159597c2e80093dded7f8b2e82def"
+    },
+    "prototype-target-identity.json": {
+      "bytes": 337,
+      "sha256": "22eefb47337d0f33d1537931b6108f85eb2e2dce65897e68acdd459ae3069a75"
+    },
+    "prototype-trust.json": {
+      "bytes": 1412,
+      "sha256": "bdb2f026fa93a6bd1b171e9c489392728c532287669d2207a5e5b9e993a8c3d7"
+    },
+    "qualification.json": {
+      "bytes": 10432,
+      "sha256": "88a2e8afc40bfde808d500937b7d5d2f19676186bc531468147eee4bf560ce6d"
+    },
+    "review-corruption-checks.json": {
+      "bytes": 1772,
+      "sha256": "fd224c391c63b5f4d9edc17c948e6869007fbb28a30a1336d1135bd3466cfb11"
+    },
+    "status-recovery-result.json": {
+      "bytes": 3186,
+      "sha256": "fcb61bad9ac5e5584d78562a15199b55b8d544df5a99d40c42718cd8d31a8dbb"
+    },
+    "sudo-terminal-review.json": {
+      "bytes": 2821,
+      "sha256": "4d930f36861eaba1b1dbfcd5b398674441aa8896427db72b525082dff3501aa5"
+    },
+    "target-accounts.json": {
+      "bytes": 66,
+      "sha256": "f03242794a43230f5b9bc33152e68bfbedd63020688fb5ac5278100d1c933081"
+    },
+    "target-log-review.json": {
+      "bytes": 8069,
+      "sha256": "46cb51ee6873caf426ac449924dbf4f6249e0043d1411fbd43354dafc0014027"
+    },
+    "upstream-license.txt": {
+      "bytes": 1306,
+      "sha256": "b867b6a7c42630db3b2ee8fe2105b18751dbc554e53f37a0095f98bdbbf7f1aa"
+    },
+    "wolfalibi_shirudo-0.1.0-py3-none-any.whl": {
+      "bytes": 55454,
+      "sha256": "4efd5d7f28eb90e36709a64b344a228854e85dee760af94950f290651907d6b0"
+    }
+  },
+  "manifest_excludes_itself": true,
+  "reviewer_files_relative_to_this_directory": {
+    "../../review_prototype_artifact.py": {
+      "bytes": 77532,
+      "sha256": "675cd103ac9edf6d89372dd030452ed57ea0799f0ce2ed47a97cf7dbee90da3e"
+    },
+    "../../review_prototype_corruptions.py": {
+      "bytes": 7165,
+      "sha256": "ae059a1c0103cfbbcc7d179271b42f5d80e878c6e7de89135ffbb0cab354713f"
+    },
+    "../ci-45290603342/review_lab_artifact.py": {
+      "bytes": 23970,
+      "sha256": "680fb2d4add10ea71b397628b9548098c0e3f23d20a928d87aaa01a352f967aa"
+    }
+  },
+  "schema": "wolfalibi.shirudo.preserved-file-manifest.v1",
+  "scope": "PUBLIC_QUALIFICATION_EVIDENCE_AND_INSTALLABLE_PACKAGE",
+  "source_note": "ZIP archives preserve original downloaded bytes, including failed development attempts. Selected public copies map to original archive members in artifact-provenance.json."
+}

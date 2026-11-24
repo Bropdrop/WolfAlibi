@@ -331,13 +331,16 @@ def check_receipt_bindings(receipt: dict, policy: dict, challenge: dict, evidenc
 
 
 class RealLab:
-    def __init__(self, upstream: Path, vm_name: str, verifier: Path, output: Path):
+    def __init__(self, upstream: Path, vm_name: str, verifier: Path, output: Path,
+                 *, bundle: Path | None = None):
         require(VM_NAME.fullmatch(vm_name) is not None, "VM_NAME", "arguments", environment=True)
         require(sys.platform == "linux" and hasattr(os, "memfd_create"),
                 "LINUX_REQUIRED", "arguments", environment=True)
         self.upstream = upstream.absolute()
         self.vm_name = vm_name
         self.verifier = verifier.absolute()
+        self.bundle = (bundle.absolute() if bundle is not None else
+                       self.upstream / "build/test-vm/host-bundle-bpf-next-verity")
         self.vm_dir = self.upstream / "build/test-vm/vms" / vm_name
         self.artifacts = PublicArtifacts(output)
         self.commands: list[dict] = []
@@ -377,7 +380,7 @@ class RealLab:
         dirty = self.command(["git", "--no-replace-objects", "status", "--porcelain", "--untracked-files=no"],
                              "source cleanliness", timeout=10)
         require(not dirty.strip(), "SOURCE_DIRTY", "upstream checkout", environment=True)
-        bundle = self.upstream / "build/test-vm/host-bundle-bpf-next-verity"
+        bundle = self.bundle
         enrollment = read_input(self.vm_dir / "enroll.json", 16_384, "builder enrollment")
         enrollment_names(enrollment, self.vm_name)
         target_version_raw = read_input(self.vm_dir / "shirudo-build", 128, "builder target version")
@@ -598,10 +601,12 @@ def main(argv=None) -> int:
     parser.add_argument("--vm-name", required=True)
     parser.add_argument("--verifier", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--bundle", type=Path,
+                        help="Independently built bundle used for this VM; defaults to the upstream bundle")
     args = parser.parse_args(argv)
     lab = None
     try:
-        lab = RealLab(args.upstream, args.vm_name, args.verifier, args.output)
+        lab = RealLab(args.upstream, args.vm_name, args.verifier, args.output, bundle=args.bundle)
         result, code = lab.run(), 0
     except LabFailure as exc:
         code = exc.exit_code

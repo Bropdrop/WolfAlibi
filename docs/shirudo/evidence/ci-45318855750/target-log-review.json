@@ -1,0 +1,230 @@
+{
+  "schema": "wolfalibi.shirudo.prototype-completed-log-review.v1",
+  "result": "PASS",
+  "review_scope": "BOUNDED_COMPLETED_CI_LOG_AND_JOB_METADATA_REVIEW",
+  "repository": "Bropdrop/WolfAlibi",
+  "run": {
+    "id": 45318855750,
+    "attempt": 1,
+    "event": "push",
+    "head_sha": "86c28db9537558b4cc76d73baea4353652462147",
+    "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750",
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-11-24T03:20:46Z",
+    "updated_at": "2026-11-24T03:43:10Z"
+  },
+  "target_job": {
+    "id": 138192443604,
+    "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/job/138192443604",
+    "name": "Immutable gate, separate owner approval, and genuine target effects",
+    "conclusion": "success"
+  },
+  "all_jobs": [
+    {
+      "id": 138192187495,
+      "name": "Genuine verifier and historical fixtures",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 138192187881,
+      "name": "Complete Python and Unix socket tests",
+      "status": "completed",
+      "conclusion": "success"
+    },
+    {
+      "id": 138192443604,
+      "name": "Immutable gate, separate owner approval, and genuine target effects",
+      "status": "completed",
+      "conclusion": "success"
+    }
+  ],
+  "prototype_summary": {
+    "schema": "wolfalibi.shirudo.prototype-lab.v1",
+    "result": "PASS",
+    "prototype_version": "0.1.0",
+    "case_count": 19,
+    "cases": [
+      {
+        "case": "measured-config-binding",
+        "result": "PASS"
+      },
+      {
+        "case": "verity-wrong-root",
+        "result": "PASS"
+      },
+      {
+        "case": "verity-corrupted-data",
+        "result": "PASS"
+      },
+      {
+        "case": "unsigned-boot-policy",
+        "result": "PASS"
+      },
+      {
+        "case": "boot-policy-root-mismatch",
+        "result": "PASS"
+      },
+      {
+        "case": "private-key-separation",
+        "result": "PASS"
+      },
+      {
+        "case": "immutable-execution",
+        "result": "PASS"
+      },
+      {
+        "case": "gate-state-access-denied",
+        "result": "PASS"
+      },
+      {
+        "case": "owner-declined",
+        "result": "PASS"
+      },
+      {
+        "case": "owner-rejected-tampered-bundle",
+        "result": "PASS"
+      },
+      {
+        "case": "owner-timeout",
+        "result": "PASS"
+      },
+      {
+        "case": "owner-terminal-required",
+        "result": "PASS"
+      },
+      {
+        "case": "forged-owner-grant",
+        "result": "PASS"
+      },
+      {
+        "case": "authorized",
+        "result": "PASS"
+      },
+      {
+        "case": "exact-retry",
+        "result": "PASS"
+      },
+      {
+        "case": "lost-reply",
+        "result": "PASS"
+      },
+      {
+        "case": "status-recovery",
+        "result": "PASS"
+      },
+      {
+        "case": "owner-grant-recovery",
+        "result": "PASS"
+      },
+      {
+        "case": "recovered-exact-retry",
+        "result": "PASS"
+      }
+    ],
+    "fresh_genuine_assessments": 5,
+    "final_independent_sql_oracle": {
+      "counter": 2,
+      "committed_operations": 2,
+      "reader_uid": 0,
+      "state_uid": 997,
+      "state_mode": 448,
+      "database_uid": 997,
+      "database_mode": 384
+    },
+    "action": {
+      "delta": 1,
+      "name": "increment_counter"
+    },
+    "assurance": "LAB_VTPM",
+    "gate_image_binding": "NATIVE_CONFIG_PCR14_TRANSITIVE_BINDING",
+    "owner_interface_implemented": true,
+    "approval_driver": "SCRIPTED_PTY",
+    "actual_human_approval": "NOT_RUN",
+    "current_authorization": false,
+    "coordinator_authority": "TRUSTED_CI_ADMINISTRATOR",
+    "continuous_process_identity_qualified": false,
+    "hardware_qualification": false,
+    "production_qualification": false,
+    "gate_daemons_stopped": true,
+    "limitations": [
+      "LAB_VTPM: the CI builder, administrator, hypervisor, vTPM and clocks remain trusted.",
+      "The direct QEMU boot does not establish a measured UKI, Secure Boot or hardware identity.",
+      "PCR14 binds the approved config containing the gate image root; trusted bootstrap and launcher observations link it to this process.",
+      "The immutable interpreter image receives no Shirudo runtime authority; root and the gate UID remain trusted for writable private state.",
+      "Separate UID and process custody is tested against peer accounts, not against the trusted CI administrator's sudo privileges.",
+      "The approval interface is exercised by a scripted controlling terminal. Actual human approval is NOT_RUN.",
+      "Freshness remains 30 seconds with 5-second admission and 2-second clock skew; continuous process identity and quote-to-effect atomicity are not proved.",
+      "Only a SQLite counter increment by one is authorized. No shield deployment, general command, financial action or production readiness is qualified.",
+      "The owner and target journals do not establish resistance to coordinated administrative rollback or power loss.",
+      "Receipts are historical records. They do not confer current authorization or prove secure deletion of private state."
+    ]
+  },
+  "cleanup": {
+    "steps": [
+      {
+        "name": "Stop the disposable VM",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 17
+      },
+      {
+        "name": "Remove ephemeral private host signing state",
+        "status": "completed",
+        "conclusion": "success",
+        "number": 18
+      }
+    ],
+    "vm_stop": {
+      "observed": true,
+      "vm_name": "wolfalibi-prototype-45318855750-1",
+      "vm_state_preserved": true
+    },
+    "host_private_state": {
+      "artifact_path": "evidence/host-cleanup.json",
+      "record": {
+        "status": "REMOVED",
+        "secure_erasure_qualified": false
+      },
+      "observation": "The cleanup step completed successfully. The retained public artifact records REMOVED and explicitly does not qualify secure erasure."
+    }
+  },
+  "public_artifact_as_recorded_in_log": {
+    "id": 14887631691,
+    "name": "shirudo-prototype-lab-86c28db9537558b4cc76d73baea4353652462147",
+    "archive_bytes": 364251,
+    "archive_sha256": "bd6f9851fe279070b1484988fd22cbe0da41effca379e0e87ae657621a8c43e8",
+    "uploaded_files": 174,
+    "url": "https://github.com/Bropdrop/WolfAlibi/actions/runs/45318855750/artifacts/14887631691"
+  },
+  "bounded_log_excerpts": [
+    {
+      "line_number": 2518,
+      "text": "2026-11-24T03:43:03.9645542Z [test-vm] stopped VM: wolfalibi-prototype-45318855750-1 (state preserved)"
+    },
+    {
+      "line_number": 2519,
+      "text": "2026-11-24T03:43:03.9673337Z ##[group]Run python scripts/shirudo_prototype_host.py cleanup > evidence/host-cleanup.json"
+    },
+    {
+      "line_number": 2571,
+      "text": "2026-11-24T03:43:04.2185340Z With the provided path, there will be 174 files uploaded"
+    },
+    {
+      "line_number": 2578,
+      "text": "2026-11-24T03:43:05.6106931Z SHA256 digest of uploaded artifact zip is bd6f9851fe279070b1484988fd22cbe0da41effca379e0e87ae657621a8c43e8"
+    },
+    {
+      "line_number": 2581,
+      "text": "2026-11-24T03:43:06.0163590Z Artifact shirudo-prototype-lab-86c28db9537558b4cc76d73baea4353652462147 has been successfully uploaded! Final size is 364251 bytes. Artifact ID is 14887631691"
+    }
+  ],
+  "review_limits": [
+    "This review summarizes the completed public job log, GitHub run/job metadata, and retained public host-cleanup record. It is separate from independent artifact signature and consistency verification.",
+    "It does not rerun TPM verification, the VM, the target gate, or the terminal ceremony.",
+    "The trusted CI administrator, builder, guest kernel, hypervisor, vTPM, and clocks remain part of the LAB_VTPM assumptions.",
+    "The terminal ceremony was scripted. No actual human approval, hardware enrollment, production readiness, continuous process identity, or current authorization is established.",
+    "Observed cleanup does not prove secure erasure; the VM stop log explicitly says state was preserved."
+  ]
+}
