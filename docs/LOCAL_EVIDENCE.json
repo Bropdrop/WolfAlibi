@@ -1,0 +1,44 @@
+{
+  "schema": "wolfalibi.human001.local-evidence.v1",
+  "scope": "LOCAL_CANDIDATE_QUALIFICATION",
+  "baseline_commit": "953d6a5f5c74c982ad35ee5ff0b15c60ecdae973",
+  "base_commit": "e963accab833e377a6e33444cd57e36e9620ea72",
+  "supplied_patch_sha256": "58090a755785fe5a35179566260662a55fcd53ce63a3a2af144f7a8f273c42ee",
+  "checks": {
+    "supplied_patch_apply": "PASS",
+    "supplied_patch_host_suite": {
+      "result": "PASS",
+      "inherited_tests": 245,
+      "included_focused_tests": 14,
+      "skipped": 0
+    },
+    "candidate_host_suite": {
+      "result": "PASS",
+      "python": "3.12",
+      "inherited_tests": 245,
+      "focused_tests": 58,
+      "skipped": 0,
+      "fixture_assessments": "FABRICATED_SIGNED_FIXTURES"
+    },
+    "local_recovery": {
+      "result": "PASS",
+      "scope": "DISPOSABLE_SQLITE_AND_UNIX_SOCKET",
+      "driver": "SCRIPTED_PTY",
+      "cases": ["lost reply and concurrent retries", "exit before commit", "exit after commit"],
+      "genuine_shirudo_evidence": "NOT_RUN"
+    },
+    "pinned_official_verifier_archive_and_elf": "PASS",
+    "separate_uid_sudo_probe": {
+      "result": "BLOCKED",
+      "reason": "The local environment lacks the disposable CI account setup and sudo."
+    },
+    "genuine_software_tpm_integration": {
+      "result": "BLOCKED",
+      "reason": "The workspace lacks /dev/kvm and caps process memory locking at 8 MiB. The pinned ELF stops at its memory-lock check before fixture evaluation."
+    }
+  },
+  "actual_human_approval": "NOT_RUN",
+  "live_protected_effect": "NOT_RUN",
+  "hardware_attestation": "NOT_RUN",
+  "source_and_artifacts": "See SOURCE_MANIFEST.json and EVIDENCE_MANIFEST.json in the downloadable bundle."
+}

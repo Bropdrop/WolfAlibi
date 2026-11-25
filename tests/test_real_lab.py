@@ -85,7 +85,7 @@ class FixtureLab(lab.RealLab):
         return evidence(challenge)
 
 
-def fixture_verifier(_path, raw, requested_policy, _nonce):
+def fixture_verifier(_path, raw, requested_policy, _nonce, *, report_sink=None):
     """Simulated reports; no executable or TPM is invoked by this fixture."""
     value = json.loads(raw)
     reason = None
@@ -99,6 +99,8 @@ def fixture_verifier(_path, raw, requested_policy, _nonce):
     result["execution_profile"] = "UPSTREAM_CLI"
     if reason:
         result["report"]["checks"] = [{"result": "fail", "text": reason}]
+    if report_sink is not None:
+        report_sink(canonical_json(result["report"]) + b"\n")
     return result
 
 

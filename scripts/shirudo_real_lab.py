@@ -26,7 +26,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from contextlib import ExitStack
+from contextlib import ExitStack, nullcontext
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -117,7 +117,7 @@ def altered_hex(value: str) -> str:
 
 
 def bounded_command(argv: list[str], cwd: Path, *, timeout=60.0,
-                    stdout_limit=MAX_COMMAND_OUTPUT) -> tuple[int, bytes, bytes]:
+                    stdout_limit=MAX_COMMAND_OUTPUT, input_data=None) -> tuple[int, bytes, bytes]:
     """Bound time, memory and descendants without using a shell or a sandbox."""
     require(0 < timeout <= 60, "COMMAND_DEADLINE", "subprocess", environment=True)
     env = os.environ.copy()
@@ -129,11 +129,15 @@ def bounded_command(argv: list[str], cwd: Path, *, timeout=60.0,
                 "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null",
                 "GIT_TERMINAL_PROMPT": "0"})
     try:
-        process = subprocess.Popen(
-            argv, cwd=cwd, env=env, stdin=subprocess.DEVNULL,
-            stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            shell=False, close_fds=True, start_new_session=True,
-        )
+        source = tempfile.TemporaryFile() if input_data is not None else nullcontext(subprocess.DEVNULL)
+        with source as stdin:
+            if input_data is not None:
+                stdin.write(input_data)
+                stdin.seek(0)
+            process = subprocess.Popen(
+                argv, cwd=cwd, env=env, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                shell=False, close_fds=True, start_new_session=True,
+            )
     except OSError as exc:
         raise EnvironmentFailure("COMMAND_START", "subprocess") from exc
     buffers = {"stdout": bytearray(), "stderr": bytearray()}
@@ -480,8 +484,9 @@ class RealLab:
                 time.sleep(min(remaining + 0.02, 1.1))
         if revoke:
             service.revoke_policy(policy_sha)
+        reports = []
         receipt = service.assess_file(challenge["payload"]["challenge_id"], evidence_path,
-                                      str(self.verifier))
+                                      str(self.verifier), report_sink=reports.append)
         self.artifacts.json(f"cases/{name}/receipt.json", receipt)
         verification = verify_receipt(
             receipt, service.public_key_hex(), expected_target=policy["target_id"],
@@ -493,6 +498,10 @@ class RealLab:
                 and verification["current_authorization"] is False,
                 "RECEIPT_VERIFICATION", name)
         check_receipt_bindings(receipt, policy, challenge, evidence)
+        if receipt["payload"]["upstream"]["report"] is not None:
+            require(len(reports) == 1 and strict_json(reports[0]) == receipt["payload"]["upstream"]["report"],
+                    "UPSTREAM_REPORT_CAPTURE", name)
+            self.artifacts.write(f"cases/{name}/upstream-report.json", reports[0])
         require(service.get_receipt(challenge["payload"]["challenge_id"]) == receipt,
                 "DURABLE_RECEIPT", name)
         result = {"case": name, "outcome": receipt["payload"]["outcome"],

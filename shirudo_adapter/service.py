@@ -277,12 +277,13 @@ class Service:
     def assess(self, challenge_id: str, evidence: bytes, verifier_path: str) -> dict:
         return self._assess(challenge_id, lambda: evidence, verifier_path)
 
-    def assess_file(self, challenge_id: str, evidence_path: str | Path, verifier_path: str) -> dict:
+    def assess_file(self, challenge_id: str, evidence_path: str | Path, verifier_path: str, *,
+                    report_sink=None) -> dict:
         return self._assess(challenge_id,
                             lambda: read_bounded_file(evidence_path, MAX_EVIDENCE_BYTES),
-                            verifier_path)
+                            verifier_path, report_sink=report_sink)
 
-    def _assess(self, challenge_id: str, evidence_source, verifier_path: str) -> dict:
+    def _assess(self, challenge_id: str, evidence_source, verifier_path: str, *, report_sink=None) -> dict:
         challenge, policy, active, started = self._reserve(challenge_id)
         result = None
         outcome, reason = "BLOCKED", "NOT_RUN"
@@ -297,7 +298,8 @@ class Service:
                 fail("INVALID_EVIDENCE", "Evidence must be bytes")
             evidence_sha = hashlib.sha256(evidence).hexdigest()
             check_evidence(evidence, policy, challenge["nonce"])
-            candidate = run_verifier(verifier_path, evidence, policy, challenge["nonce"])
+            options = {} if report_sink is None else {"report_sink": report_sink}
+            candidate = run_verifier(verifier_path, evidence, policy, challenge["nonce"], **options)
             route = "SYNTHETIC" if policy["assurance"] == "SYNTHETIC" else "UPSTREAM_CLI"
             if (type(candidate) is not dict or set(candidate) != {
                     "accepted", "execution_profile", "binary_sha256", "version_id",

@@ -176,10 +176,10 @@ jobs:
         run: |
           sudo prlimit --pid "$$" --memlock=unlimited:unlimited
           python scripts/shirudo_real_lab.py --upstream "$PWD/upstream" --vm-name "$VM_NAME" --verifier "$PWD/artifacts/verifier/shirudo" --bundle "$PWD/artifacts/prototype/bundle" --output "$PWD/evidence/lab"
-      - name: Qualify separate owner ceremony and immutable target gate
+      - name: Qualify keyless handoff, independent effect review, and gate recovery
         run: |
           sudo prlimit --pid "$$" --memlock=unlimited:unlimited
-          python scripts/shirudo_prototype_lab.py --upstream "$PWD/upstream" --vm-name "$VM_NAME" --verifier "$PWD/artifacts/verifier/shirudo" --build "$PWD/artifacts/prototype" --authorities "$PWD/evidence/authorities" --output "$PWD/evidence/prototype"
+          python scripts/wt_alibi_human_lab.py test --upstream "$PWD/upstream" --vm-name "$VM_NAME" --verifier "$PWD/artifacts/verifier/shirudo" --build "$PWD/artifacts/prototype" --authorities "$PWD/evidence/authorities" --output "$PWD/evidence/prototype"
       - name: Show bounded public boot diagnostics on failure
         if: failure()
         run: |
