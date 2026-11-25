@@ -302,6 +302,8 @@ print(json.dumps({'canonical_sha256':hashlib.sha256(canonical).hexdigest(),
 
 
 class PrototypeLab(RealLab):
+    retain_scripted_transcript = True
+
     def __init__(self, upstream, vm_name, verifier, output, *, build, authorities):
         self.build = parse_input(read_input(build / "build-result.json", 65536, "prototype build"),
                                  65536, "prototype build")
@@ -612,6 +614,14 @@ class PrototypeLab(RealLab):
         self.positive_accepted = True
         return bundle
 
+    def owner_bundle(self, name, intent, ready, bundle_name, behavior):
+        bundle = self.fresh_bundle(name, intent["request_id"])
+        submitted = copy.deepcopy(bundle)
+        if behavior == "tamper":
+            submitted["assessment"]["signature"] = "0" * 128
+        self.roles.public(bundle_name, submitted)
+        return bundle, submitted
+
     def ceremony(self, name, behavior="approve"):
         intent = {"schema": "wolfalibi.shirudo.owner-intent.v1", "request_id": secrets.token_hex(16),
             "target_id": self.vm_name, "gate_instance_id": self.identity["gate_instance_id"],
@@ -628,11 +638,7 @@ class PrototypeLab(RealLab):
                 terminal.send("READY")
                 ready = terminal.event()
                 require(ready.get("status") == "READY", "OWNER_NOT_READY", name)
-                bundle = self.fresh_bundle(name, intent["request_id"])
-                submitted = copy.deepcopy(bundle)
-                if behavior == "tamper":
-                    submitted["assessment"]["signature"] = "0" * 128
-                self.roles.public(bundle_name, submitted)
+                bundle, submitted = self.owner_bundle(name, intent, ready, bundle_name, behavior)
                 event = terminal.event()
                 if behavior != "tamper":
                     require(event.get("status") == "AWAITING_APPROVAL", "OWNER_DID_NOT_REVIEW", name)
@@ -645,7 +651,8 @@ class PrototypeLab(RealLab):
                     "terminal_transcript_sha256": sha256(bytes(terminal.transcript)),
                     "terminal_transcript_bytes": len(terminal.transcript)}
                 self.artifacts.json(f"materials/{name}/terminal.json", record)
-                self.artifacts.write(f"materials/{name}/terminal-transcript.txt", bytes(terminal.transcript))
+                if self.retain_scripted_transcript:
+                    self.artifacts.write(f"materials/{name}/terminal-transcript.txt", bytes(terminal.transcript))
                 self.artifacts.json(f"materials/{name}/submitted-bundle.json", submitted)
                 if behavior == "approve":
                     require(event.get("status") in ("GRANT_ISSUED", "GRANT_RECORDED") and return_code == 0,
@@ -671,8 +678,9 @@ class PrototypeLab(RealLab):
                 diagnostic, channels = capture_owner_terminal_failure(terminal)
                 diagnostic["case"] = name
                 self.artifacts.json("diagnostics/owner-terminal.json", diagnostic)
-                for channel, data in channels.items():
-                    self.artifacts.write("diagnostics/owner-" + channel + ".txt", data)
+                if self.retain_scripted_transcript:
+                    for channel, data in channels.items():
+                        self.artifacts.write("diagnostics/owner-" + channel + ".txt", data)
                 raise
 
     def effect(self, document, material, expected):

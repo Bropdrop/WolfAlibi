@@ -1,0 +1,18 @@
+# Codex execution handoff: WT-ALIBI-HUMAN-001
+
+Repository: `Bropdrop/WolfAlibi`. Baseline: exact commit `953d6a5f5c74c982ad35ee5ff0b15c60ecdae973`, PR #49. First fetch live PR metadata, verify head/base and working tree, and read `docs/shirudo/PROTOTYPE.md`, `OWNER_APPROVAL.md`, `ACTION_GATE.md`, `scripts/shirudo_prototype_lab.py`, `shirudo_adapter/owner_cli.py`, `owner.py`, `action_gate_cli.py`, `action_gate.py`, and current CI workflow before applying any changes. If baseline differs, stop and report the divergence; do not silently rebase.
+
+Apply the accompanying additive patch via `git apply --check`, then `git apply` in a clean detached worktree at the exact baseline. The included `wt_alibi_human_handoff.py` is a **minimal safe boundary** and may need correction/integration; do not promote its 14 local tests into a full qualification claim.
+
+Implement and qualify the following, on a separate local worktree only:
+
+1. A **keyless** human-operated coordinator: uses the existing verifier/target CLI interface to issue a fresh challenge only after authentic READY; obtains the target-signed operation challenge, genuine Shirudo evidence and accepted assessment under independent pins. Avoid arbitrary command execution, shell interpolation, secret exposure and mutation of trusted profile inputs. It atomically sends one complete public bundle to the owner-watched path. No owner signing code in coordinator.
+2. Retain the original terminal-only owner CLI as sole grant signer and require the genuine person to operate its foreground terminal. A scripted PTY remains only a hostile/functional test. No automatic approval or silent grant renewal.
+3. A separate independent read-only verifier that checks signed challenge, assessment, owner grant, **target effect receipt**, and independently observed SQLite counter journal against frozen external pins and exact request ID. It must not load the target's private state, sign, or invoke `execute`.
+4. Exactly-once semantics: lost reply, request retry, process interruption and recovery use exact operation ID; never substitute a fresh operation on ambiguous results. Tests must affirm no unreported counter increments.
+5. At least 20 focused hostile tests plus existing 245 inherited tests, and genuine VM integration on a disposable software TPM. Do not accept a generic failure when the intended signature/measurement control was not exercised; preserve raw upstream reports and expected failure causes.
+6. Evidence package: immutable source hash, toolchain/binary pins, public manifests, owner/verifier separation observations, signed records, independent counter oracle, test report, tampering-mutation results, cleanup outcomes and explicit assurance limitations. No private signing keys, readable secrets, or identifying terminal data in public artifacts.
+
+Safety/authority constraints: limit effects to disposable SQLite `increment_counter`, delta exactly 1. Never run a real owner approval, simulate the user's consent, deploy a shield, touch a live protected service, merge, publish, push, or release. Keep real human approval `NOT_RUN` and any scripted tests `SCRIPTED_PTY`. Keep 5 s admission, 30 s freshness, 2 s skew and remaining lifetime bounds; reject anything that widens these windows. Do not claim hardware attestation or production readiness. Root, VM builder, clocks, process lineage and terminal are trusted as documented.
+
+Deliver a clean downloadable patch, source/test/evidence bundle, exact CI commands, a human-operated acceptance runbook and precise PASS/BLOCKED table separating unit, mocked, integration and genuine human evidence. **Do not run the human acceptance ceremony on the user's behalf.**

@@ -394,7 +394,7 @@ def validate_recorded_report(report: dict, code: int, contract: list[str]) -> bo
     return accepted
 
 
-def run_verifier(executable: str, evidence: bytes, policy: dict, nonce: str) -> dict:
+def run_verifier(executable: str, evidence: bytes, policy: dict, nonce: str, *, report_sink=None) -> dict:
     """Verify immutable evidence using an operator-pinned executable snapshot.
 
     Exit-1 verification failures return ``accepted=False``.  Inability to run
@@ -433,6 +433,8 @@ def run_verifier(executable: str, evidence: bytes, policy: dict, nonce: str) -> 
                 raise _error("VERIFIER_VERSION", "Verifier version ID does not match the operator pin")
             code, out, _ = _bounded_run(executable_fd, args, (executable_fd, evidence_fd), deadline)
             accepted, report, contract = _report(out, code, required)
+            if report_sink is not None:
+                report_sink(out)
             return {
                 "accepted": accepted, "report": report, "exit_code": code,
                 "binary_sha256": actual_sha, "version_id": version,

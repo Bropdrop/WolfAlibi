@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from base64 import b64encode
 import sys
 
 from .model import (AdapterError, MAX_POLICY_BYTES,
@@ -26,6 +27,7 @@ def parser() -> argparse.ArgumentParser:
         if name == "verify":
             p.add_argument("--evidence", required=True)
             p.add_argument("--verifier", required=True)
+            p.add_argument("--include-upstream-report", action="store_true")
     p = commands.add_parser("verify-receipt")
     p.add_argument("--receipt", required=True)
     p.add_argument("--public-key", required=True)
@@ -37,6 +39,7 @@ def parser() -> argparse.ArgumentParser:
 
 def main(argv=None) -> int:
     args = parser().parse_args(argv)
+    reports = []
     try:
         if args.command == "init":
             service = Service.initialize(args.state)
@@ -59,10 +62,17 @@ def main(argv=None) -> int:
                 result = {"status": "REVOKED", "policy_sha256": args.policy_sha256}
             elif args.command == "receipt":
                 result = service.get_receipt(args.challenge_id)
+            elif args.include_upstream_report:
+                result = service.assess_file(args.challenge_id, args.evidence, args.verifier,
+                                             report_sink=reports.append)
             else:
                 result = service.assess_file(args.challenge_id, args.evidence, args.verifier)
-        sys.stdout.buffer.write(canonical_json(result) + b"\n")
         outcome = result.get("payload", {}).get("outcome")
+        if args.command == "verify" and args.include_upstream_report:
+            report = result["payload"]["upstream"]["report"]
+            raw = b64encode(reports[0]).decode("ascii") if reports and report is not None else None
+            result = {"receipt": result, "upstream_report_base64": raw}
+        sys.stdout.buffer.write(canonical_json(result) + b"\n")
         return 1 if outcome in ("REJECTED", "BLOCKED") else 0
     except AdapterError as exc:
         sys.stdout.buffer.write(canonical_json({"status": "BLOCKED", "code": exc.code,
