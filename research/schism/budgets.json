@@ -1,0 +1,37 @@
+{
+  "scope": "per gate or reader per wave",
+  "gate_workers": 4,
+  "recovery_workers": 4,
+  "max_service_threads": 5,
+  "max_service_fds": 64,
+  "max_service_rss_kib": 131072,
+  "max_service_address_space_bytes": 536870912,
+  "max_service_cpu_seconds_per_wave": 120,
+  "max_wall_seconds_per_wave": 180,
+  "max_database_bytes": 8388608,
+  "max_database_growth_per_recovery_wave_bytes": 0,
+  "profiles": {
+    "contention": [
+      1000,
+      1000
+    ],
+    "duplicates": [
+      2,
+      2
+    ],
+    "overload": [
+      64,
+      10000
+    ],
+    "recovery": [
+      4,
+      30000
+    ]
+  },
+  "post_restart_recovery_waves": 3,
+  "coordinator_workers": [
+    500,
+    500
+  ],
+  "max_control_and_seal_bytes": 8388608
+}
