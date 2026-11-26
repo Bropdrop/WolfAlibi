@@ -1,0 +1,1 @@
+{"attempts":1000,"sessions":4,"queries_per_session":25000,"per_wave_wall_seconds":300,"target_cpu_seconds_per_wave":400,"target_peak_rss_kib":262144,"target_storage_bytes":8388608,"per_member_storage_bytes":167772160,"cold_start_seconds":15,"max_handlers":4}

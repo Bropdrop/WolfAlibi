@@ -86,6 +86,7 @@ class Trial:
         names += ["history", "probe", "audit-service", "review-custodian"] + [
             prefix + n for n in roles for prefix in ("service-", "control-")
         ]
+        names.extend(getattr(self, "extra_identities", ()))
         issue(base, names)
         peer_ca = base / "member-credentials"
         peer_ca.mkdir()
@@ -522,6 +523,7 @@ class Trial:
                 member_pins=self.config["member_pins"],
                 members=self.c.clients,
                 token=self.c.auditor.token,
+                **getattr(self, "audit_context", {}),
             ),
         )
         port = line(auditor)["port"]

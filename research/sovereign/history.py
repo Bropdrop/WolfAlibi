@@ -64,7 +64,23 @@ def serve():
             value = data[name].encode()
             require(hashlib.sha256(value).hexdigest() == pins[name], "OBSERVER_PIN")
             (root / (name + ".json")).write_bytes(value)
-        _, expected, receipts = inspect(root, pins["enrollment"])
+        if "resurrection" in pins:
+            from research.sovereign.resurrection.audit import history
+
+            extra = data["resurrection"].encode()
+            require(
+                hashlib.sha256(extra).hexdigest() == pins["resurrection"],
+                "WITNESS_PINS",
+            )
+            _, expected, receipts = history(
+                **json.loads(extra),
+                enrollment=json.loads(data["enrollment"]),
+                materials=json.loads(data["materials"]),
+                journal=json.loads(data["oracle"]),
+                commands=json.loads(data["quorum-audit"])[0],
+            )
+        else:
+            _, expected, receipts = inspect(root, pins["enrollment"])
         materials = json.loads(data["materials"])
     bindings = {canonical_json(m["binding"]): name for name, m in materials.items()}
     ctx = tls(Path("/identity"), True)

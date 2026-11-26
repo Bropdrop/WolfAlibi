@@ -26,17 +26,22 @@ TABLES = (
 
 
 def snapshot(command):
-    if command != "snapshot":
+    if command not in ("snapshot", "sealed-snapshot"):
         raise ValueError("unsupported query")
     with closing(
         sqlite3.connect("file:/volume/journal.sqlite3?mode=ro", uri=True)
     ) as c:
         c.row_factory = sqlite3.Row
         c.execute("BEGIN")
-        return {
+        journal = {
             t: [dict(r) for r in c.execute(f"SELECT * FROM {t} ORDER BY rowid")]
             for t in TABLES
         }
+        if command == "sealed-snapshot":
+            from research.sovereign.target import seal
+
+            return dict(journal=journal, seal=seal(c))
+        return journal
 
 
 def audit(config):
@@ -45,7 +50,11 @@ def audit(config):
     client.member_pins = config["member_pins"]
     client.token = config["token"]
     with Session(config["probe_port"], client) as probe:
-        journal = probe.call("snapshot")
+        if "resurrection" in config:
+            observed = probe.call("sealed-snapshot")
+            journal = observed["journal"]
+        else:
+            journal = probe.call("snapshot")
     copies = [
         [read(port, client, i + 1) for i in range(len(journal["commands"]))]
         for port in config["members"]
@@ -61,7 +70,33 @@ def audit(config):
             data = canonical_json(value) + b"\n"
             (root / (name + ".json")).write_bytes(data)
             pins[name] = hashlib.sha256(data).hexdigest()
-        counts, _, _ = inspect(root, pins["enrollment"])
+        if "resurrection" in config:
+            from research.sovereign.resurrection.audit import history
+
+            client.endpoint = config["witness_probe_tls"]
+            with Session(config["witness_probe_port"], client) as remote:
+                head = remote.call("head")
+            if (
+                head != config["resurrection"]["records"][-1]
+                or observed["seal"] != head["payload"]["seal"]
+            ):
+                raise ValueError("witness and durable target differ")
+            if not all(v == copies[0] for v in copies):
+                raise ValueError("directory disagreement")
+            counts, _, _ = history(
+                **config["resurrection"],
+                enrollment=evidence["enrollment"],
+                materials=evidence["materials"],
+                journal=journal,
+                commands=copies[0],
+            )
+        else:
+            counts, _, _ = inspect(root, pins["enrollment"])
+    if "resurrection" in config:
+        counts.update(
+            durable_seal=observed["seal"],
+            witness_head=hashlib.sha256(canonical_json(head)).hexdigest(),
+        )
     return dict(oracle=journal, copies=copies, pins=pins, counts=counts)
 
 

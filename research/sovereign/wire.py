@@ -39,12 +39,12 @@ class Session:
         self.close()
 
 
-def serve():
+def serve(factory=Stationary):
     config = json.loads(Path("/public.json").read_bytes())
     context = tls(Path("/identity"))
     context.member_pins = config["member_pins"]
     context.token = Path("/token").read_text()
-    gate = Stationary(Path("/state"), config, context)
+    gate = factory(Path("/state"), config, context)
     release = threading.Event()
 
     def held():
@@ -62,6 +62,25 @@ def serve():
                 release.clear()
                 gate._before_commit = held
                 print(json.dumps(dict(event="armed")), flush=True)
+            elif cmd.strip() == "arm-reservation" and hasattr(gate, "activate"):
+                release.clear()
+                gate.reservation_hook = held
+                print(json.dumps(dict(event="reservation-armed")), flush=True)
+            elif cmd.startswith("{") and hasattr(gate, "activate"):
+                try:
+                    reply = gate.activate(json.loads(cmd))
+                except (
+                    AdapterError,
+                    ValueError,
+                    KeyError,
+                    OSError,
+                    RuntimeError,
+                ) as exc:
+                    reply = dict(
+                        state="RECOVERY_UNRESOLVED",
+                        reason=getattr(exc, "code", type(exc).__name__),
+                    )
+                print(json.dumps(reply), flush=True)
             elif cmd.strip() == "release":
                 release.set()
 

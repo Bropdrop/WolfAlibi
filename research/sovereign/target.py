@@ -347,14 +347,18 @@ class Stationary(Gate):
             c.commit()
         return {"state": "ENROLLED"}
 
+    def recovery_boot(self, signed_boot):
+        return signed_boot == self.boot
+
     def recover(self, b, peer):
         # ACL is provisioned with the frozen request via independently signed enrollment.
         grant = verify_record(b, self._trust["owner_public_key"])
         if (
             grant.get("schema") != "wolfalibi.sovereign.recover.v1"
             or grant["principal"] != peer
-            or (grant["target"], grant["gate"], grant["boot"])
-            != (self._trust["target_id"], self.instance_id, self.boot)
+            or (grant["target"], grant["gate"])
+            != (self._trust["target_id"], self.instance_id)
+            or not self.recovery_boot(grant["boot"])
         ):
             return {"state": "UNRESOLVED", "reason": "ACCESS_DENIED"}
         with self._connection() as c:
