@@ -421,7 +421,7 @@ class Trial:
             until = time.monotonic() + 12
             while time.monotonic() < until:
                 try:
-                    new = self.c.status(others[0])["leader"]
+                    new = self.c.status(others[0]).get("leader")
                     if (
                         new
                         and new != "0"

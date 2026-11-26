@@ -45,4 +45,5 @@ for pass in first repeat; do
     python -m research.sovereign.review "$out" "$out/observer-pins.json"
     python -m research.sovereign.controls "$out"
     python -m research.sovereign.qualification "$out" "$out/observer-pins.json"
+    python -m research.sovereign.mutation_trial "$work/mutations-$pass"
 done
