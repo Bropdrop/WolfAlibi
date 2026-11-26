@@ -1,0 +1,1 @@
+{"source_gate_workers":4,"client_contention_threads":1000,"recovery_workers":4,"queries_per_recovery_worker":25000,"max_wave_wall_s":300,"max_gate_fds":64,"max_gate_address_space_mib":512,"max_service_rss_mib":160,"max_service_cpu_s":400,"max_target_bytes":8388608}
