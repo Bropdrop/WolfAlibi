@@ -4,6 +4,7 @@ from concurrent.futures import ThreadPoolExecutor
 from contextlib import closing
 import json
 import multiprocessing
+import shutil
 import socket
 import sqlite3
 import unittest
@@ -159,3 +160,24 @@ class Interrupt(unittest.TestCase):
             "ALREADY_ACTIVATED", activate, paths, pins, roots, package, tr, lab.paths
         )
         DestinationGate(dst.state, paths, pins, key, roots, package)
+        clone = lab.root / "destination-clone"
+        shutil.copytree(dst.state, clone)
+        lab.denied(
+            "TARGET_CLONE", DestinationGate, clone, paths, pins, key, roots, package
+        )
+        external = paths["control"]
+        missing = external.with_suffix(".offline")
+        external.rename(missing)
+        try:
+            lab.denied(
+                "CHECKPOINT_UNAVAILABLE",
+                DestinationGate,
+                dst.state,
+                paths,
+                pins,
+                key,
+                roots,
+                package,
+            )
+        finally:
+            missing.rename(external)
