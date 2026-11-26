@@ -376,9 +376,10 @@ class FencedGate(Gate):
         super()._check_database(c)
 
     def _begin(self, c):
-        now = super()._begin(c)
+        c.execute("BEGIN IMMEDIATE")
+        self._check_database(c)
         demand(control_head(c, self.pins)[2] == self.public, "STALE_EXECUTOR")
-        return now
+        return self._tick(c)
 
     def _commit_prepared(self, c, action):
         epoch, head, executor = control_head(c, self.pins)
