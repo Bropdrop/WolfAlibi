@@ -193,8 +193,32 @@ def run(out, stress=False):
             writer.kill()
             writer.join(5)
         assert writer.exitcode == -9 and dest.oracle() == (0, 0)
+        from concurrent.futures import ThreadPoolExecutor
+        from threading import Barrier
+        from shirudo_adapter.model import AdapterError
+
+        contenders = Barrier(2)
+
+        def compete():
+            contenders.wait(5)
+            try:
+                activate(paths, pins, roots, package, transition, lab.paths)
+            except AdapterError as exc:
+                return exc.code
+            # Withhold the result just after the durable transaction returns.
+            return "RESPONSE_LOST"
+
         start_activation = time.monotonic_ns()
-        activate(paths, pins, roots, package, transition, lab.paths)
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(compete) for _ in range(2)]
+            outcomes = sorted(job.result() for job in futures)
+        assert outcomes == ["ALREADY_ACTIVATED", "RESPONSE_LOST"]
+        with closing(
+            sqlite3.connect(lab.paths["control"].as_uri() + "?mode=ro", uri=True)
+        ) as cp:
+            assert cp.execute(
+                "SELECT head,destination FROM relocations"
+            ).fetchall() == [(digest(fence), digest(pins))]
         activation_end = time.monotonic_ns()
         (out / "boundaries.json").write_text(
             json.dumps(
@@ -205,6 +229,7 @@ def run(out, stress=False):
                     activation_start=start_activation,
                     activation_end=activation_end,
                     interrupted_writer=writer.exitcode,
+                    competing_results=outcomes,
                 )
             )
             + "\n"
@@ -233,6 +258,7 @@ def run(out, stress=False):
         dest.gate = DestinationGate(dest.state, paths, pins, executor, roots, package)
         for r in (req, pending, revoked):
             lab.denied("HISTORICAL_READ_ONLY", dest.gate.execute, r)
+        dest.now = time.time_ns() // 1_000_000
         _, _, fresh = dest.operation()
         permit = dict(
             schema=PERMIT,
@@ -370,6 +396,7 @@ def run(out, stress=False):
             ("lineage", roots2),
             ("segments", package2),
             ("second-activation", tr3),
+            ("third-enrollment", t3),
         ):
             (out / (n + ".json")).write_text(json.dumps(v, sort_keys=True) + "\n")
     finally:
