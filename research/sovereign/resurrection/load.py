@@ -40,7 +40,9 @@ def overlap(lab):
             raw.connect_ex(("127.0.0.1", lab.port))
             barrier.wait()
             try:
-                if not select.select([], [raw], [], 6)[1]:
+                poller = select.poll()
+                poller.register(raw, select.POLLOUT)
+                if not poller.poll(6000):
                     raise TimeoutError("connection")
                 raw.settimeout(6)
                 with Session(lab.port, lab.ctx["a"], raw) as client:

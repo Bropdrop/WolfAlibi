@@ -171,7 +171,7 @@ def semantic(root):
         "INTENT_IS_NOT_RECEIPT",
     )
     require(
-        all(f[k]["state"] == "DENIED" for k in ("retired-first", "retired-second")),
+        all(f[k].get("state") == "DENIED" for k in ("retired-first", "retired-second")),
         "STALE_INCARNATION",
     )
     return summary, expected, receipts, budget_fail
@@ -267,6 +267,8 @@ def verify(root, trust):
     perf = measured(root, expect, receipts, failures)
     from research.sovereign.resurrection.controls import controls
 
+    from research.sovereign.resurrection.variants import replay
+
     jumps = load(root, "activations")
     return dict(
         status="FAIL" if failures else "PASS",
@@ -274,6 +276,7 @@ def verify(root, trust):
         **summary,
         **perf,
         mutations=controls(root),
+        complete_audit_mutations=replay(root),
         cold_ms=[x["cold_ns"] / 1e6 for x in jumps],
         reconcile_ms=[x["result"]["ns"] / 1e6 for x in jumps],
         unavailable_ms=[x["unavailable_ns"] / 1e6 for x in jumps],

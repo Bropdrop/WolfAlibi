@@ -8,7 +8,7 @@ from research.blackout.experiment import reader_pid
 from research.sovereign.cluster import rpc, write, key
 from research.sovereign.failures import backup
 from research.sovereign.history import FILES
-from research.sovereign.trial import Trial, box, save
+from research.sovereign.trial import Trial, box, save, sample
 from research.sovereign.wire import Session
 from research.sovereign.resurrection.gate import seal, schema_hash
 from research.sovereign.resurrection.witness import AUTH
@@ -151,6 +151,7 @@ class Lab(Trial):
     def start(self, race=False):
         t = time.monotonic_ns()
         self.cold_started = t
+        self.initial_size = self.db.stat().st_size
         if race:
             candidates = [self.launch(self.args) for _ in range(2)]
             pair = [self.ready(candidate) for candidate in candidates]
@@ -315,6 +316,8 @@ class Lab(Trial):
                 before=self.before_snapshot,
                 before_seal=self.before_seal,
                 cold_ns=time.monotonic_ns() - self.cold_started,
+                process=sample(self.pid),
+                journal_growth_bytes=self.db.stat().st_size - self.initial_size,
                 auth=plan["auth"],
                 result=r,
                 unavailable_ns=time.monotonic_ns() - self.offline,
