@@ -1,4 +1,5 @@
 """Focused regressions for the independent qualification predicates."""
+
 import unittest
 from research.wt_swarm.review import Mismatch
 from research.sovereign.review import distinct, eligible, partition

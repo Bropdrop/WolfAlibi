@@ -5,14 +5,13 @@ import json
 import os
 import secrets
 import shutil
-import sqlite3
 import subprocess
 import sys
 import tempfile
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import ExitStack, closing
+from contextlib import ExitStack
 from pathlib import Path
 from cryptography import x509
 from cryptography.hazmat.primitives import hashes
@@ -84,7 +83,7 @@ class Trial:
             "b",
         ]
         roles = ("owner", "verifier", "a", "b")
-        names += ["history"] + [
+        names += ["history", "probe", "audit-service", "review-custodian"] + [
             prefix + n for n in roles for prefix in ("service-", "control-")
         ]
         issue(base, names)
@@ -171,6 +170,23 @@ class Trial:
         self.proc = self.spawn(self.target_args, True)
         ready = line(self.proc)
         self.boot, self.port = ready["boot"], ready["port"]
+        mask = base / "masked"
+        mask.touch(mode=0o400)
+        probe = self.spawn(
+            box(
+                "observer",
+                [
+                    ("--ro-bind", base / "probe", "/identity"),
+                    ("--ro-bind", self.state, "/volume"),
+                    ("--ro-bind", mask, "/volume/signing.key"),
+                ],
+                True,
+            )
+            + ["probe", self.cert["auditor"]]
+        )
+        self.probe_port = line(probe)["port"]
+        self.service_pids["sql-probe"] = reader_pid(probe)
+        self.c.auditor.endpoint = self.cert["probe"]
         self.pid = reader_pid(self.proc)
         self.orders = []
         self.ops = {}
@@ -325,25 +341,8 @@ class Trial:
         return r
 
     def observe(self):
-        with closing(
-            sqlite3.connect(
-                (self.state / "journal.sqlite3").as_uri() + "?mode=ro", uri=True
-            )
-        ) as c:
-            c.row_factory = sqlite3.Row
-            c.execute("BEGIN")
-            return {
-                t: [dict(r) for r in c.execute(f"SELECT * FROM {t} ORDER BY rowid")]
-                for t in (
-                    "counter",
-                    "commands",
-                    "operations",
-                    "settlements",
-                    "revoked_grants",
-                    "bindings",
-                    "recovery_acl",
-                )
-            }
+        with Session(self.probe_port, self.c.auditor) as probe:
+            return probe.call("snapshot")
 
     def functional(self):
         self.order("a")
@@ -500,15 +499,60 @@ class Trial:
             ("replies", self.replies),
             ("faults", self.faults),
             ("times", self.times),
-            ("oracle", self.observe()),
         ):
             save(self.out / (n + ".json"), d)
-        copies = [
-            [read(port, self.c.auditor, i + 1) for i in range(self.idx)]
-            for port in self.c.clients
-        ]
-        assert all(v == [r["command"] for r in self.orders] for v in copies)
-        save(self.out / "quorum-audit.json", copies)
+        auditor = self.spawn(
+            box(
+                "observer",
+                [
+                    ("--ro-bind", self.base / "audit-service", "/identity"),
+                    ("--ro-bind", self.base / "auditor", "/reader"),
+                ],
+                True,
+            )
+            + ["auditor", self.cert["review-custodian"]]
+        )
+        send(
+            auditor,
+            dict(
+                enrollment=json.loads((self.out / "enrollment.json").read_bytes()),
+                materials=self.ops,
+                probe_port=self.probe_port,
+                probe_pin=self.cert["probe"],
+                member_pins=self.config["member_pins"],
+                members=self.c.clients,
+                token=self.c.auditor.token,
+            ),
+        )
+        port = line(auditor)["port"]
+        ctx = self.ctx["review-custodian"]
+        ctx.endpoint = self.cert["audit-service"]
+        with Session(port, ctx) as client:
+            observation = client.call("reconcile")
+        for service, endpoint, fp in (
+            ("sql-probe", self.probe_port, self.cert["probe"]),
+            ("auditor", port, self.cert["audit-service"]),
+        ):
+            outsider = tls(self.base / "bob")
+            outsider.endpoint = fp
+            try:
+                with Session(endpoint, outsider) as client:
+                    client.call("snapshot" if service == "sql-probe" else "reconcile")
+            except OSError:
+                self.faults[service + "-unauthorized"] = "NO_RESPONSE_BODY"
+            else:
+                raise AssertionError("unauthorized observer response")
+        save(self.out / "faults.json", self.faults)
+        for name, value in (
+            ("oracle", observation["oracle"]),
+            ("quorum-audit", observation["copies"]),
+            ("observer-pins", observation["pins"]),
+            ("auditor", observation["counts"]),
+        ):
+            save(self.out / (name + ".json"), value)
+        assert all(
+            v == [r["command"] for r in self.orders] for v in observation["copies"]
+        )
 
 
 def main():

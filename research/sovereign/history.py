@@ -25,7 +25,7 @@ def historical_trial(lab):
     # SQL snapshot. Transport these bytes over a private pipe, with no database mount.
     captured = {n: (lab.out / (n + ".json")).read_bytes() for n in FILES}
     pins = {n: hashlib.sha256(b).hexdigest() for n, b in captured.items()}
-    save(lab.out / "observer-pins.json", pins)
+    assert pins == json.loads((lab.out / "observer-pins.json").read_bytes())
     process = lab.spawn(
         box("history", [("--ro-bind", lab.base / "history", "/identity")], True)
         + [json.dumps(pins)]
