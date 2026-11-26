@@ -19,6 +19,7 @@ from shirudo_adapter.receipt import sign_record, verify_record
 
 SCHEMA = "wolfalibi.schism.fenced-state.v1"
 TRANSITION = "wolfalibi.schism.transition.v1"
+FENCE = "wolfalibi.exodus.source-fence.v1"
 PERMIT = "wolfalibi.schism.permit.v1"
 STAMP = "wolfalibi.schism.effect.v1"
 ZERO = "0" * 64
@@ -96,6 +97,44 @@ def seal(con, stable=None):
     con.execute("UPDATE witness.anchor SET hash=? WHERE id=1", (value,))
 
 
+def check_fence(payload, pins):
+    exact_keys(
+        payload,
+        {
+            "schema",
+            "epoch",
+            "gate",
+            "target",
+            "previous",
+            "executor",
+            "destination",
+            "authorization",
+        },
+        "source retirement",
+    )
+    authorizer = pins.get("migration_authorizer")
+    demand(
+        authorizer and authorizer not in [pins["issuer"], *pins["executors"]],
+        "MIGRATION_AUTHORITY",
+    )
+    destination = require_hex(
+        payload["destination"], 64, "destination enrollment digest"
+    )
+    expected = dict(
+        schema="wolfalibi.exodus.retire-authority.v1",
+        gate=pins["gate"],
+        target=pins["target"],
+        epoch=payload["epoch"],
+        previous=payload["previous"],
+        destination=destination,
+    )
+    demand(
+        payload["executor"] is None
+        and verify_record(payload["authorization"], authorizer) == expected,
+        "MIGRATION_BINDING",
+    )
+
+
 def control_head(con, pins):
     row = con.execute(
         "SELECT epoch,record FROM control.transitions ORDER BY epoch DESC LIMIT 1"
@@ -104,12 +143,15 @@ def control_head(con, pins):
         return 0, ZERO, None
     record = json.loads(row[1])
     p = verify_record(record, pins["issuer"])
+    retiring = p["schema"] == FENCE
+    if retiring:
+        check_fence(p, pins)
     demand(
-        p["schema"] == TRANSITION
+        (retiring or p["schema"] == TRANSITION)
         and p["epoch"] == row[0]
         and p["gate"] == pins["gate"]
         and p["target"] == pins["target"]
-        and p["executor"] in pins["executors"],
+        and (retiring or p["executor"] in pins["executors"]),
         "TRANSITION_BINDING",
     )
     floor = con.execute(
@@ -219,19 +261,24 @@ def administer(paths, pins, record, barrier=None, on_begin=None):
             )
         c.execute("BEGIN IMMEDIATE")
         epoch, head, current = guard(c, paths, pins)
-        if p.get("schema") == TRANSITION:
-            exact_keys(
-                p,
-                {"schema", "gate", "target", "epoch", "previous", "executor"},
-                "transition",
-            )
+        demand(epoch == 0 or current is not None, "SOURCE_FENCED")
+        if p.get("schema") in (TRANSITION, FENCE):
+            if p["schema"] == FENCE:
+                demand(epoch > 0, "SOURCE_INACTIVE")
+                check_fence(p, pins)
+            else:
+                exact_keys(
+                    p,
+                    {"schema", "gate", "target", "epoch", "previous", "executor"},
+                    "transition",
+                )
+                demand(p["executor"] in pins["executors"], "UNKNOWN_EXECUTOR")
             demand(
                 type(p["epoch"]) is int
                 and p["epoch"] == epoch + 1
                 and p["previous"] == head,
                 "EPOCH_CAS",
             )
-            demand(p["executor"] in pins["executors"], "UNKNOWN_EXECUTOR")
             c.execute(
                 "INSERT INTO control.transitions VALUES(?,?)",
                 (p["epoch"], canonical_json(record).decode()),
