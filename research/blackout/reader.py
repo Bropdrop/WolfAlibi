@@ -35,9 +35,9 @@ def locator(binding):
     return {k: binding[k] for k in LOCATOR}
 
 
-def database(path):
+def database(path, factory=sqlite3.Connection):
     con = sqlite3.connect(
-        path.as_uri() + "?mode=ro", uri=True, timeout=0.5, isolation_level=None
+        path.as_uri() + "?mode=ro", uri=True, timeout=0.5, isolation_level=None, factory=factory
     )
     con.row_factory = sqlite3.Row
     con.execute("PRAGMA query_only=ON")
@@ -45,9 +45,11 @@ def database(path):
     return con
 
 
-def observation(con, b, profile):
+def observation(con, b, profile, guard=None):
     con.execute("BEGIN")
     try:
+        if guard is not None:
+            guard(con, b)
         meta = dict(con.execute("SELECT key,value FROM metadata"))
         if (
             con.execute("PRAGMA application_id").fetchone()[0] != APPLICATION_ID
@@ -110,7 +112,7 @@ def observation(con, b, profile):
         con.rollback()
 
 
-def response(con, query, peer, config, key):
+def response(con, query, peer, config, key, guard=None):
     if not isinstance(query, dict) or set(query) != set(LOCATOR):
         return DENIAL
     if any(type(v) != str for v in query.values()):
@@ -120,9 +122,9 @@ def response(con, query, peer, config, key):
         return DENIAL
     try:
         outcome, reason, receipt, revoked_at = observation(
-            con, binding, config["profile"]
+            con, binding, config["profile"], guard
         )
-    except (sqlite3.Error, KeyError, AdapterError, TypeError, ValueError):
+    except (sqlite3.Error, OSError, KeyError, AdapterError, TypeError, ValueError):
         outcome, reason, receipt, revoked_at = (
             "UNRESOLVED",
             "JOURNAL_UNAVAILABLE",
@@ -142,7 +144,7 @@ def response(con, query, peer, config, key):
     return {"proof": sign_record(key, payload), "receipt": receipt}
 
 
-def main():
+def main(connect=database, guard=None):
     cfg = json.loads(Path("/config.json").read_bytes())
     tls = context(True)
     key = Ed25519PrivateKey.generate()
@@ -161,7 +163,7 @@ def main():
                 ).hexdigest()
                 expiry = ssl.cert_time_to_seconds(peer.getpeercert()["notAfter"])
                 peer.sendall(b"RECOVERY-READY\n")
-                with closing(database(journal)) as con:
+                with closing(connect(journal)) as con:
                     for _ in range(512):
                         body = stream.readline(MAX_FRAME + 1)
                         if (
@@ -174,7 +176,7 @@ def main():
                             DENIAL
                             if time.time() >= expiry
                             else response(
-                                con, strict_json(body, MAX_FRAME), principal, cfg, key
+                                con, strict_json(body, MAX_FRAME), principal, cfg, key, guard
                             )
                         )
                         peer.sendall(canonical_json(result) + b"\n")

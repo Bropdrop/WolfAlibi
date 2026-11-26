@@ -236,6 +236,9 @@ class _GateConnection(sqlite3.Connection):
 
 
 class Gate:
+    state_schema = "wolfalibi.shirudo.action-state.v1"
+    connection_factory = _GateConnection
+
     def __init__(self, state_dir):
         self.path = Path(state_dir).absolute()
         self._clock = lambda: time.time_ns() // 1_000_000
@@ -243,7 +246,7 @@ class Gate:
         self._check_paths()
         config = strict_json(read_bounded_file(self.path / "state.json", 4096), 4096)
         exact_keys(config, {"schema", "gate_instance_id", "public_key", "trust_sha256"}, "gate identity")
-        if config["schema"] != "wolfalibi.shirudo.action-state.v1":
+        if config["schema"] != self.state_schema:
             fail("STATE_INVALID", "Unsupported gate state")
         require_hex(config["gate_instance_id"], 32, "gate instance")
         require_hex(config["public_key"], 64, "gate public key")
@@ -391,7 +394,7 @@ class Gate:
         conn = None
         try:
             uri = "file:" + quote(str(self.path / "journal.sqlite3"), safe="/") + "?mode=rw"
-            conn = sqlite3.connect(uri, uri=True, isolation_level=None, timeout=10, factory=_GateConnection)
+            conn = sqlite3.connect(uri, uri=True, isolation_level=None, timeout=10, factory=self.connection_factory)
             conn.row_factory = sqlite3.Row
             conn.execute("PRAGMA foreign_keys=ON")
             conn.execute("PRAGMA trusted_schema=OFF")
@@ -679,7 +682,7 @@ class Gate:
             final_now = self._tick(conn)
             self._active(conn)
             self._admission_times(attestation, final_now)
-            conn.commit()
+            self._commit_prepared(conn, action_record)
         return action_record
 
     def execute(self, request):
@@ -735,8 +738,14 @@ class Gate:
             # hook. It is not a request field or a transport operation.
             if self._before_commit is not None:
                 self._before_commit()
-            conn.commit()
+            self._commit_effect(conn, request, receipt)
         return {"result": "COMMITTED", "receipt": receipt}
+
+    def _commit_prepared(self, conn, action_record):
+        conn.commit()
+
+    def _commit_effect(self, conn, request, receipt):
+        conn.commit()
 
     def status(self, operation_id=None):
         if operation_id is not None:
