@@ -64,7 +64,7 @@ def lineage(s, frame, payload, receipt, boot):
     )
 
 
-def inspect(root, pin):
+def inspect(root, pin, *, incarnations=None, superseded=()):
     require(
         hashlib.sha256((root / "enrollment.json").read_bytes()).hexdigest() == pin,
         "PROVISIONING",
@@ -88,14 +88,29 @@ def inspect(root, pin):
     floor = 0
     revoked = set()
     windows = []
+    issuer_boot = boot
+    history_boot = boot
+    boots = {}
     for index, (row, cmd) in enumerate(zip(j["commands"], copies[0]), 1):
         require(json.loads(row["command"]) == cmd and row["idx"] == index, "ORDER")
         p = verify_record(cmd, owner)
-        ack = verify_record(json.loads(row["acknowledgement"]), boot)
+        if incarnations is not None:
+            # The caller has independently verified the owner and witness chain.
+            history_boot = incarnations.get(index, history_boot)
+        ack = verify_record(json.loads(row["acknowledgement"]), history_boot)
         require(
             p["index"] == index
             and p["previous"] == previous
-            and (p["boot"], p["gate"], p["target"]) == (boot, gate, target),
+            and (p["boot"], p["gate"], p["target"])
+            == (
+                (
+                    (p["boot"] if index in superseded else history_boot)
+                    if p["kind"] == "activate"
+                    else issuer_boot
+                ),
+                gate,
+                target,
+            ),
             "CHAIN",
         )
         require(
@@ -127,6 +142,9 @@ def inspect(root, pin):
         )
         floor = ack["counter"]
         windows.append((floor, previous))
+        if p["kind"] == "activate":
+            issuer_boot = p["boot"]
+        boots[previous] = issuer_boot
         heads[previous] = (epoch, holder, set(revoked))
     require({r["id"] for r in j["revoked_grants"]} == revoked, "REVOKED_SET")
     rows = {r["id"]: r for r in j["operations"]}
@@ -187,7 +205,8 @@ def inspect(root, pin):
             ),
             "GRANT",
         )
-        common = dict(target=target, gate=gate, boot=boot, op=op, request=digest(req))
+        origin = boots[prepared[op][1]]
+        common = dict(target=target, gate=gate, boot=origin, op=op, request=digest(req))
         binding = verify_record(acl[op], owner)
         require(
             acl[op] == material["binding"]
@@ -266,7 +285,7 @@ def inspect(root, pin):
             and rp["counter_before"] == row["counter_before"] == seq - 1,
             "EXACT_RECEIPT",
         )
-        lineage(s, frame, payload, receipt, boot)
+        lineage(s, frame, payload, receipt, origin)
         expect[name] = "COMMITTED"
         receipts[name] = receipt
     return dict(effects=len(settled), transitions=len(windows)), expect, receipts

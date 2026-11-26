@@ -67,6 +67,7 @@ def main():
     allowed = {
         "owner": {
             "wolfalibi.sovereign.order.v1",
+            "wolfalibi.resurrection.activation.v1",
             "wolfalibi.sovereign.permit.v1",
             "wolfalibi.sovereign.recover.v1",
             "wolfalibi.shirudo.action-grant.v1",
