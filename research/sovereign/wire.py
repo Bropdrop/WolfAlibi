@@ -127,4 +127,8 @@ def serve():
 
 
 if __name__ == "__main__":
-    serve()
+    try:
+        serve()
+    except AdapterError as exc:
+        print(json.dumps({"startup": "DENIED", "reason": exc.code}), file=sys.stderr)
+        sys.exit(1)

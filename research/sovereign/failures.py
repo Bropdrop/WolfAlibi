@@ -1,5 +1,6 @@
 """Bounded failure schedules for a private local trial."""
 
+import json
 import os
 import shutil
 import signal
@@ -84,9 +85,10 @@ def exercise(lab):
     shutil.copytree(lab.state, clone)
     args = [str(clone) if a == str(lab.state) else a for a in lab.target_args]
     result = subprocess.run(args, input=b"", capture_output=True, timeout=6)
-    assert result.returncode and b"TARGET_RESTART_UNRESOLVED" in result.stderr, (
-        result.stderr
-    )
+    assert result.returncode == 1 and json.loads(result.stderr) == {
+        "startup": "DENIED",
+        "reason": "TARGET_RESTART_UNRESOLVED",
+    }, result.stderr
     lab.faults["clone"] = "TARGET_RESTART_UNRESOLVED"
     # Exercise loss of the quorum's recorded floor, independently and together
     # with local target rollback. This uses fixture administrator privileges.
