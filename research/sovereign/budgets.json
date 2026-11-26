@@ -1,0 +1,1 @@
+{"overlap_workers":1000,"recovery_workers":4,"recovery_queries_per_worker":25000,"max_wall_seconds_per_wave":300,"max_cpu_seconds_per_service_per_wave":400,"max_rss_mib_per_service":256,"max_target_bytes":8388608,"max_etcd_member_storage_bytes":167772160,"max_concurrent_target_handlers":4}
